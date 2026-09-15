@@ -2,7 +2,7 @@
 """Catch infinite-yield WaitForChild bugs before they reach Studio.
 
 Every static :WaitForChild("Name") in src/ is resolved against the ACTUAL
-built place (Egg-Heist.rbxlx at repo root, rebuilt first for freshness). A missing
+built place (Egg-Heist.rbxl at repo root, rebuilt first for freshness). A missing
 target means the game would hang forever at runtime with zero errors --
 pcall cannot save you from an infinite yield.
 
@@ -13,36 +13,26 @@ Usage: python3 tools/check_waits.py  (exit 1 on any missing target)
 """
 import re
 import sys
-import xml.etree.ElementTree as ET
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
-import build_place  # noqa: E402  (rebuilds place for freshness)
+import build_binary_place  # noqa: E402  (rebuilds place for freshness)
+from place_binary import parse_binary_place  # noqa: E402
 
 
 def collect_instances(place_path: Path) -> set:
-    tree = ET.parse(place_path)
+    services, _ = parse_binary_place(place_path)
     paths = set()
 
-    def walk(elem, prefix):
-        if elem.tag != "Item":
-            return
-        name = None
-        props = elem.find("Properties")
-        if props is not None:
-            for s in props.findall("string"):
-                if s.attrib.get("name") == "Name":
-                    name = s.text or ""
-        if name is None:
-            return
-        full = f"{prefix}/{name}" if prefix else name
+    def walk(node, prefix):
+        full = f"{prefix}/{node['name']}" if prefix else node["name"]
         paths.add(full)
-        for child in elem.findall("Item"):
+        for child in node["children"]:
             walk(child, full)
 
-    for item in tree.getroot().findall("Item"):
-        walk(item, "")
+    for svc in services:
+        walk(svc, "")
     return paths
 
 
@@ -70,8 +60,8 @@ def instance_path(src: Path) -> str:
 
 
 def main() -> int:
-    build_place.main()  # ensure the place matches src/
-    place = ROOT / "Egg-Heist.rbxlx"
+    build_binary_place.main()  # ensure the place matches src/
+    place = ROOT / "Egg-Heist.rbxl"
     instances = collect_instances(place)
 
     missing, checked, skipped = [], 0, 0

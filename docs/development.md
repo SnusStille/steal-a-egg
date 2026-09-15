@@ -7,14 +7,17 @@ edit src/  →  build  →  validate  →  simulate  →  Play in Studio
 ```
 
 ```bash
-python3 tools/build_place.py && python3 tools/validate_syntax.py \
+python3 tools/build_binary_place.py && python3 tools/validate_syntax.py \
   && python3 tools/check_refs.py && python3 tools/check_waits.py \
-  && python3 tools/sim_boot.py     # expect WARNS:0 ERRORS:0
+  && python3 tools/sim_boot.py --world-mode real \
+  && python3 tools/sim_boot.py --world-mode none  # expect WARNS:0 ERRORS:0 x2
 ```
 
-`src/` mirrors the DataModel (Rojo-style); `build_place.py` and
+`src/` mirrors the DataModel (Rojo-style); `build_binary_place.py` and
 `default.project.json` agree on the mapping, so Rojo (`rojo build` /
-`rojo serve`) and the Python builder produce the same game.
+`rojo serve`) and the Python builder produce the same game. The Python
+builder additionally embeds the world model, producing the single-file
+`Egg-Heist.rbxl` deliverable.
 
 ## Conventions
 

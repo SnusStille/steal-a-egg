@@ -1,5 +1,32 @@
 # Changelog
 
+## SINGLE FILE — real map embedded in one open-and-Play place (2026-09-15)
+
+The delivered place showed NO map (scripts only; the world needed a manual
+"Insert from File" step). Fixed at the root: the place is now ONE binary
+file with the real world embedded at build time. Open `Egg-Heist.rbxl`,
+press Play — done. Full gate green (syntax, refs, waits against the binary
+place, sim `WARNS:0 ERRORS:0` in BOTH real-world and fallback modes).
+
+- NEW `tools/build_binary_place.py`: merges `assets/world/EggHeistWorld.rbxm`
+  (byte-identical source, never modified) with all 93 `src/` scripts into
+  `Egg-Heist.rbxl`. World bytes copied verbatim (514 instances); folders
+  merged into the world's Folder class; PRNT re-encoded with the world
+  re-parented under Workspace; Studio footer/flags verified against
+  Studio-saved reference files; every build self-verifies (roundtrip).
+- NEW `tools/place_binary.py`: shared binary-place reader for the sim and
+  `check_waits.py` (WaitForChild targets now resolve against the real place
+  including world paths: 262 static targets checked).
+- `tools/sim_boot.py`: runs the binary place in `--world-mode real`
+  (deterministic per-district/per-plot synthetic positions + real decoded
+  sizes; proves the "Found existing world" path) and `--world-mode none`
+  (fallback path). Both green: health 6/6, `WARNS:0 ERRORS:0`.
+- WorldService: `SetMostWanted`/`SetEventBoard` now find fallback sign GUIs
+  by class instead of never-matching names.
+- Removed: `Egg-Heist.rbxlx` (mapless XML place) and `tools/build_place.py`
+  (superseded). Docs rewritten for the single-file flow (SETUP has a Swedish
+  quickstart).
+
 ## CLEAN FOUNDATION — architecture repair (2026-09-15)
 
 Full audit (every script, remote, config, world object, dependency).

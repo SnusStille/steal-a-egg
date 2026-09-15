@@ -1,55 +1,94 @@
 #!/usr/bin/env python3
 """Headless server-boot simulator: executes the REAL Main + services
 from the built place with stubbed Roblox APIs. Catches real boot errors
-without Studio. Usage: python3 tools/sim_boot.py (needs `lupa`)."""
+without Studio. Usage: python3 tools/sim_boot.py [--place P] [--world-mode real|none] (needs `lupa`).
+
+Place format is auto-detected (XML .rbxlx or binary .rbxl). The binary
+place carries the real world model, whose CFrames are intentionally NOT
+decoded (custom layout); parts get deterministic synthetic positions
+clustered per district/plot with REAL decoded sizes, which exercises the
+ exact same code paths (anchors, offsets, clearance checks).
+--world-mode=none drops the world subtree to cover the fallback path."""
+import struct
 import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT / "tools"))
+from place_binary import parse_binary_place  # noqa: E402
 
 
-def parse_item(elem, sources, counter):
-    cls = elem.attrib.get("class")
-    props = elem.find("Properties")
-    name, source, cf, size, color = "", None, None, None, None
-    if props is not None:
-        for c in props:
-            n = c.attrib.get("name")
-            if c.tag == "string" and n == "Name":
-                name = c.text or ""
-            elif c.tag == "ProtectedString" and n == "Source":
-                cid = f"src{counter[0]}"
-                counter[0] += 1
-                sources[cid] = c.text or ""
-                source = cid
-            elif c.tag == "CoordinateFrame" and n == "CFrame":
-                vals = {}
-                for v in c:
-                    vals[v.tag] = float(v.text or 0)
-                cf = [vals.get("X", 0), vals.get("Y", 0), vals.get("Z", 0)]
-            elif c.tag == "Vector3" and n == "Size":
-                vals = {}
-                for v in c:
-                    vals[v.tag] = float(v.text or 0)
-                size = [vals.get("X", 1), vals.get("Y", 1), vals.get("Z", 1)]
-            elif c.tag == "Color3" and n == "Color":
-                vals = {}
-                for v in c:
-                    vals[v.tag] = float(v.text or 0)
-                color = [vals.get("R", 0), vals.get("G", 0), vals.get("B", 0)]
-    node = {"name": name, "class": cls, "children": []}
-    if source:
-        node["sourceId"] = source
-    if cf:
-        node["cf"] = cf
-    if size:
-        node["size"] = size
-    if color:
-        node["color"] = color
-    for k in elem.findall("Item"):
-        node["children"].append(parse_item(k, sources, counter))
-    return node
+# District/plot cluster centers for synthetic geometry. Distinct, spread
+# out; within a group the anchor part sits exactly at the center.
+_DISTRICT_CENTERS = {
+    "Spawn": (0, 0), "EggMarket": (300, 0), "HeistArea": (0, 300),
+    "EventArea": (-300, 0),
+}
+_ANCHOR_NAMES = {
+    "PlazaBase", "PlazaInnerFloor", "MarketFloor", "MarketInnerFloor",
+    "HeistFloor", "HeistInnerFloor", "EventFloor", "EventInnerFloor",
+    "EventStage", "Foundation",
+}
+
+
+def _assign_synthetic_positions(services):
+    by_name = {}
+    for s in services:
+        by_name[s["name"]] = s
+    ws = by_name.get("Workspace")
+    if not ws:
+        return
+    egg = next((c for c in ws["children"] if c["name"] == "EggHeist"), None)
+    if not egg:
+        return
+    groups = []  # (center, anchor_names, part_nodes[])
+    egg_kids = {c["name"]: c for c in egg["children"]}
+
+    def collect_parts(node, out):
+        if node["class"] == "Part":
+            out.append(node)
+        for k in node["children"]:
+            collect_parts(k, out)
+
+    district_of = {}
+    world_map = egg_kids.get("Map")
+    if world_map:
+        for d in world_map["children"]:
+            if d["name"] in _DISTRICT_CENTERS:
+                parts = []
+                collect_parts(d, parts)
+                groups.append((_DISTRICT_CENTERS[d["name"]], parts))
+                district_of[d["name"]] = True
+    bases = egg_kids.get("Bases")
+    if bases:
+        plots = sorted([c for c in bases["children"] if c["name"].startswith("Plot")],
+                       key=lambda c: c["name"])
+        for i, plot in enumerate(plots):
+            parts = []
+            collect_parts(plot, parts)
+            groups.append((((i - 3.5) * 100, -400), parts))
+        tmpl = next((c for c in bases["children"] if c["name"] == "BaseTemplate"), None)
+        if tmpl:
+            parts = []
+            collect_parts(tmpl, parts)
+            groups.append((((0, -700), parts)))
+    # anything else under EggHeist gets its own slot
+    for c in egg["children"]:
+        if c["name"] in ("Map", "Bases"):
+            continue
+        parts = []
+        collect_parts(c, parts)
+        if parts:
+            slot = len(groups)
+            groups.append((((600 + (slot % 4) * 150, -600 + (slot // 4) * 150), parts)))
+    for (cx, cz), parts in groups:
+        anchors = [p for p in parts if p["name"] in _ANCHOR_NAMES]
+        rest = [p for p in parts if p["name"] not in _ANCHOR_NAMES]
+        for p in anchors:
+            p["cf"] = [float(cx), 1.0, float(cz)]
+        for j, p in enumerate(rest):
+            p["cf"] = [float(cx + (j % 10) * 12 - 54), 1.0, float(cz + (j // 10) * 12)]
 
 
 def main() -> int:
@@ -59,13 +98,46 @@ def main() -> int:
         print("lupa not installed. Run: pip install --break-system-packages lupa")
         return 2
 
-    place = ROOT / "Egg-Heist.rbxlx"
-    tree = ET.parse(place)
+    args = sys.argv[1:]
+    place = ROOT / "Egg-Heist.rbxl"
+    world_mode = "real"
+    i = 0
+    while i < len(args):
+        if args[i] == "--place" and i + 1 < len(args):
+            place = Path(args[i + 1])
+            i += 2
+        elif args[i] == "--world-mode" and i + 1 < len(args):
+            world_mode = args[i + 1]
+            i += 2
+        else:
+            print(f"sim: unknown arg {args[i]}")
+            return 2
+    assert world_mode in ("real", "none"), world_mode
     sources, counter = {}, [0]
-    services = []
-    for item in tree.getroot().findall("Item"):
-        services.append(parse_item(item, sources, counter))
-    print(f"sim: parsed {len(sources)} script sources from place")
+    raw_head = place.read_bytes()[:8]
+    if raw_head == b"<roblox!":
+        services, sources = parse_binary_place(place, sources, counter)
+        print(f"sim: parsed {len(sources)} script sources from binary place {place.name}")
+    else:
+        tree = ET.parse(place)
+        services = []
+        for item in tree.getroot().findall("Item"):
+            services.append(parse_item(item, sources, counter))
+        print(f"sim: parsed {len(sources)} script sources from XML place {place.name}")
+    if world_mode == "none":
+        dropped = 0
+        for svc in services:
+            if svc["name"] == "Workspace":
+                before = len(svc["children"])
+                svc["children"] = [c for c in svc["children"] if c["name"] != "EggHeist"]
+                dropped = before - len(svc["children"])
+        print(f"sim: world-mode=none (dropped world subtree: {dropped} root(s) -> fallback path)")
+    else:
+        has_world = any(
+            c["name"] == "EggHeist"
+            for svc in services if svc["name"] == "Workspace" for c in svc["children"]
+        )
+        print(f"sim: world-mode=real (world present: {has_world})")
 
     lua = LuaRuntime()
 

@@ -23,8 +23,11 @@ def read_chunks(data: bytes):
         name = data[pos : pos + 4].decode("ascii")
         clen, ulen, _res = struct.unpack("<III", data[pos + 4 : pos + 16])
         pos += 16
-        raw = data[pos : pos + clen]
-        pos += clen
+        # clen == 0 means stored uncompressed: ulen bytes follow
+        # (e.g. Studio's END chunk: clen=0, ulen=9, payload `</roblox>`).
+        size = ulen if clen == 0 else clen
+        raw = data[pos : pos + size]
+        pos += size
         if clen == 0:
             chunks.append((name, raw))
         else:

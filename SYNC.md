@@ -27,4 +27,4 @@ always works.
 | `assets/world/EggHeistWorld.rbxm` | Workspace/EggHeist |
 
 Edit any `.luau` file and the change syncs instantly — no rebuild step.
-`tools/build_place.py` + `Egg-Heist.rbxlx` remain the no-Rojo path.
+`tools/build_binary_place.py` + `Egg-Heist.rbxl` remain the no-Rojo path.

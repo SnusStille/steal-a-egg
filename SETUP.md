@@ -1,29 +1,33 @@
 # Egg Heist — Setup Guide
 
+## Snabbstart (svenska)
+
+1. Öppna **Roblox Studio**.
+2. Öppna filen **`Egg-Heist.rbxl`** (`File > Open from File`).
+3. Tryck **Play** (F5). Klart — kartan, alla scripts och allt innehåll
+   finns redan i filen. Inga fler steg behövs.
+
 ## Path A: Play immediately (recommended)
 
 1. Open **Roblox Studio**.
-2. Open `Egg-Heist.rbxlx` (`File > Open from File`).
-3. Insert the world (optional): right-click **Workspace > Insert from File…**
-   and choose `assets/world/EggHeistWorld.rbxm`.
-   - The model must be named `EggHeist` directly under Workspace.
-     (If it inserted with another name, rename it.)
-4. Press **Play** (F5).
+2. Open **`Egg-Heist.rbxl`** (`File > Open from File`).
+3. Press **Play** (F5). That's it.
 
-> If you skip step 3, the game still runs: `WorldService` detects the missing
-> world and builds a complete procedural fallback (spawn, market, vault,
-> event stage, 8 plots, egg assets).
+The `.rbxl` is ONE whole file: the full map (spawn plaza, egg market,
+heist vault district, event grounds, 8 base plots, decorations) plus all
+93 scripts are already inside. The map is visible in the editor viewport
+before you press Play, under **Workspace > EggHeist**.
 
-> **"Empty map" in the editor is NORMAL:** before you press Play, the
-> viewport only shows a baseplate + spawn. The full map only exists at
-> RUNTIME. Always test with Play (F5) — after pressing Play, Output shows
-> `Fallback world built: N parts...` as proof the map was built.
+> Safety net: if the world model is ever missing, `WorldService` detects
+> it and builds a complete procedural fallback (spawn, market, vault,
+> event stage, 8 plots, egg assets) — the game always runs.
 
 ### Proof it works (Output after Play)
 
 ```text
-[EggHeist] Boot summary: 23 loaded (0 failed), 23 init ok (0 failed), 23 start ok (0 failed)
-[EggHeist] Fallback world built: 275 parts, ...   (or: Found existing world: ...)
+[EggHeist] Found existing world: Workspace.EggHeist
+[EggHeist] Boot summary: 26 loaded (0 failed), 26 init ok (0 failed), 26 start ok (0 failed)
+[Health] ALL 6 CHECKS PASSED
 [EggHeist] Server READY. Have fun!
 [EggHeist] Client started.
 ```
@@ -36,7 +40,7 @@ copy the red text — it names the exact script and line.
 1. Install the [Rojo Studio plugin](https://rojo.space/docs/installation/) and
    the `rojo` CLI (7.x).
 2. From the repo root:
-   - One-off build: `rojo build -o Egg-Heist-Rojo.rbxlx`, then open the file.
+   - One-off build: `rojo build -o Egg-Heist-Rojo.rbxl`, then open the file.
    - Live sync: `rojo serve`, then connect the Studio plugin.
 3. The world model is wired via `default.project.json`
    (`Workspace.EggHeist` → `assets/world/EggHeistWorld.rbxm`), so Rojo builds
@@ -47,18 +51,20 @@ copy the red text — it names the exact script and line.
 After editing anything under `src/`, run from the repo root:
 
 ```bash
-python3 tools/build_place.py && python3 tools/validate_syntax.py \
+python3 tools/build_binary_place.py && python3 tools/validate_syntax.py \
   && python3 tools/check_refs.py && python3 tools/check_waits.py \
-  && python3 tools/sim_boot.py
+  && python3 tools/sim_boot.py --world-mode real \
+  && python3 tools/sim_boot.py --world-mode none
 ```
 
-(The chain rebuilds the place, syntax-checks all 84 files, verifies every
-require/remote/config reference, proves every `WaitForChild` target exists,
-then boots the whole game headlessly: server + client + 2-player
-join/claim/trade/heist/events. Expect `WARNS:0 ERRORS:0`.)
+(The chain rebuilds the single-file place (real world embedded), syntax-checks
+all 93 files, verifies every require/remote/config reference, proves every
+`WaitForChild` target exists, then boots the whole game headlessly TWICE —
+once with the real world, once with the fallback: server + client + 2-player
+join/claim/trade/heist/events. Expect `WARNS:0 ERRORS:0` both times.)
 
 `sim_boot.py` needs the `lupa` package (`pip install lupa`); the other tools
-need `luaparser` (`pip install luaparser`) and `lz4` for `inspect_rbxm.py.
+need `luaparser` (`pip install luaparser`) and `lz4`.
 
 ## Publishing checklist
 

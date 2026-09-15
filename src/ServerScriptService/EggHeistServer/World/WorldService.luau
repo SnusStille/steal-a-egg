@@ -746,8 +746,8 @@ function WorldService.SetMostWanted(text)
 	local map = root:FindFirstChild("Map")
 	local heist = map and map:FindFirstChild("HeistArea")
 	local board = heist and heist:FindFirstChild("WantedBoard")
-	local gui = board and board:FindFirstChild("SignGui")
-	local label = gui and gui:FindFirstChild("SignText")
+	local gui = board and (board:FindFirstChild("SignGui") or board:FindFirstChildOfClass("SurfaceGui"))
+	local label = gui and (gui:FindFirstChild("SignText") or gui:FindFirstChildOfClass("TextLabel"))
 	if label and label:IsA("TextLabel") then
 		label.Text = tostring(text)
 		return true
@@ -764,8 +764,8 @@ function WorldService.SetEventBoard(text)
 	local eventArea = root:FindFirstChild("Map")
 	eventArea = eventArea and eventArea:FindFirstChild("EventArea")
 	local board = eventArea and eventArea:FindFirstChild("EventBoard")
-	local gui = board and board:FindFirstChild("SignGui")
-	local label = gui and gui:FindFirstChild("SignText")
+	local gui = board and (board:FindFirstChild("SignGui") or board:FindFirstChildOfClass("SurfaceGui"))
+	local label = gui and (gui:FindFirstChild("SignText") or gui:FindFirstChildOfClass("TextLabel"))
 	if label and label:IsA("TextLabel") then
 		label.Text = tostring(text)
 		return true
