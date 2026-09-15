@@ -23,6 +23,7 @@ local BOARDS = {
 	Heists = { Store = "EggHeist_Board_Heists", Stat = "heistsWon", Display = "Master Thieves" },
 	Collectors = { Store = "EggHeist_Board_Collectors", Stat = "__collection", Display = "Top Collectors" },
 	Levels = { Store = "EggHeist_Board_Levels", Stat = "__level", Display = "Highest Level" },
+	Defenders = { Store = "EggHeist_Board_Defenders", Stat = "successfulDefenses", Display = "Top Defenders" },
 }
 
 function LeaderboardService.Init(_, reg)
@@ -158,7 +159,7 @@ local function buildPhysicalBoard()
 	list.TextSize = 28
 	list.TextYAlignment = Enum.TextYAlignment.Top
 	list.Parent = gui
-	return list
+	return gui
 end
 
 -- Overhead social tag: display name + heist rep title + level.
@@ -216,10 +217,12 @@ local function hookTitles(player)
 end
 
 function LeaderboardService.Start()
-	local boardLabel = nil
+	local boardGui = nil
 	pcall(function()
-		boardLabel = buildPhysicalBoard()
+		boardGui = buildPhysicalBoard()
 	end)
+	local physicalBoards = { "Heists", "Richest", "Defenders" }
+	local physicalIndex = 0
 
 	registry.Net.OnFunction("GetLeaderboard", function(_, boardName)
 		if BOARDS[boardName] then
@@ -238,16 +241,25 @@ function LeaderboardService.Start()
 				end
 			end
 			cache = {} -- invalidate
-			if boardLabel and boardLabel.Parent then
-				local entries = LeaderboardService.GetBoard("Heists")
-				local lines = {}
-				for i, entry in ipairs(entries) do
-					lines[#lines + 1] = tostring(i) .. ". " .. entry.name .. " - " .. tostring(entry.score)
-					if i >= 7 then
-						break
-					end
+			if boardGui and boardGui.Parent then
+				physicalIndex = (physicalIndex % #physicalBoards) + 1
+				local boardName = physicalBoards[physicalIndex]
+				local entries = LeaderboardService.GetBoard(boardName)
+				local listLabel = boardGui:FindFirstChild("List")
+				local titleLabel = boardGui:FindFirstChild("Title")
+				if titleLabel then
+					titleLabel.Text = string.upper(BOARDS[boardName].Display)
 				end
-				boardLabel.Text = table.concat(lines, "\n")
+				if listLabel then
+					local lines = {}
+					for i, entry in ipairs(entries) do
+						lines[#lines + 1] = tostring(i) .. ". " .. entry.name .. " - " .. tostring(entry.score)
+						if i >= 7 then
+							break
+						end
+					end
+					listLabel.Text = table.concat(lines, "\n")
+				end
 			end
 		end
 	end)

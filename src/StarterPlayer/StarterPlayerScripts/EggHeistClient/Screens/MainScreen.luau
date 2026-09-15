@@ -331,11 +331,12 @@ end
 
 function MainScreen.RefreshRanks()
 	UIFactory.ClearChildren(ranksList, true)
-	local boards = { "Richest", "Levels", "Heists", "Collectors" }
+	local boards = { "Richest", "Levels", "Heists", "Collectors", "Defenders" }
 	local titles = { Richest = "Richest Heisters (lifetime earned)",
 		Levels = "Highest Levels",
 		Heists = "Master Thieves (successful extractions)",
-		Collectors = "Top Collectors (unique discoveries)" }
+		Collectors = "Top Collectors (unique discoveries)",
+		Defenders = "Top Defenders (thieves stopped)" }
 	for _, board in ipairs(boards) do
 		local header = UIFactory.Label(titles[board], UDim2.new(1, 0, 0, 24), Theme.Accent, 14)
 		header.TextXAlignment = Enum.TextXAlignment.Left

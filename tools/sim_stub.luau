@@ -1068,6 +1068,12 @@ function _SIM.petSnatchLoop()
 	_SIM.check(restored, "petsnatch", "pet not re-equipped after tackle")
 	_SIM.check(furniture:FindFirstChild("HeistBeacon") == nil,
 		"petsnatch", "beacon not cleared after tackle")
+	local LS = require(_SIM.serverModule("LeaderboardService"))
+	_SIM.check(prof2.stats.successfulDefenses == 1,
+		"petsnatch", "defense stat not recorded")
+	local defenders = LS.GetBoard("Defenders")
+	_SIM.check(defenders[1] and defenders[1].name == p2.DisplayName,
+		"petsnatch", "defenders board does not rank the victim first")
 	HS.TestResetCooldowns()
 	return table.concat(out, " | ") .. " | petsnatch-ok"
 end

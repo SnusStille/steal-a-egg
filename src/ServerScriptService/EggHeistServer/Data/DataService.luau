@@ -118,6 +118,7 @@ local function defaultProfile(userId)
 			heistsWon = 0,
 			heistsFailed = 0,
 			timesRobbed = 0,
+			successfulDefenses = 0,
 			vaultBanked = 0,
 			playMinutes = 0,
 			upgradesBought = 0,
