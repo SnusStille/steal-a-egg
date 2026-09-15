@@ -94,13 +94,17 @@ function IconFactory.EggIcon(eggId, size)
 	return vpf
 end
 
---- 3D creature icon, mutation visuals included.
-function IconFactory.PetIcon(petId, mut, size)
+--- 3D creature icon, mutation visuals included. Silhouette blacks the clone
+--- out (undiscovered collection entries); the cached template stays intact.
+function IconFactory.PetIcon(petId, mut, size, silhouette)
 	local vpf = makeFrame(size)
 	local model = getModel("pet:" .. tostring(petId) .. ":" .. tostring(mut), function()
 		return ModelFactory.BuildCreature(petId, mut, 1)
 	end)
 	if model then
+		if silhouette then
+			ModelFactory.Silhouette(model)
+		end
 		frameModel(vpf, model)
 	end
 	return vpf

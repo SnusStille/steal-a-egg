@@ -12,6 +12,7 @@ local Mutations = require(ConfigFolder:WaitForChild("Mutations"))
 local Collection = require(ConfigFolder:WaitForChild("Collection"))
 local Format = require(Shared:WaitForChild("Utilities"):WaitForChild("Format"))
 local UIFactory = require(script.Parent:WaitForChild("UIFactory"))
+local IconFactory = require(script.Parent:WaitForChild("IconFactory"))
 
 local CollectionScreen = {}
 local ctx = nil
@@ -243,18 +244,29 @@ function CollectionScreen.Refresh()
 				UIFactory.Stroke(card, Color3.fromRGB(50, 54, 75), 1)
 			end
 			UIFactory.Padding(card, 6)
+			local locked = count == 0
+			local icon = IconFactory.PetIcon(entry.pet.Id, entry.mut,
+				UDim2.new(0, 56, 0, 56), locked)
+			icon.Position = UDim2.new(0, 0, 0, 0)
+			if locked then
+				icon.BackgroundColor3 = Color3.fromRGB(70, 74, 100)
+				icon.BackgroundTransparency = 0.2
+			end
+			UIFactory.Corner(icon, 8)
+			icon.Parent = card
 			local title = (entry.mut and (entry.mut .. " ") or "") .. entry.pet.DisplayName
-			if count == 0 then
+			if locked then
 				title = "???"
 			end
-			local name = UIFactory.Label(title, UDim2.new(1, 0, 0, 34),
+			local name = UIFactory.Label(title, UDim2.new(1, -62, 0, 36),
 				count > 0 and Theme.Text or Theme.TextDim, 12)
+			name.Position = UDim2.new(0, 62, 0, 0)
 			name.TextWrapped = true
 			name.Parent = card
 			local sub = UIFactory.Label(
 				count > 0 and (entry.pet.Rarity .. "  x" .. tostring(count)) or entry.pet.Rarity,
-				UDim2.new(1, 0, 0, 20), rarityColor, 11)
-			sub.Position = UDim2.new(0, 0, 0, 40)
+				UDim2.new(1, -62, 0, 20), rarityColor, 11)
+			sub.Position = UDim2.new(0, 62, 0, 38)
 			sub.Font = Theme.FontRegular
 			sub.Parent = card
 			local desc = UIFactory.Label(count > 0 and entry.pet.Description or "Not discovered",

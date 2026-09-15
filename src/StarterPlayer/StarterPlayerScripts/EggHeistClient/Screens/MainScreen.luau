@@ -146,7 +146,6 @@ function MainScreen.Init(context)
 
 	for i, item in ipairs(NAV) do
 		local button = UIFactory.Button(item.Label, function()
-			SoundManager.Play("Click", 0.4)
 			MainScreen.OpenNav(item)
 		end)
 		button.Name = item.Id

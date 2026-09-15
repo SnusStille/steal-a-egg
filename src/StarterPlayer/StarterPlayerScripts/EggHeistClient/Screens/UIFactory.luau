@@ -4,6 +4,8 @@
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 
+local SoundManager = require(script.Parent.Parent:WaitForChild("Effects"):WaitForChild("SoundManager"))
+
 local UIFactory = {}
 
 UIFactory.Theme = {
@@ -115,6 +117,7 @@ function UIFactory.Button(text, onClick)
 					end)
 				end)
 			end)
+			SoundManager.Play("Click", 0.35)
 			pcall(onClick)
 		end)
 	end
@@ -149,6 +152,7 @@ function UIFactory.CloseButton(onClick)
 	UIFactory.Stroke(button, Theme.Stroke, 2)
 	if onClick then
 		button.MouseButton1Click:Connect(function()
+			SoundManager.Play("Click", 0.35)
 			pcall(onClick)
 		end)
 	end
@@ -358,6 +362,7 @@ function UIFactory.Toggle(initial, onChanged)
 		state = not state
 		button.BackgroundColor3 = state and Theme.Success or Color3.fromRGB(70, 74, 95)
 		button.Text = state and "ON" or "OFF"
+		SoundManager.Play("Click", 0.35)
 		if onChanged then
 			pcall(onChanged, state)
 		end

@@ -15684,6 +15684,7 @@
 							local Collection = require(ConfigFolder:WaitForChild("Collection"))
 							local Format = require(Shared:WaitForChild("Utilities"):WaitForChild("Format"))
 							local UIFactory = require(script.Parent:WaitForChild("UIFactory"))
+							local IconFactory = require(script.Parent:WaitForChild("IconFactory"))
 							
 							local CollectionScreen = {}
 							local ctx = nil
@@ -15915,18 +15916,29 @@
 							UIFactory.Stroke(card, Color3.fromRGB(50, 54, 75), 1)
 							end
 							UIFactory.Padding(card, 6)
+							local locked = count == 0
+							local icon = IconFactory.PetIcon(entry.pet.Id, entry.mut,
+							UDim2.new(0, 56, 0, 56), locked)
+							icon.Position = UDim2.new(0, 0, 0, 0)
+							if locked then
+							icon.BackgroundColor3 = Color3.fromRGB(70, 74, 100)
+							icon.BackgroundTransparency = 0.2
+							end
+							UIFactory.Corner(icon, 8)
+							icon.Parent = card
 							local title = (entry.mut and (entry.mut .. " ") or "") .. entry.pet.DisplayName
-							if count == 0 then
+							if locked then
 							title = "???"
 							end
-							local name = UIFactory.Label(title, UDim2.new(1, 0, 0, 34),
+							local name = UIFactory.Label(title, UDim2.new(1, -62, 0, 36),
 							count &gt; 0 and Theme.Text or Theme.TextDim, 12)
+							name.Position = UDim2.new(0, 62, 0, 0)
 							name.TextWrapped = true
 							name.Parent = card
 							local sub = UIFactory.Label(
 							count &gt; 0 and (entry.pet.Rarity .. "  x" .. tostring(count)) or entry.pet.Rarity,
-							UDim2.new(1, 0, 0, 20), rarityColor, 11)
-							sub.Position = UDim2.new(0, 0, 0, 40)
+							UDim2.new(1, -62, 0, 20), rarityColor, 11)
+							sub.Position = UDim2.new(0, 62, 0, 38)
 							sub.Font = Theme.FontRegular
 							sub.Parent = card
 							local desc = UIFactory.Label(count &gt; 0 and entry.pet.Description or "Not discovered",
@@ -16925,13 +16937,17 @@
 							return vpf
 							end
 							
-							--- 3D creature icon, mutation visuals included.
-							function IconFactory.PetIcon(petId, mut, size)
+							--- 3D creature icon, mutation visuals included. Silhouette blacks the clone
+							--- out (undiscovered collection entries); the cached template stays intact.
+							function IconFactory.PetIcon(petId, mut, size, silhouette)
 							local vpf = makeFrame(size)
 							local model = getModel("pet:" .. tostring(petId) .. ":" .. tostring(mut), function()
 							return ModelFactory.BuildCreature(petId, mut, 1)
 							end)
 							if model then
+							if silhouette then
+							ModelFactory.Silhouette(model)
+							end
 							frameModel(vpf, model)
 							end
 							return vpf
@@ -17422,7 +17438,6 @@
 							
 							for i, item in ipairs(NAV) do
 							local button = UIFactory.Button(item.Label, function()
-							SoundManager.Play("Click", 0.4)
 							MainScreen.OpenNav(item)
 							end)
 							button.Name = item.Id
@@ -19486,6 +19501,8 @@
 							local UserInputService = game:GetService("UserInputService")
 							local TweenService = game:GetService("TweenService")
 							
+							local SoundManager = require(script.Parent.Parent:WaitForChild("Effects"):WaitForChild("SoundManager"))
+							
 							local UIFactory = {}
 							
 							UIFactory.Theme = {
@@ -19597,6 +19614,7 @@
 							end)
 							end)
 							end)
+							SoundManager.Play("Click", 0.35)
 							pcall(onClick)
 							end)
 							end
@@ -19631,6 +19649,7 @@
 							UIFactory.Stroke(button, Theme.Stroke, 2)
 							if onClick then
 							button.MouseButton1Click:Connect(function()
+							SoundManager.Play("Click", 0.35)
 							pcall(onClick)
 							end)
 							end
@@ -19840,6 +19859,7 @@
 							state = not state
 							button.BackgroundColor3 = state and Theme.Success or Color3.fromRGB(70, 74, 95)
 							button.Text = state and "ON" or "OFF"
+							SoundManager.Play("Click", 0.35)
 							if onChanged then
 							pcall(onChanged, state)
 							end
