@@ -25,6 +25,8 @@ local anchors = {} -- name -> Vector3 (statue, stage, plaza, event, heist)
 local islands = {} -- { root, baseY, phase, speed }
 local pulseBeams = {} -- { part, base, phase, speed }
 local clouds = {} -- { part, base, axis, range, speed, phase }
+local orbiters = {} -- { parts = { { part, dx, dy, dz } }, center, radius, y, speed, phase }
+local wanderers = {} -- { part, center, rx, ry, rz, sx, sy, sz, px, py, pz }
 local built = false
 
 -- Fallback district centers (match the fallback map layout)
@@ -680,6 +682,87 @@ local function buildLavaRiver()
 	end
 end
 
+-- MAP MEGAPASS: hot-air balloon on a slow scenic orbit around the plaza.
+local function buildBalloon()
+	local base = anchors.plaza or FALLBACK_POS.plaza
+	local center = Vector3.new(base.X, 48, base.Z)
+	local radius = 70
+	local bag = mkPart("BalloonBag", Vector3.new(9, 11, 9), center,
+		CANDY.tangerine)
+	bag.Shape = Enum.PartType.Ball
+	local band = mkPart("BalloonBand", Vector3.new(9.4, 2, 9.4), center,
+		CANDY.white)
+	band.Shape = Enum.PartType.Ball
+	band.Transparency = 0.15
+	local basket = mkPart("BalloonBasket", Vector3.new(3.5, 3, 3.5),
+		center + Vector3.new(0, -10, 0), Color3.fromRGB(140, 100, 65))
+	local ropes = {}
+	for i, off in ipairs({ { -1.4, -1.4 }, { 1.4, -1.4 }, { -1.4, 1.4 }, { 1.4, 1.4 } }) do
+		ropes[i] = mkPart("BalloonRope" .. i, Vector3.new(0.3, 6, 0.3),
+			center + Vector3.new(off[1], -5.5, off[2]), Color3.fromRGB(110, 80, 55))
+	end
+	local pole = mkPart("BalloonFlagPole", Vector3.new(0.3, 3, 0.3),
+		center + Vector3.new(0, 7, 0), CANDY.white)
+	local flag = mkPart("BalloonFlag", Vector3.new(2.4, 1.4, 0.2),
+		center + Vector3.new(1.3, 7.6, 0), CANDY.pink)
+	local parts = {
+		{ part = bag, dx = 0, dy = 0, dz = 0 },
+		{ part = band, dx = 0, dy = 0, dz = 0 },
+		{ part = basket, dx = 0, dy = -10, dz = 0 },
+		{ part = pole, dx = 0, dy = 7, dz = 0 },
+		{ part = flag, dx = 1.3, dy = 7.6, dz = 0 },
+	}
+	for i, rope in ipairs(ropes) do
+		local off = ({ { -1.4, -1.4 }, { 1.4, -1.4 }, { -1.4, 1.4 }, { 1.4, 1.4 } })[i]
+		parts[#parts + 1] = { part = rope, dx = off[1], dy = -5.5, dz = off[2] }
+	end
+	orbiters[#orbiters + 1] = { parts = parts, center = center,
+		radius = radius, y = center.Y, speed = 0.035, phase = 0 }
+end
+
+-- MAP MEGAPASS: ambient critters - butterflies over the gardens,
+-- fish circling the pond, fireflies dancing in the grotto.
+local function buildCritters()
+	local plaza = anchors.plaza or FALLBACK_POS.plaza
+	local grotto = anchors.grotto or FALLBACK_POS.grotto
+	local butterflyColors = { CANDY.pink, CANDY.lemon, CANDY.sky,
+		CANDY.mint, CANDY.grape, CANDY.tangerine }
+	local gardens = {
+		Vector3.new(plaza.X - 14, 3, plaza.Z - 40),
+		Vector3.new(plaza.X + 14, 3, plaza.Z - 40),
+	}
+	for i = 1, 6 do
+		local center = gardens[(i - 1) % 2 + 1]
+		local fly = mkPart("Butterfly" .. i, Vector3.new(1.2, 0.4, 0.8),
+			center, butterflyColors[i], Enum.Material.Neon)
+		wanderers[#wanderers + 1] = { part = fly, center = center,
+			rx = 7, ry = 1.6, rz = 7,
+			sx = 0.5 + i * 0.06, sy = 1.1, sz = 0.4 + i * 0.05,
+			px = i * 1.1, py = i * 0.7, pz = i * 1.7 }
+	end
+	local pond = Vector3.new(plaza.X + 48, 0.2, plaza.Z + 52)
+	for i = 1, 3 do
+		local fish = mkPart("PondFish" .. i, Vector3.new(1, 0.6, 0.6),
+			pond, Color3.fromRGB(255, 150, 80), Enum.Material.Neon)
+		fish.Shape = Enum.PartType.Ball
+		wanderers[#wanderers + 1] = { part = fish, center = pond,
+			rx = 3.5, ry = 0.15, rz = 3.5,
+			sx = 0.9, sy = 2, sz = 0.9,
+			px = i * 2.1, py = 0, pz = i * 2.1 }
+	end
+	for i = 1, 4 do
+		local mote = mkPart("GrottoMote" .. i, Vector3.new(0.7, 0.7, 0.7),
+			Vector3.new(grotto.X, 4, grotto.Z),
+			Color3.fromRGB(170, 240, 255), Enum.Material.Neon)
+		mote.Shape = Enum.PartType.Ball
+		wanderers[#wanderers + 1] = { part = mote,
+			center = Vector3.new(grotto.X, 4, grotto.Z),
+			rx = 11, ry = 2.5, rz = 11,
+			sx = 0.3 + i * 0.04, sy = 0.7, sz = 0.26 + i * 0.05,
+			px = i * 1.9, py = i, pz = i * 1.3 }
+	end
+end
+
 function AtmosphereService.Init(_, reg)
 	registry = reg
 	ensureLightingRig()
@@ -714,7 +797,7 @@ function AtmosphereService.Init(_, reg)
 		buildCandyTrees, buildLollipops, buildGiantEggs,
 		buildRainbowArch, buildGumdrops, buildCrystalGrotto,
 		buildSunnyBeach, buildBaseBoulevard, buildDistrictArches,
-		buildLavaRiver,
+		buildLavaRiver, buildBalloon, buildCritters,
 	}
 	for _, builder in ipairs(builders) do
 		local ok, err = pcall(builder)
@@ -778,6 +861,39 @@ function AtmosphereService.Start()
 						cloud.part.CFrame = CFrame.new(
 							cloud.base.X, cloud.base.Y, cloud.base.Z + off)
 					end
+				end)
+			end
+		end
+	end)
+	-- balloon orbit
+	task.spawn(function()
+		while true do
+			task.wait(0.15)
+			local t = os.clock()
+			for _, orbiter in ipairs(orbiters) do
+				local a = t * orbiter.speed + orbiter.phase
+				local ox = orbiter.center.X + math.cos(a) * orbiter.radius
+				local oz = orbiter.center.Z + math.sin(a) * orbiter.radius
+				for _, entry in ipairs(orbiter.parts) do
+					pcall(function()
+						entry.part.CFrame = CFrame.new(
+							ox + entry.dx, orbiter.y + entry.dy, oz + entry.dz)
+					end)
+				end
+			end
+		end
+	end)
+	-- critter wander (butterflies, fish, grotto motes)
+	task.spawn(function()
+		while true do
+			task.wait(0.12)
+			local t = os.clock()
+			for _, w in ipairs(wanderers) do
+				pcall(function()
+					w.part.CFrame = CFrame.new(
+						w.center.X + math.sin(t * w.sx + w.px) * w.rx,
+						w.center.Y + math.sin(t * w.sy + w.py) * w.ry,
+						w.center.Z + math.cos(t * w.sz + w.pz) * w.rz)
 				end)
 			end
 		end
