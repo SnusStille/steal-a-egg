@@ -8,4 +8,4 @@
 *.rbxm.lock
 
 __pycache__/
-*.pyc
+*.py[cod]

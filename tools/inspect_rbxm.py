@@ -5,7 +5,7 @@ The file uses LZ4-compressed chunks with byte-interleaved u32 arrays and
 zigzag + delta encoded referents. This tool understands exactly enough to
 recover class names, Name/Text strings, and the parent hierarchy.
 
-Usage: python3 tools/inspect_rbxm.py ["Egg heist.rbxm"]
+Usage: python3 tools/inspect_rbxm.py [assets/world/EggHeistWorld.rbxm]
 """
 import struct
 import sys
@@ -59,7 +59,7 @@ def parse_strings(payload: bytes, count: int):
 
 
 def main() -> None:
-    path = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("Egg heist.rbxm")
+    path = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("assets/world/EggHeistWorld.rbxm")
     data = path.read_bytes()
     chunks = read_chunks(data)
 

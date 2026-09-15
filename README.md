@@ -1,176 +1,97 @@
-# Egg Heist
+# Egg Heist — MAX
 
-**Collect → Hatch → Upgrade → Build → Steal → Defend → Progress → Repeat**
+**Collect → Hatch → Build → Steal → Defend → Progress → Repeat**
 
-Egg Heist is a complete, commercial-style Roblox game: hatch collectible Egg Pals,
-build up your base and vault, upgrade security, and sneak into rival bases to
-steal loot and extract it — while defending your own fortune.
+Egg Heist is a complete, server-authoritative Roblox game: hatch collectible
+Egg Pals, build up your base and vault, upgrade security, and sneak into rival
+bases to steal loot and extract it — while defending your own fortune.
+
+This is the MAX branch: the full game on a clean, professional project
+structure. One implementation per system, no dead code, everything verified
+by automated checks (see [Testing](#testing)).
 
 ## Play in 60 seconds (no tools needed)
 
-1. Open `build/Egg-Heist.rbxlx` in **Roblox Studio**.
-2. Drag `Egg heist.rbxm` (the world model, in the repo root and in `build/`)
-   into **Workspace** (or skip this — the game builds a fallback world itself).
+1. Open **`Egg-Heist.rbxlx`** in **Roblox Studio**.
+2. Optional: drag `assets/world/EggHeistWorld.rbxm` into **Workspace**
+   (or skip it — the game builds a full fallback world by itself).
 3. Press **Play**. That's it.
 
 Full instructions: [`SETUP.md`](SETUP.md).
 
-> **Download:** grab **`Egg-Heist-v4.0.1.zip`** from the repo root — it contains
-> the place file, the world model, all source, tools, and docs.
-> (Older `-v4`, `-v3`, `-v2`, `-Final` packages are kept in releases for reference.)
+> **Download:** grab **`Egg-Heist-MAX.zip`** — the place file, the world
+> model, all source, tools, and docs. Nothing else needed.
 
 ## Project structure
 
-```
-Egg heist.rbxm                 # Original world model (preserved, byte-identical)
-build/Egg-Heist.rbxlx          # Generated Studio-ready place (scripts embedded)
-Egg-Heist-v4.0.1.zip           # Complete downloadable package (place + world + src + docs)
-src/
-  ServerScriptService/EggHeistServer/
-    ServerMain.server.lua      # BOOTSTRAP: loads domains in dependency order
-    Server/
-      Net/            NetService (remotes+routing) · NotifyService (toasts)
-      Data/           DataService (profiles, DataStores, autosave, sync)
-      Economy/        EconomyService (ONLY writer of cash/gems/xp)
-      Eggs/           EggService (buy/hatch, server-side RNG)
-      Pets/           PetService (inventory/equip/levels, 3D followers)
-      Bases/          BaseService (plots, upgrades, vault, decorations)
-      Security/       SecurityService (shop + lasers/traps/cameras/lockdown)
-      Heists/         HeistService (breach -> grab -> carry -> extract)
-                      GadgetService (lockpick/smoke/sprint/EMP)
-      Progression/    ProgressionService (prestige/rebirth)
-                      AchievementService (one-shot goals + claim grants)
-      Quests/         QuestService (dailies/weeklies + tutorial hook)
-      Rewards/        RewardService (daily streak calendar)
-                      CollectionService (discovery milestones)
-      Events/         EventService (scheduler, modifiers, pickups)
-      Monetization/   ShopService (gamepasses/products, ProcessReceipt)
-      Social/         LeaderboardService (OrderedDataStores + boards)
-                      TradeService (safe trade sessions)
-      World/          WorldService (world discovery + fallback builder)
-                      NpcService (world guides + tips)
-      Admin/          AdminService (allow-listed commands)
-      Util/           RateLimiter (token-bucket anti-spam)
-  ReplicatedStorage/EggHeistShared/
-    Remotes.lua                # THE remote contract (C2S/S2C/Fn + rate limits)
-    Types.lua                  # Data-model docs + record constructors
-    Config/                    # EVERY tunable number (16 files, see below)
-    Utilities/                 # Format · Signal · TableUtil · Validate
-  StarterPlayer/.../EggHeistClient/
-    ClientMain.client.lua      # BOOTSTRAP: net -> controllers -> UI -> Start
-    Client/
-      ClientNet.lua            # Remote access (Fire/On/Invoke)
-      Controllers/             # 14 thin intents/caches (Data, Egg, Pet, Base, Trade, ...)
-      Input/          InputController (PC keybinds: B/Q/H/Esc)
-      UI/                      # 16 modules (Main/HUD + 15 windows, UIFactory theme)
-      Effects/                 # Effects (tweens/confetti/shake) + SoundManager
-tools/                         # build_place.py, validate_lua.py, check_refs.py, inspect_rbxm.py
-docs/                          # Architecture, economy, security, testing, monetization...
-default.project.json           # Rojo project (optional professional workflow)
+```text
+Egg-Heist/
+├── README.md / SETUP.md / CHANGELOG.md
+├── default.project.json        # Rojo project (optional workflow)
+├── Egg-Heist.rbxlx             # Built place — open this in Studio
+├── assets/
+│   └── world/
+│       └── EggHeistWorld.rbxm  # Original world model (byte-identical, never modified)
+├── src/                        # Source of truth (mirrors the DataModel, Rojo-style)
+│   ├── ServerScriptService/EggHeistServer/
+│   │   ├── Main.server.luau    # BOOTSTRAP: loads 23 services in dependency order
+│   │   └── <Domain>/           # Admin, Bases, Data, Economy, Eggs, Events,
+│   │                           # Heists, Monetization, Net, Pets, Progression,
+│   │                           # Quests, Rewards, Security, Social, Utilities, World
+│   ├── ReplicatedStorage/EggHeistShared/
+│   │   ├── Remotes.luau        # Remote registry (38 C2S / 12 S2C / 2 Fn)
+│   │   ├── Types.luau          # Shared record constructors
+│   │   ├── Config/             # 17 data modules: eggs, pets, economy, ...
+│   │   └── Utilities/          # Signal, Validate, Format, TableUtil
+│   └── StarterPlayer/StarterPlayerScripts/EggHeistClient/
+│       ├── Main.client.luau    # BOOTSTRAP: network → controllers → screens
+│       ├── ClientNet.luau      # Remote access layer (waits, timeouts, asserts)
+│       ├── Controllers/        # 14 controllers (client logic per system)
+│       ├── Screens/            # 18 screens + UIFactory (all UI)
+│       ├── Effects/            # VFX + SoundManager
+│       └── Input/              # Keybinds (touch uses on-screen buttons)
+├── tools/                      # Build + validators + headless game simulator
+└── docs/                       # architecture, gameplay, economy, development
 ```
 
-**Design rules** (enforced by `tools/check_refs.py`):
+In Studio's Explorer the game looks exactly like `src/`:
 
-- Services never `require` each other — they talk through the `registry`.
-- Only `EconomyService` mutates cash/gems/xp. Only `DataService` touches profiles.
-- All egg/heist/security randomness happens on the **server**.
-- Every remote endpoint is declared in `Shared/Remotes.lua` — no ad-hoc remotes.
-- Configs own numbers; systems own logic. See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+```text
+ServerScriptService/EggHeistServer/{ Main, Admin, Bases, Data, ... }
+ReplicatedStorage/EggHeistShared/{ Remotes, Types, Config, Utilities }
+StarterPlayerScripts/EggHeistClient/{ Main, ClientNet, Controllers, Screens, ... }
+```
 
-## How the game works
+## Systems
 
-| System | Loop |
-|---|---|
-| Eggs (12) | Buy in shop → hatch (weighted rarity → species → mutation) → ceremony |
-| Pets (33) | Equip (slots unlock by level) → earn cash every 5 s → level up → follow you in 3D |
-| Mutations (8) | Golden → Void; roll on hatch, multiply income/value, tint visuals |
-| Bases (8 plots) | Claim a plot → upgrades (5 tracks) → vault banks 15% of earnings |
-| Heists | Breach enemy vault (channel) → grab → slowed carry → extraction pad |
-| Security (8) | Doors, cameras, lasers, alarms, traps, vault shield, lockdown, decoys |
-| Progression | XP/levels → prestige at 30 (keep best pets, +25% income/rank) |
-| Quests | 3 dailies + 2 weeklies from data-driven pools |
-| Rewards | 7-day streak calendar + offline earnings (8 h cap) |
-| Events (4) | Golden Hour, Meteor Shower, Blood Moon, Void Rift (modifiers + pickups) |
-| Social | 3 leaderboards (richest / thieves / collectors) + physical board |
-| Monetization | 4 gamepasses + 5 dev products, server-validated (IDs are placeholders) |
+| Layer | Count | Contents |
+|---|---|---|
+| Server services | 23 | Data, Economy, Eggs, Pets, Bases, Security, Heists, Gadgets, Quests, Rewards, Collection, Progression, Achievements, Events, Shop, Leaderboards, Trade, NPCs, Travel, World, Net, Notify, Admin |
+| Client controllers | 14 | Data, Egg, Pet, Base, Heist, Quest, Shop, Event, Tutorial, Gadget, Collection, NPC, Trade, Input |
+| Screens | 18 | Main, Inventory, Shop, Collection, Base, Quests, Daily, Settings, Hatch, Heist, Event banner, Tutorial, Objective, Trade, Help, Feed, Travel, Notifications |
+| Remotes | 38 + 12 + 2 | Validated + rate-limited; server never trusts the client |
 
-Anti-exploit: server-authoritative economy, input validation on every remote,
-per-endpoint rate limits, proximity re-checks, cooldowns. See
-[`docs/SECURITY.md`](docs/SECURITY.md).
+## Content (all data-driven — see `docs/development.md`)
 
-## Developer recipes
+- **14 eggs** (10 shop + 4 event-only) · **37 creatures** · **6 rarities**
+  (Common → Secret) · mutations + set bonuses
+- **25 quests** (daily/weekly) · **34 achievements** · collection milestones
+- Rotating **world events** (Golden Hour, Meteor Shower, Egg Rain, …)
+- **5 upgrade tracks** · **8 security items** · **5 gadgets** · decorations,
+  titles, leaderboards, trading, prestige, gamepasses
 
-**Add an egg** — append to `Config/Eggs.lua` (`Id`, `Tier`, price, `HatchWeights`,
-…), optionally add a `Body`-part model to world `EggAssets`. Shop/hatching/gifts
-pick it up automatically.
-
-**Add a pet** — one row in `Config/Pets.lua`:
-`{ id, name, rarity, baseIncome, assetModel, bodyColor, blurb }`.
-
-**Add a mutation** — append to `Config/Mutations.lua` (rarest last).
-Optional visual case in `PetService.applyMutationVisuals`.
-
-**Add a quest** — pool entry in `Config/Quests.lua` + `Quest.AddProgress(player,
-"Type", n)` hook in the relevant system.
-
-**Add an event** — entry in `Config/Events.lua` (duration/cooldown/weight/
-modifiers/lighting) + bespoke spawns in `EventService.StartEvent`.
-
-**Change economy values** — everything lives in `Config/Economy.lua`
-(prices live with their content: `Eggs`, `Upgrades`, `Security`, `Shop`).
-
-**Add a base upgrade / security item** — `Config/Upgrades.lua` (`Tracks`) or
-`Config/Security.lua` (`Items`); wire new effects at their read sites
-(`SecurityService.RebuildPlotSecurity` for physical defenses).
-
-**Add a remote endpoint** — declare in `Remotes.lua` (+ rate limit),
-`registry.Net.OnRequest` server-side, `ctx.Net.Fire/On/Invoke` client-side,
-then run `check_refs.py`.
-
-**Configure monetization** — replace `ProductId = 0` placeholders in
-`Config/Shop.lua` with real IDs. See [`docs/MONETIZATION.md`](docs/MONETIZATION.md).
-
-More: [`docs/EXTENDING.md`](docs/EXTENDING.md) · [`docs/ECONOMY.md`](docs/ECONOMY.md) ·
-[`docs/ROADMAP.md`](docs/ROADMAP.md) (trading/PvP plans).
-
-## Controls
-
-| Input | Action |
-|---|---|
-| B | Toggle backpack |
-| Q | Toggle quests |
-| H | Grab loot (near an enemy vault) |
-| Esc | Close all windows |
-| Touch | On-screen nav buttons (right side) — full mobile support |
-
-Keybinds live in `Client/Input/InputController.lua`.
-
-## Developer workflow
+## Testing
 
 ```bash
-python3 tools/validate_lua.py   # syntax-check all 65 scripts
-python3 tools/check_refs.py     # cross-reference requires/remotes/methods
-python3 tools/build_place.py    # regenerate build/Egg-Heist.rbxlx
-python3 tools/inspect_rbxm.py   # decode + print the world model tree
+python3 tools/build_place.py     # src/ -> Egg-Heist.rbxlx
+python3 tools/validate_syntax.py # all 84 .luau files parse
+python3 tools/check_refs.py      # requires, registries, endpoints, configs
+python3 tools/check_waits.py     # every WaitForChild target exists in the build
+python3 tools/sim_boot.py        # headless run: server+client boot, 2-player
+                                 # join/claim/trade/heist/events — 0 warns, 0 errors
 ```
 
-Or use **Rojo**: `rojo build -o Egg-Heist.rbxlx` / `rojo serve` with
-`default.project.json` (the world `.rbxm` is wired into Workspace).
-
-## Docs
-
-- [`SETUP.md`](SETUP.md) — Studio setup, publishing, configuration checklist
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — systems map + data model
-- [`docs/WORLD.md`](docs/WORLD.md) — how gameplay binds to the world model
-- [`docs/ECONOMY.md`](docs/ECONOMY.md) — economy tuning guide
-- [`docs/SECURITY.md`](docs/SECURITY.md) — anti-exploit model
-- [`docs/MONETIZATION.md`](docs/MONETIZATION.md) — wiring real product IDs
-- [`docs/EXTENDING.md`](docs/EXTENDING.md) — adding eggs, pets, events, quests
-- [`docs/ROADMAP.md`](docs/ROADMAP.md) — trading, PvP, and future systems
-- [`docs/TESTING.md`](docs/TESTING.md) — in-Studio test plan
-
-## Requirements
-
-- Roblox Studio (any recent version). No plugins required for the quick path.
-- Optional: [Rojo](https://rojo.space/) 7.x for sync-based development.
-- Optional: Python 3.10+ with `luaparser` for the validation/build tools.
+Docs: [`docs/architecture.md`](docs/architecture.md) ·
+[`docs/gameplay.md`](docs/gameplay.md) ·
+[`docs/economy.md`](docs/economy.md) ·
+[`docs/development.md`](docs/development.md)

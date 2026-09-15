@@ -2,7 +2,7 @@
 """Catch infinite-yield WaitForChild bugs before they reach Studio.
 
 Every static :WaitForChild("Name") in src/ is resolved against the ACTUAL
-built place (build/Egg-Heist.rbxlx, rebuilt first for freshness). A missing
+built place (Egg-Heist.rbxlx at repo root, rebuilt first for freshness). A missing
 target means the game would hang forever at runtime with zero errors --
 pcall cannot save you from an infinite yield.
 
@@ -60,22 +60,22 @@ def resolve_script_base(base: str, mypath: str):
 def instance_path(src: Path) -> str:
     parts = list(src.parts)[1:]  # drop "src"
     fname = parts[-1]
-    if fname.endswith(".server.lua"):
-        inst = fname[: -len(".server.lua")]
-    elif fname.endswith(".client.lua"):
-        inst = fname[: -len(".client.lua")]
+    if fname.endswith(".server.luau"):
+        inst = fname[: -len(".server.luau")]
+    elif fname.endswith(".client.luau"):
+        inst = fname[: -len(".client.luau")]
     else:
-        inst = fname[: -len(".lua")]
+        inst = fname[: -len(".luau")]
     return "/".join(parts[:-1] + [inst])
 
 
 def main() -> int:
     build_place.main()  # ensure the place matches src/
-    place = ROOT / "build" / "Egg-Heist.rbxlx"
+    place = ROOT / "Egg-Heist.rbxlx"
     instances = collect_instances(place)
 
     missing, checked, skipped = [], 0, 0
-    for src in sorted((ROOT / "src").rglob("*.lua")):
+    for src in sorted((ROOT / "src").rglob("*.luau")):
         rel = src.relative_to(ROOT)
         text = src.read_text(encoding="utf-8")
         mypath = instance_path(rel)

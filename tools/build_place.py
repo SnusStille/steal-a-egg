@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Build a Roblox Studio-ready .rbxlx place from the src/ tree.
 
-Reads every .lua file under src/ following Rojo naming conventions and emits
-an XML place (build/Egg-Heist.rbxlx) with all scripts in the right services,
+Reads every .luau file under src/ following Rojo naming conventions and emits
+an XML place (Egg-Heist.rbxlx, repo root) with all scripts in the right services,
 plus a safe fallback baseplate + spawn. The original world model
-("Egg heist.rbxm") is NOT modified; it is copied next to the place file and
-the game auto-detects it at runtime (see WorldService).
+(assets/world/EggHeistWorld.rbxm) is NOT modified; the game auto-detects
+it at runtime (see WorldService).
 
 Usage: python3 tools/build_place.py
 """
@@ -15,7 +15,6 @@ from xml.sax.saxutils import escape
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "src"
-BUILD = ROOT / "build"
 
 _ref_counter = 0
 
@@ -105,8 +104,8 @@ def instance_for_file(path: Path) -> Item | None:
     name = path.name
     source = path.read_text(encoding="utf-8")
     props = xml_string("Name", "") + "\n"  # placeholder, replaced below
-    if name.endswith(".server.lua"):
-        inst_name = name[: -len(".server.lua")]
+    if name.endswith(".server.luau"):
+        inst_name = name[: -len(".server.luau")]
         props = (
             xml_string("Name", inst_name)
             + "\n"
@@ -115,8 +114,8 @@ def instance_for_file(path: Path) -> Item | None:
             + xml_protected("Source", source)
         )
         return Item("Script", props)
-    if name.endswith(".client.lua"):
-        inst_name = name[: -len(".client.lua")]
+    if name.endswith(".client.luau"):
+        inst_name = name[: -len(".client.luau")]
         props = (
             xml_string("Name", inst_name)
             + "\n"
@@ -125,8 +124,8 @@ def instance_for_file(path: Path) -> Item | None:
             + xml_protected("Source", source)
         )
         return Item("LocalScript", props)
-    if name.endswith(".lua"):
-        inst_name = name[: -len(".lua")]
+    if name.endswith(".luau"):
+        inst_name = name[: -len(".luau")]
         props = xml_string("Name", inst_name) + "\n" + xml_protected("Source", source)
         return Item("ModuleScript", props)
     return None
@@ -141,12 +140,12 @@ def instance_for_dir(path: Path) -> Item:
     init_class = None
 
     for child in sorted(path.iterdir(), key=lambda p: p.name):
-        if child.is_file() and child.suffix == ".lua":
-            if child.name in ("init.lua", "init.server.lua", "init.client.lua"):
+        if child.is_file() and child.suffix == ".luau":
+            if child.name in ("init.luau", "init.server.luau", "init.client.luau"):
                 init_source = child.read_text(encoding="utf-8")
-                if child.name == "init.server.lua":
+                if child.name == "init.server.luau":
                     init_class = "Script"
-                elif child.name == "init.client.lua":
+                elif child.name == "init.client.luau":
                     init_class = "LocalScript"
                 else:
                     init_class = "ModuleScript"
@@ -223,7 +222,7 @@ def service_dir(name: str) -> Item | None:
     for child in sorted(path.iterdir(), key=lambda p: p.name):
         if child.is_dir():
             children.append(instance_for_dir(child))
-        elif child.is_file() and child.suffix == ".lua":
+        elif child.is_file() and child.suffix == ".luau":
             item = instance_for_file(child)
             if item:
                 children.append(item)
@@ -291,7 +290,7 @@ def build() -> str:
                 for child in sorted(sub.iterdir(), key=lambda p: p.name):
                     if child.is_dir():
                         kids.append(instance_for_dir(child))
-                    elif child.is_file() and child.suffix == ".lua":
+                    elif child.is_file() and child.suffix == ".luau":
                         item = instance_for_file(child)
                         if item:
                             kids.append(item)
@@ -305,7 +304,7 @@ def build() -> str:
     )
 
     # StarterGui (from src/StarterGui when present; UI is code-built by default,
-    # so this is usually empty - Client/UI modules construct the ScreenGuis)
+    # so this is usually empty - Screens modules construct the ScreenGuis at runtime)
     sg_children = service_dir("StarterGui") or []
     parts.append(
         Item("StarterGui", xml_string("Name", "StarterGui"), sg_children).to_xml()
@@ -327,18 +326,16 @@ def build() -> str:
 
 
 def main() -> int:
-    BUILD.mkdir(parents=True, exist_ok=True)
     place_xml = build()
-    out = BUILD / "Egg-Heist.rbxlx"
+    out = ROOT / "Egg-Heist.rbxlx"
     out.write_text(place_xml, encoding="utf-8")
     print(f"Wrote {out} ({len(place_xml):,} bytes, {_ref_counter} instances)")
 
-    # Copy the original world model next to the place file (byte-identical).
-    world_src = ROOT / "Egg heist.rbxm"
+    # The world model ships in assets/ (byte-identical, never modified);
+    # just verify it is present so the zip/place never goes out alone.
+    world_src = ROOT / "assets" / "world" / "EggHeistWorld.rbxm"
     if world_src.exists():
-        data = world_src.read_bytes()
-        (BUILD / "Egg heist.rbxm").write_bytes(data)
-        print(f"Copied world model ({len(data):,} bytes, unchanged)")
+        print(f"World model present ({world_src.stat().st_size:,} bytes, unchanged)")
     else:
         print("WARNING: world model not found!", file=sys.stderr)
     return 0

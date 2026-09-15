@@ -3,7 +3,7 @@
   "serveSync": [
     {
       "target": "Workspace.EggHeist",
-      "path": "Egg heist.rbxm"
+      "path": "assets/world/EggHeistWorld.rbxm"
     }
   ],
   "tree": {
@@ -15,7 +15,7 @@
         "Gravity": 196.2
       },
       "EggHeist": {
-        "$path": "Egg heist.rbxm"
+        "$path": "assets/world/EggHeistWorld.rbxm"
       }
     },
     "Lighting": {

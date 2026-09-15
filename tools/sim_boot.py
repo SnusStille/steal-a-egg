@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Headless server-boot simulator: executes the REAL ServerMain + services
+"""Headless server-boot simulator: executes the REAL Main + services
 from the built place with stubbed Roblox APIs. Catches real boot errors
 without Studio. Usage: python3 tools/sim_boot.py (needs `lupa`)."""
 import sys
@@ -59,7 +59,7 @@ def main() -> int:
         print("lupa not installed. Run: pip install --break-system-packages lupa")
         return 2
 
-    place = ROOT / "build" / "Egg-Heist.rbxlx"
+    place = ROOT / "Egg-Heist.rbxlx"
     tree = ET.parse(place)
     sources, counter = {}, [0]
     services = []
@@ -82,7 +82,7 @@ def main() -> int:
             return tbl
         return value
 
-    lua.execute((ROOT / "tools" / "sim_stub.lua").read_text(encoding="utf-8"))
+    lua.execute((ROOT / "tools" / "sim_stub.luau").read_text(encoding="utf-8"))
     sim = lua.globals()._SIM
     for key, src in sources.items():
         sim.sources[key] = src
@@ -90,10 +90,10 @@ def main() -> int:
         lua.globals()._SIM.buildTree(to_lua(svc), None)
 
     target = lua.eval(
-        '_SIM.find({"ServerScriptService", "EggHeistServer", "ServerMain"})'
+        '_SIM.find({"ServerScriptService", "EggHeistServer", "Main"})'
     )
     if target is None:
-        print("sim FATAL: ServerMain not found in place")
+        print("sim FATAL: server Main not found in place")
         return 1
     ok, result = lua.globals()._SIM.runScript(target)
     print("SERVER BOOT:", "OK" if ok else f"FAIL: {result}")
@@ -101,10 +101,10 @@ def main() -> int:
     # Phase 2: client boot (same world, remotes already exist)
     print("CLIENT SETUP:", lua.eval("_SIM.setupClient()"))
     client = lua.eval(
-        '_SIM.find({"StarterPlayer", "StarterPlayerScripts", "EggHeistClient", "ClientMain"})'
+        '_SIM.find({"StarterPlayer", "StarterPlayerScripts", "EggHeistClient", "Main"})'
     )
     if client is None:
-        print("sim FATAL: ClientMain not found in place")
+        print("sim FATAL: client Main not found in place")
         return 1
     cok, cresult = lua.globals()._SIM.runScript(client)
     print("CLIENT BOOT:", "OK" if cok else f"FAIL: {cresult}")
@@ -116,6 +116,15 @@ def main() -> int:
     # Phase 4: claim a base + hatch the starter egg
     print("CLAIM:", lua.eval("_SIM.claimBase()"), "| delayed ran:", lua.eval("_SIM.runDelayed()"))
     print("HATCH:", lua.eval("_SIM.hatchFirstEgg()"), "| delayed ran:", lua.eval("_SIM.runDelayed()"))
+    print("RICH:", lua.eval("_SIM.setupRichAs(_SIM.localPlayer)"))
+    print("ECONOMY:", lua.eval("_SIM.economyLoop()"))
+    lua.eval('_SIM.addPlayer("SimTrader", 2)')
+    print("P2: joined; RICH:", lua.eval("_SIM.setupRichAs(_SIM.players[2])"))
+    print("P2CLAIM:", lua.eval("_SIM.claimBaseAs(_SIM.players[2], 2)"), "| delayed ran:", lua.eval("_SIM.runDelayed()"))
+    print("TRADE:", lua.eval("_SIM.tradeLoop()"))
+    print("HEIST:", lua.eval("_SIM.heistLoop()"))
+    print("EVENT:", lua.eval('_SIM.startEvent("GoldenHour")'))
+    print("EVENT:", lua.eval('_SIM.startEvent("EggRain")'))
     print("=" * 70)
     print("STATE DUMP:")
     print(lua.eval("_SIM.stateDump()"))

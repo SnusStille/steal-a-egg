@@ -3,10 +3,9 @@
 ## Path A: Play immediately (recommended)
 
 1. Open **Roblox Studio**.
-2. Open `build/Egg-Heist.rbxlx` (`File > Open from File`).
-   (Unzipping `Egg-Heist-v2.zip` gives you this file plus everything else.)
-3. Insert the world: in the Asset Manager / Explorer, right-click **Workspace >
-   Insert from File…** and choose `Egg heist.rbxm` (repo root or `build/`).
+2. Open `Egg-Heist.rbxlx` (`File > Open from File`).
+3. Insert the world (optional): right-click **Workspace > Insert from File…**
+   and choose `assets/world/EggHeistWorld.rbxm`.
    - The model must be named `EggHeist` directly under Workspace.
      (If it inserted with another name, rename it.)
 4. Press **Play** (F5).
@@ -20,6 +19,18 @@
 > RUNTIME. Always test with Play (F5) — after pressing Play, Output shows
 > `Fallback world built: N parts...` as proof the map was built.
 
+### Proof it works (Output after Play)
+
+```text
+[EggHeist] Boot summary: 23 loaded (0 failed), 23 init ok (0 failed), 23 start ok (0 failed)
+[EggHeist] Fallback world built: 275 parts, ...   (or: Found existing world: ...)
+[EggHeist] Server READY. Have fun!
+[EggHeist] Client started.
+```
+
+If you see a red `EGG HEIST ERROR` label instead: open **View > Output**,
+copy the red text — it names the exact script and line.
+
 ## Path B: Rojo workflow (developers)
 
 1. Install the [Rojo Studio plugin](https://rojo.space/docs/installation/) and
@@ -28,52 +39,42 @@
    - One-off build: `rojo build -o Egg-Heist-Rojo.rbxlx`, then open the file.
    - Live sync: `rojo serve`, then connect the Studio plugin.
 3. The world model is wired via `default.project.json`
-   (`Workspace.EggHeist` → `Egg heist.rbxm`), so Rojo builds include it.
+   (`Workspace.EggHeist` → `assets/world/EggHeistWorld.rbxm`), so Rojo builds
+   include it.
+
+## Validating changes (developers)
+
+After editing anything under `src/`, run from the repo root:
+
+```bash
+python3 tools/build_place.py && python3 tools/validate_syntax.py \
+  && python3 tools/check_refs.py && python3 tools/check_waits.py \
+  && python3 tools/sim_boot.py
+```
+
+(The chain rebuilds the place, syntax-checks all 84 files, verifies every
+require/remote/config reference, proves every `WaitForChild` target exists,
+then boots the whole game headlessly: server + client + 2-player
+join/claim/trade/heist/events. Expect `WARNS:0 ERRORS:0`.)
+
+`sim_boot.py` needs the `lupa` package (`pip install lupa`); the other tools
+need `luaparser` (`pip install luaparser`) and `lz4` for `inspect_rbxm.py.
 
 ## Publishing checklist
 
 - [ ] **API access**: Game Settings > Security > Enable Studio Access to API
       Services (needed for DataStores in Studio testing; live games have it).
 - [ ] **Monetization**: replace placeholder product IDs in
-      `src/ReplicatedStorage/EggHeistShared/Config/Shop.lua` with real IDs
-      from Creator Dashboard > Monetization (see `docs/MONETIZATION.md`).
+      `src/ReplicatedStorage/EggHeistShared/Config/Shop.luau` with real IDs
+      from Creator Dashboard > Monetization:
+      4 gamepasses (VIP 499, Extra Pet Slots 299, Auto Hatchery 399,
+      Swift Shadow 249) + 5 developer products (100 Gems 99, 550 Gems 449,
+      $50,000 Cash 99, 2x Income 15 min 79, 2x Luck 15 min 129).
+      Unconfigured products safely show "coming soon" — the game runs fully
+      without spending.
 - [ ] **Admins**: add your userId(s) to `ADMINS` in
-      `src/ServerScriptService/EggHeistServer/Server/Admin/AdminService.lua`.
+      `src/ServerScriptService/EggHeistServer/Admin/AdminService.luau`.
 - [ ] **Max players**: 8 recommended (8 base plots). Set in
       Game Settings > Worlds, or raise `Settings.MaxBasePlots` and add plot
       models to the world.
 - [ ] **Avatar**: R15 recommended (pet followers + loot weld tested with R15/R6).
-- [ ] **FilteringEnabled**: must stay ON (default). The game assumes it.
-- [ ] **Test with 2+ players**: heists, vault prompts, extraction, and alarms
-      need at least two clients (use Studio's Team Test or a private server).
-
-## Configuration quick reference
-
-All tuning lives in `src/ReplicatedStorage/EggHeistShared/Config/`:
-
-| File | What to tune |
-|---|---|
-| `Economy.lua` | prices, income, XP curves, vault, prestige, daily rewards |
-| `Eggs.lua` | egg prices, hatch weights, level gates |
-| `Pets.lua` | pet roster, base income |
-| `Mutations.lua` | mutation chances + multipliers |
-| `Upgrades.lua` / `Security.lua` | base/security tracks, costs, effects |
-| `Quests.lua` | daily/weekly pools |
-| `Events.lua` | event durations, weights, modifiers, lighting |
-| `Shop.lua` | gamepasses/products/decorations |
-| `Settings.lua` | heist rules, feature flags, performance budgets |
-| `Tutorial.lua` | onboarding steps |
-
-After editing source, regenerate the place: `python3 tools/build_place.py`
-(or rebuild with Rojo).
-
-## Troubleshooting
-
-| Symptom | Fix |
-|---|---|
-| Spawn in empty void | Insert `Egg heist.rbxm` into Workspace (see Path A step 3). The void failsafe will still rescue you to spawn. |
-| Data doesn't save in Studio | Enable API access (see checklist). The game falls back to memory-only profiles with a warning. |
-| "No free base plots" | All 8 plots are taken. Add plots to the world + bump `MaxBasePlots`, or use a fresh server. |
-| Remotes folder missing on client | Server `Init` failed — check the server Output window for `[EggHeist]` errors. |
-| Pet followers invisible | Check Settings > "Show my pets"; followers hide beyond 250 studs by design. |
-| Purchases do nothing | Product IDs are `0` placeholders — wire real IDs (docs/MONETIZATION.md). |

@@ -1,5 +1,27 @@
 # Changelog
 
+## MAX — Professional rebuild (2026-09-15)
+
+Full project restructure on the same proven systems (this is now the main
+development branch). No rewrites of working logic — moves, renames, and
+targeted fixes, every step verified green.
+
+- NEW LAYOUT: flat domain folders (no `Server/`/`Client/` wrapper levels),
+  `Main.server.luau` / `Main.client.luau` entry points, `Screens/*Screen`
+  naming, `.luau` everywhere, `Util` → `Utilities`, place file at repo
+  root, world model at `assets/world/EggHeistWorld.rbxm` (byte-identical),
+  lowercase `docs/` (architecture/gameplay/economy/development).
+- FIXED: heist death-watch was called but never implemented — abandoning
+  loot errored mid-flow (victim refund skipped, UIs stuck). Implemented
+  properly + disconnects on all carry-ending paths (die/expire/win/abandon).
+- FIXED: hatching a stale/unknown egg id consumed the egg silently; the
+  dead record is now dropped loudly with a warning instead.
+- NEW: `Shared/Config/Audio.luau` central sound bank (SoundManager reads it).
+- Simulator now covers 2-player join/claim, full economy loop (15 endpoints),
+  complete trade flow, heist grab→abandon AND grab→death-drop with refund
+  verification, and two full event lifecycles. Still `WARNS:0 ERRORS:0`.
+- Removed: old version zips, `build/` folder, obsolete docs.
+
 ## v6.0.2 — Hotfix: client could never boot (2026-09-15)
 
 Two fatal client bugs found via headless boot simulation (new

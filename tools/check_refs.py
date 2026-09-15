@@ -5,7 +5,7 @@
 2. Every `registry.<Service>` reference names a real service (server files).
 3. Every `ctx.Controllers.<Name>` / `ctx.UI.<Name>` names a real module.
 4. Every `registry.<Service>.<Method>(` call names a defined function.
-5. Every Net Fire/On/Invoke endpoint exists in Shared/Remotes.lua.
+5. Every Net Fire/On/Invoke endpoint exists in Shared/Remotes.luau.
 6. Every Config.<Field> access spot-check for typos (top-level keys).
 
 Usage: python3 tools/check_refs.py
@@ -26,33 +26,33 @@ def err(msg: str):
 
 
 # ---------------------------------------------------------------- services --
-# v2 layout: Server/<Domain>/<Name>Service.lua, Shared/{Config,Utilities},
-# Client/{Controllers,UI,Effects,Input}.
-server_root = SRC / "ServerScriptService/EggHeistServer/Server"
-server_utils = server_root / "Util"
+# MAX layout: EggHeistServer/<Domain>/<Name>Service.luau (flat),
+# EggHeistShared/{Config,Utilities}, EggHeistClient/{Controllers,Screens,Effects,Input}.
+server_root = SRC / "ServerScriptService/EggHeistServer"
+server_utils = server_root / "Utilities"
 shared_dir = SRC / "ReplicatedStorage/EggHeistShared"
 config_dir = shared_dir / "Config"
 shared_utils = shared_dir / "Utilities"
-client_dir = SRC / "StarterPlayer/StarterPlayerScripts/EggHeistClient/Client"
+client_dir = SRC / "StarterPlayer/StarterPlayerScripts/EggHeistClient"
 controllers_dir = client_dir / "Controllers"
 input_dir = client_dir / "Input"
-ui_dir = client_dir / "UI"
+screens_dir = client_dir / "Screens"
 effects_dir = client_dir / "Effects"
 
-# services: every *Service.lua directly inside a domain folder (one level deep)
+# services: every *Service.luau directly inside a domain folder (one level deep)
 services: dict[str, Path] = {}
-for path in sorted(server_root.glob("*/*.lua")):
+for path in sorted(server_root.glob("*/*.luau")):
     if path.stem.endswith("Service"):
         services[path.stem] = path
 # domain lookup for LOAD_ORDER validation: "Domain/Module" -> exists
 service_paths = {f"{p.parent.name}/{p.stem}" for p in services.values()}
-server_utils_mods = {p.stem: p for p in server_utils.glob("*.lua")}
-configs = {p.stem: p for p in config_dir.glob("*.lua")}
-shared_utils_mods = {p.stem: p for p in shared_utils.glob("*.lua")}
-controllers = {p.stem: p for p in controllers_dir.glob("*.lua")}
-controllers.update({p.stem: p for p in input_dir.glob("*.lua")})
-uis = {p.stem: p for p in ui_dir.glob("*.lua")}
-effects = {p.stem: p for p in effects_dir.glob("*.lua")}
+server_utils_mods = {p.stem: p for p in server_utils.glob("*.luau")}
+configs = {p.stem: p for p in config_dir.glob("*.luau")}
+shared_utils_mods = {p.stem: p for p in shared_utils.glob("*.luau")}
+controllers = {p.stem: p for p in controllers_dir.glob("*.luau")}
+controllers.update({p.stem: p for p in input_dir.glob("*.luau")})
+screens = {p.stem: p for p in screens_dir.glob("*.luau")}
+effects = {p.stem: p for p in effects_dir.glob("*.luau")}
 
 # service methods: `function ServiceName.Method(` or `ServiceName.Method = function`
 # NOTE: methods are defined with the FULL table name (e.g. DataService.Get).
@@ -67,13 +67,13 @@ for svc, path in services.items():
 
 # controller/UI methods (for .Method( calls on ctx.Controllers.X / ctx.UI.X)
 ctrl_methods: dict[str, set[str]] = {}
-for name, path in {**controllers, **uis, **effects}.items():
+for name, path in {**controllers, **screens, **effects}.items():
     text = path.read_text(encoding="utf-8")
     found = set(re.findall(rf"function\s+{re.escape(name)}\.(\w+)\s*\(", text))
     ctrl_methods[name] = found
 
 # remotes registry
-remotes_text = (shared_dir / "Remotes.lua").read_text(encoding="utf-8")
+remotes_text = (shared_dir / "Remotes.luau").read_text(encoding="utf-8")
 c2s = set(re.findall(r'"(C2S_\w+)"', remotes_text))  # not present; parse lists below
 # parse the C2S/S2C/Fn string lists
 c2s_names = set()
@@ -94,7 +94,7 @@ for line in remotes_text.splitlines():
         if m:
             {"c2s": c2s_names, "s2c": s2c_names, "fn": fn_names}[section].add(m.group(1))
 
-all_lua = sorted(SRC.rglob("*.lua"))
+all_lua = sorted(SRC.rglob("*.luau"))
 
 # ------------------------------------------------- 1. require resolution --
 # Map known WaitForChild roots to directories.
@@ -137,7 +137,7 @@ for path in all_lua:
                     s for s in services
                 ]:
                     break
-            # explicit service file requires happen only in ServerMain via WaitForChild(moduleName) var - skip
+            # explicit service file requires happen only in Main via WaitForChild(moduleName) var - skip
         if chain.strip().startswith("script.Parent"):
             # relative requires: resolve against file's directory
             # count .Parent hops
@@ -151,7 +151,7 @@ for path in all_lua:
                 target = target / step
             if target.suffix == "":
                 # module name -> file
-                if not (target.with_suffix(".lua").exists() or target.is_dir()):
+                if not (target.with_suffix(".luau").exists() or target.is_dir()):
                     # check client UI/Effects/Controllers siblings
                     err(f"{rel}: relative require '{chain.strip()}' -> {target} NOT FOUND")
 
@@ -173,10 +173,10 @@ for path in all_lua:
             name = m.group(1)
             if name not in controllers:
                 err(f"{rel}: ctx.Controllers.{name} NOT FOUND")
-        for m in re.finditer(r"ctx\.UI\.(\w+)", text):
+        for m in re.finditer(r"ctx\.Screens\.(\w+)", text):
             name = m.group(1)
-            if name not in uis:
-                err(f"{rel}: ctx.UI.{name} NOT FOUND")
+            if name not in screens:
+                err(f"{rel}: ctx.Screens.{name} NOT FOUND")
         for m in re.finditer(r'Controllers/(\w+)",\n', text):
             pass
 
@@ -197,10 +197,10 @@ for path in all_lua:
             ctrl, method = m.group(1), m.group(2)
             if ctrl in ctrl_methods and method not in ctrl_methods[ctrl]:
                 err(f"{rel}: ctx.Controllers.{ctrl}.{method}() not defined")
-        for m in re.finditer(r"ctx\.UI\.(\w+)\.(\w+)\s*\(", text):
+        for m in re.finditer(r"ctx\.Screens\.(\w+)\.(\w+)\s*\(", text):
             ui, method = m.group(1), m.group(2)
             if ui in ctrl_methods and method not in ctrl_methods[ui]:
-                err(f"{rel}: ctx.UI.{ui}.{method}() not defined")
+                err(f"{rel}: ctx.Screens.{ui}.{method}() not defined")
         for m in re.finditer(r"ctx\.Data\.(\w+)\s*\(", text):
             method = m.group(1)
             if method not in ctrl_methods.get("DataController", set()):
@@ -236,26 +236,26 @@ for path in all_lua:
             err(f"{rel}: Invoke {m.group(1)} not in Remotes.Fn")
 
 # ------------------------------------------------- 6. load order vs files --
-init_server = (SRC / "ServerScriptService/EggHeistServer/ServerMain.server.lua").read_text()
+init_server = (SRC / "ServerScriptService/EggHeistServer/Main.server.luau").read_text()
 load_block = init_server.split("LOAD_ORDER")[1].split("}")[0] if "LOAD_ORDER" in init_server else ""
 for m in re.finditer(r'"([\w/]+Service)"', load_block):
     entry = m.group(1)
     module = entry.split("/")[-1]
     if "/" in entry:
         if entry not in service_paths:
-            err(f"ServerMain.server.lua: service path {entry} NOT FOUND")
+            err(f"Main.server.luau: service path {entry} NOT FOUND")
     elif module not in services:
-        err(f"ServerMain.server.lua: service file {module} NOT FOUND")
-init_client = (SRC / "StarterPlayer/StarterPlayerScripts/EggHeistClient/ClientMain.client.lua").read_text()
+        err(f"Main.server.luau: service file {module} NOT FOUND")
+init_client = (SRC / "StarterPlayer/StarterPlayerScripts/EggHeistClient/Main.client.luau").read_text()
 for m in re.finditer(r'"(\w+Controller)"', init_client):
     if m.group(1) not in controllers:
-        err(f"ClientMain.client.lua: controller {m.group(1)} NOT FOUND")
-for m in re.finditer(r'"(\w+UI)"', init_client):
-    if m.group(1) not in uis:
-        err(f"ClientMain.client.lua: UI module {m.group(1)} NOT FOUND")
+        err(f"Main.client.luau: controller {m.group(1)} NOT FOUND")
+for m in re.finditer(r'"(\w+Screen)"', init_client):
+    if m.group(1) not in screens:
+        err(f"Main.client.luau: Screen module {m.group(1)} NOT FOUND")
 
 # ------------------------------------------------- report --
-print(f"services={len(services)} controllers={len(controllers)} uis={len(uis)} "
+print(f"services={len(services)} controllers={len(controllers)} screens={len(screens)} "
       f"configs={len(configs)} c2s={len(c2s_names)} s2c={len(s2c_names)} fn={len(fn_names)}")
 for w in warnings:
     print("WARN:", w)
