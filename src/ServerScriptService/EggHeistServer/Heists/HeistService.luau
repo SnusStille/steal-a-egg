@@ -12,6 +12,8 @@ local Settings = require(ConfigFolder:WaitForChild("Settings"))
 local Validate = require(Shared:WaitForChild("Utilities"):WaitForChild("Validate"))
 local ModelFactory = require(Shared:WaitForChild("Utilities"):WaitForChild("ModelFactory"))
 local Eggs = require(ConfigFolder:WaitForChild("Eggs"))
+local Pets = require(ConfigFolder:WaitForChild("Pets"))
+local Types = require(Shared:WaitForChild("Types"))
 
 local HeistService = {}
 HeistService.Name = "HeistService"
@@ -204,6 +206,63 @@ local function attachEggVisual(player, eggId)
 	return model
 end
 
+-- Carried-pet visual: the actual stolen creature rides above the thief.
+local function attachPetVisual(player, pet)
+	local character = player.Character
+	if not character then
+		return nil
+	end
+	local head = character:FindFirstChild("Head")
+	if not head then
+		return nil
+	end
+	local ok, model = pcall(ModelFactory.BuildCreature, pet.id, pet.mut, 0.45)
+	if not ok or not model then
+		return nil
+	end
+	model.Name = "PetCarryVisual"
+	for _, descendant in ipairs(model:GetDescendants()) do
+		if descendant:IsA("ProximityPrompt") or descendant:IsA("BillboardGui")
+			or descendant:IsA("SurfaceGui") or descendant:IsA("ParticleEmitter")
+			or descendant:IsA("PointLight") then
+			descendant:Destroy()
+		elseif descendant:IsA("BasePart") then
+			descendant.Anchored = false
+			descendant.CanCollide = false
+			descendant.CanQuery = false
+			descendant.CanTouch = false
+			descendant.Massless = true
+		end
+	end
+	local body = model.PrimaryPart
+	if not body then
+		pcall(function() model:Destroy() end)
+		return nil
+	end
+	body.CFrame = head.CFrame + Vector3.new(0, 2.6, 0)
+	local weld = Instance.new("WeldConstraint")
+	weld.Part0 = head
+	weld.Part1 = body
+	weld.Parent = body
+	model.Parent = character
+	local tag = Instance.new("BillboardGui")
+	tag.Name = "LootTag"
+	tag.Size = UDim2.new(0, 140, 0, 30)
+	tag.StudsOffset = Vector3.new(0, 4.4, 0)
+	tag.AlwaysOnTop = true
+	tag.Parent = body
+	local text = Instance.new("TextLabel")
+	text.Size = UDim2.fromScale(1, 1)
+	text.BackgroundTransparency = 1
+	text.Text = "STOLEN PET!"
+	text.TextColor3 = Color3.fromRGB(255, 120, 200)
+	text.Font = Enum.Font.GothamBold
+	text.TextSize = 16
+	text.TextStrokeTransparency = 0.3
+	text.Parent = tag
+	return model
+end
+
 local function clearLootVisual(player)
 	local character = player.Character
 	if character then
@@ -214,6 +273,10 @@ local function clearLootVisual(player)
 		local eggLoot = character:FindFirstChild("EggCarryVisual")
 		if eggLoot then
 			eggLoot:Destroy()
+		end
+		local petLoot = character:FindFirstChild("PetCarryVisual")
+		if petLoot then
+			petLoot:Destroy()
 		end
 	end
 	local state = carrying[player.UserId]
@@ -233,22 +296,159 @@ local function disconnectDeathWatch(player)
 	end
 end
 
-local function returnLootToVictim(thief, reason)
+local returnLootToVictim -- forward: tackle prompt (below) resolves the thief
+
+local function clearTacklePrompt(player)
+	if not player then
+		return
+	end
+	local character = player.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	if not root then
+		return
+	end
+	for _, child in ipairs(root:GetChildren()) do
+		if child.Name == "TacklePrompt" then
+			pcall(function() child:Destroy() end)
+		end
+	end
+end
+
+-- Tackle: the victim gets a hold-to-tackle prompt on the carrier's root.
+local function attachTacklePrompt(thief)
+	local state = carrying[thief.UserId]
+	if not state then
+		return
+	end
+	local character = thief.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	if not root then
+		return
+	end
+	clearTacklePrompt(thief)
+	local prompt = Instance.new("ProximityPrompt")
+	prompt.Name = "TacklePrompt"
+	prompt.ActionText = "Tackle!"
+	prompt.ObjectText = "Catch " .. thief.DisplayName
+	prompt.HoldDuration = Settings.Heist.TackleHoldDuration or 1
+	prompt.MaxActivationDistance = Settings.Heist.TackleDistance or 7
+	prompt.RequiresLineOfSight = false
+	prompt.Parent = root
+	prompt.Triggered:Connect(function(player)
+		local liveState = carrying[thief.UserId]
+		if not liveState then
+			return
+		end
+		if player.UserId ~= liveState.victimUserId then
+			registry.Notify.Send(player, "error", "Not your thief!",
+				"Only the victim can tackle this thief.", 3)
+			return
+		end
+		local tacklerChar = player.Character
+		local thiefChar = thief.Character
+		local tacklerRoot = tacklerChar and tacklerChar:FindFirstChild("HumanoidRootPart")
+		local thiefRoot = thiefChar and thiefChar:FindFirstChild("HumanoidRootPart")
+		if not tacklerRoot or not thiefRoot then
+			return
+		end
+		if (tacklerRoot.Position - thiefRoot.Position).Magnitude
+				> (Settings.Heist.TackleDistance or 7) + 6 then
+			return
+		end
+		registry.Notify.Send(thief, "error", "TACKLED!",
+			player.DisplayName .. " caught you! The loot is returned.", 5)
+		returnLootToVictim(thief, "was tackled")
+	end)
+end
+
+-- Victim-base beacon: a red pillar marks the robbed plot during a carry.
+local function setVictimBeacon(plotIndex, enabled)
+	local plot = registry.World.GetPlotModel(plotIndex)
+	if not plot then
+		return
+	end
+	local furniture = plot:FindFirstChild("ServerFurniture")
+	if enabled and not furniture then
+		furniture = Instance.new("Folder")
+		furniture.Name = "ServerFurniture"
+		furniture.Parent = plot
+	end
+	if not furniture then
+		return
+	end
+	local existing = furniture:FindFirstChild("HeistBeacon")
+	if not enabled then
+		if existing then
+			pcall(function() existing:Destroy() end)
+		end
+		return
+	end
+	if existing then
+		return
+	end
+	local foundation = plot:FindFirstChild("Foundation")
+	local basePos = foundation and foundation.Position or Vector3.new(0, 0, 0)
+	local beacon = Instance.new("Part")
+	beacon.Name = "HeistBeacon"
+	beacon.Size = Vector3.new(3, 60, 3)
+	beacon.CFrame = CFrame.new(basePos + Vector3.new(0, 30, 0))
+	beacon.Color = Color3.fromRGB(255, 40, 60)
+	beacon.Material = Enum.Material.Neon
+	beacon.Transparency = 0.25
+	beacon.Anchored = true
+	beacon.CanCollide = false
+	beacon.CanQuery = false
+	beacon.Parent = furniture
+	local lamp = Instance.new("PointLight")
+	lamp.Color = Color3.fromRGB(255, 40, 60)
+	lamp.Brightness = 2
+	lamp.Range = 40
+	lamp.Parent = beacon
+	local billboard = Instance.new("BillboardGui")
+	billboard.Name = "HeistSign"
+	billboard.Size = UDim2.new(0, 260, 0, 44)
+	billboard.StudsOffset = Vector3.new(0, 34, 0)
+	billboard.AlwaysOnTop = true
+	billboard.Parent = beacon
+	local text = Instance.new("TextLabel")
+	text.Size = UDim2.fromScale(1, 1)
+	text.BackgroundTransparency = 1
+	text.Text = "!! HEIST IN PROGRESS !!"
+	text.TextColor3 = Color3.fromRGB(255, 60, 80)
+	text.Font = Enum.Font.GothamBold
+	text.TextSize = 20
+	text.TextStrokeTransparency = 0.2
+	text.Parent = billboard
+end
+
+function returnLootToVictim(thief, reason)
 	local state = carrying[thief.UserId]
 	if not state then
 		return
 	end
 	disconnectDeathWatch(thief)
 	carrying[thief.UserId] = nil
+	extracting[thief.UserId] = nil
+	clearTacklePrompt(thief)
+	setVictimBeacon(state.plotIndex, false)
 	setCarrySlow(thief, false)
 	clearLootVisual(thief)
 	local isEgg = state.stolenEgg ~= nil
+	local isPet = state.stolenPet ~= nil
 	if isEgg then
 		local eggVictim = Players:GetPlayerByUserId(state.stolenEgg.victimUserId)
 		if eggVictim then
 			registry.Egg.RestoreTakenEgg(eggVictim, state.stolenEgg.egg)
 			registry.Notify.Send(eggVictim, "success", "Egg recovered!",
 				"The thief " .. tostring(reason or "failed") .. ". Your egg is back.", 5)
+		end
+	end
+	if isPet then
+		local petVictim = Players:GetPlayerByUserId(state.stolenPet.victimUserId)
+		if petVictim then
+			registry.Pet.RestoreTakenPet(petVictim, state.stolenPet.pet)
+			registry.Notify.Send(petVictim, "success", "Pet recovered!",
+				"The thief " .. tostring(reason or "failed") .. ". Your pet is back.", 5)
 		end
 	end
 	local victim = Players:GetPlayerByUserId(state.victimUserId)
@@ -259,10 +459,12 @@ local function returnLootToVictim(thief, reason)
 			victimProfile.base.vault = math.min(capacity,
 				(victimProfile.base.vault or 0) + state.amount)
 			registry.Data.MarkDirty(victim)
-			if not isEgg then
+			if not isEgg and not isPet then
 				registry.Notify.Send(victim, "success", "Loot recovered!",
 					"The thief " .. tostring(reason or "failed") .. ". Your vault was refunded.", 5)
 			end
+			victimProfile.stats.successfulDefenses =
+				(victimProfile.stats.successfulDefenses or 0) + 1
 		end
 	end
 	local thiefProfile = profileOf(thief)
@@ -534,6 +736,8 @@ function HeistService.TryGrabEgg(thief, plotIndex, padIndex)
 		stolenEgg = { egg = taken, victimUserId = victim.UserId },
 	}
 	setCarrySlow(thief, true)
+	attachTacklePrompt(thief)
+	setVictimBeacon(plotIndex, true)
 	local eggDef = Eggs.ById[taken.eggId]
 	local eggName = (eggDef and eggDef.DisplayName) or "an egg"
 	registry.Notify.Send(thief, "success", "Egg snatched!",
@@ -549,6 +753,124 @@ function HeistService.TryGrabEgg(thief, plotIndex, padIndex)
 		timeLeft = Settings.Heist.MaxCarryTime,
 	})
 	-- death drops the egg
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	if humanoid then
+		local carryState = carrying[thief.UserId]
+		if carryState then
+			carryState.deathConn = humanoid.Died:Connect(function()
+				if carrying[thief.UserId] then
+					returnLootToVictim(thief, "died")
+				end
+			end)
+		end
+	end
+end
+
+function HeistService.TryGrabPet(thief, plotIndex, slot)
+	plotIndex = math.floor(tonumber(plotIndex) or 0)
+	slot = math.floor(tonumber(slot) or 0)
+	if plotIndex < 1 or plotIndex > Settings.MaxBasePlots then
+		return
+	end
+	if slot < 1 or slot > 4 then
+		return
+	end
+	if carrying[thief.UserId] or channeling[thief.UserId] then
+		registry.Notify.Send(thief, "warning", "Hands full",
+			"Finish your current heist first!", 3)
+		return
+	end
+	local victim = registry.Base.GetOwnerOfPlot(plotIndex)
+	if not victim or victim == thief then
+		return
+	end
+	local now = os.clock()
+	if (grabCooldownUntil[thief.UserId] or 0) > now then
+		registry.Notify.Send(thief, "warning", "Cooldown",
+			"You're still cooling down from the last grab!", 3)
+		return
+	end
+	if (victimCooldownUntil[victim.UserId] or 0) > now then
+		registry.Notify.Send(thief, "warning", "Too soon",
+			"That base was just hit!", 3)
+		return
+	end
+	-- range: thief must stand near the victim's base
+	local character = thief.Character
+	local hrp = character and character:FindFirstChild("HumanoidRootPart")
+	local plot = registry.World.GetPlotModel(plotIndex)
+	local foundation = plot and plot:FindFirstChild("Foundation")
+	if not hrp or not foundation or not foundation:IsA("BasePart") then
+		return
+	end
+	if (hrp.Position - foundation.Position).Magnitude > (Settings.Heist.GrabRange or 45) then
+		return
+	end
+	if registry.Security.IsLockedDown(victim) then
+		registry.Notify.Send(thief, "warning", "Lockdown!", "This base is sealed!", 3)
+		return
+	end
+	local victimProfile = profileOf(victim)
+	local thiefProfile = profileOf(thief)
+	if not victimProfile or not thiefProfile then
+		return
+	end
+	-- decoy wastes the run on a fake
+	if registry.Security.RollDecoy(victim) then
+		grabCooldownUntil[thief.UserId] = now + Settings.Heist.GrabCooldown
+		registry.Notify.Send(thief, "warning", "It's a decoy!",
+			"You grabbed a worthless fake!", 5)
+		registry.Notify.Send(victim, "success", "Decoy worked!",
+			thief.DisplayName .. " stole a fake!", 5)
+		return
+	end
+	-- alarm tips off the victim
+	local security = victimProfile.base.security or {}
+	if (security.Alarm or 0) > 0 then
+		registry.Notify.Send(victim, "error", "Intruder!",
+			thief.DisplayName .. " is at your pet showcase!", 5)
+		registry.Net.Fire(victim, "Fx", "HeistAlarm", thief.DisplayName)
+	end
+	-- server-authoritative: resolve the pet IN THIS SHOWCASE SLOT
+	local targetUid = victimProfile.equipped and victimProfile.equipped[slot]
+	if not targetUid then
+		registry.Notify.Send(thief, "warning", "Gone", "That pet is no longer there!", 3)
+		return
+	end
+	local taken = registry.Pet.TakeDisplayedPet(victim, targetUid)
+	if not taken then
+		registry.Notify.Send(thief, "warning", "Gone", "That pet is no longer there!", 3)
+		return
+	end
+	grabCooldownUntil[thief.UserId] = now + Settings.Heist.GrabCooldown
+	victimCooldownUntil[victim.UserId] = now + Settings.Heist.StealCooldownPerVictim
+	carrying[thief.UserId] = {
+		amount = 0,
+		victimUserId = victim.UserId,
+		plotIndex = plotIndex,
+		expiresAt = now + Settings.Heist.MaxCarryTime,
+		model = attachPetVisual(thief, taken),
+		stolenPet = { pet = taken, victimUserId = victim.UserId },
+	}
+	setCarrySlow(thief, true)
+	attachTacklePrompt(thief)
+	setVictimBeacon(plotIndex, true)
+	local petDef = Pets.ById[taken.id]
+	local petTitle = (taken.mut and (taken.mut .. " ") or "")
+		.. ((petDef and petDef.DisplayName) or taken.id)
+	registry.Notify.Send(thief, "success", "Pet snatched!",
+		"Carry " .. petTitle .. " to EXTRACTION!", 6)
+	registry.Notify.Send(victim, "error", "Pet stolen!",
+		thief.DisplayName .. " snatched " .. petTitle .. "! Tackle them!", 6)
+	registry.Net.Fire(victim, "Fx", "HeistAlarm", thief.DisplayName)
+	registry.Net.Fire(thief, "Fx", "GrabFx")
+	registry.Net.Fire(thief, "HeistUpdate", {
+		carrying = true,
+		amount = 0,
+		petName = petTitle,
+		timeLeft = Settings.Heist.MaxCarryTime,
+	})
+	-- death drops the pet
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 	if humanoid then
 		local carryState = carrying[thief.UserId]
@@ -634,6 +956,8 @@ function HeistService.CompleteGrab(thief, victim, plotIndex, target, scenarioId)
 		model = attachLootVisual(thief),
 	}
 	setCarrySlow(thief, true)
+	attachTacklePrompt(thief)
+	setVictimBeacon(plotIndex, true)
 	registry.Notify.Send(thief, "success", "Loot grabbed!",
 		"Carry it to EXTRACTION before time runs out!", 6)
 	registry.Notify.Send(victim, "error", "You've been robbed!",
@@ -692,6 +1016,9 @@ local function completeExtraction(thief)
 	end
 	disconnectDeathWatch(thief)
 	carrying[thief.UserId] = nil
+	extracting[thief.UserId] = nil
+	clearTacklePrompt(thief)
+	setVictimBeacon(state.plotIndex, false)
 	setCarrySlow(thief, false)
 	clearLootVisual(thief)
 	registry.Economy.AddCash(thief, state.amount, "heist")
@@ -701,6 +1028,31 @@ local function completeExtraction(thief)
 			registry.Egg.GiftEgg(thief, eggId, "heist")
 			registry.Notify.Send(thief, "secret", "Egg stolen!",
 				"You got away with a stolen egg! Place it in your base.", 6)
+		end
+	end
+	if state.stolenPet then
+		local pet = state.stolenPet.pet
+		local thiefProfile2 = profileOf(thief)
+		if pet and thiefProfile2 then
+			local newUid = registry.Data.GenerateUid(thief)
+			thiefProfile2.pets[#thiefProfile2.pets + 1] = {
+				uid = newUid,
+				id = pet.id,
+				mut = pet.mut,
+				lvl = pet.lvl or 1,
+				xp = pet.xp or 0,
+			}
+			thiefProfile2.collection = thiefProfile2.collection or {}
+			local collectionKey = Types.CollectionKey(pet.id, pet.mut)
+			local isNew = not thiefProfile2.collection[collectionKey]
+			thiefProfile2.collection[collectionKey] = true
+			registry.Data.MarkDirty(thief)
+			registry.Quest.AddProgress(thief, "NewCollection", isNew and 1 or 0)
+			local petDef = Pets.ById[pet.id]
+			local petTitle = (pet.mut and (pet.mut .. " ") or "")
+				.. ((petDef and petDef.DisplayName) or pet.id)
+			registry.Notify.Send(thief, "secret", "Pet stolen!",
+				"You got away with " .. petTitle .. "! Equip it from your backpack.", 6)
 		end
 	end
 	registry.Economy.AddXp(thief, Economy.XpPerHeistSuccess)
@@ -749,6 +1101,14 @@ local function completeExtraction(thief)
 		local eggDef = Eggs.ById[state.stolenEgg.egg and state.stolenEgg.egg.eggId or ""]
 		local eggName = (eggDef and eggDef.DisplayName) or "an egg"
 		feedText = thief.DisplayName .. " stole " .. eggName .. " from "
+			.. (feedVictim and feedVictim.DisplayName or "a base") .. "!"
+	end
+	if state.stolenPet then
+		local stolen = state.stolenPet.pet or {}
+		local petDef = Pets.ById[stolen.id or ""]
+		local petTitle = (stolen.mut and (stolen.mut .. " ") or "")
+			.. ((petDef and petDef.DisplayName) or "a pet")
+		feedText = thief.DisplayName .. " stole " .. petTitle .. " from "
 			.. (feedVictim and feedVictim.DisplayName or "a base") .. "!"
 	end
 	registry.Net.FireAll("Feed", { icon = "HEIST", text = feedText })
@@ -824,6 +1184,8 @@ function HeistService.AbandonCarry(player)
 	disconnectDeathWatch(player)
 	carrying[player.UserId] = nil
 	extracting[player.UserId] = nil
+	clearTacklePrompt(player)
+	setVictimBeacon(state.plotIndex, false)
 	setCarrySlow(player, false)
 	clearLootVisual(player)
 	if state.stolenEgg then
@@ -832,6 +1194,14 @@ function HeistService.AbandonCarry(player)
 			registry.Egg.RestoreTakenEgg(eggVictim, state.stolenEgg.egg)
 			registry.Notify.Send(eggVictim, "info", "Egg recovered",
 				"The thief abandoned your stolen egg.", 4)
+		end
+	end
+	if state.stolenPet then
+		local petVictim = Players:GetPlayerByUserId(state.stolenPet.victimUserId)
+		if petVictim then
+			registry.Pet.RestoreTakenPet(petVictim, state.stolenPet.pet)
+			registry.Notify.Send(petVictim, "info", "Pet recovered",
+				"The thief abandoned your stolen pet.", 4)
 		end
 	end
 	local victim = Players:GetPlayerByUserId(state.victimUserId)

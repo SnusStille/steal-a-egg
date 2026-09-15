@@ -994,6 +994,70 @@ function _SIM.snatchLoop()
 	return table.concat(out, " | ") .. " | snatch-ok"
 end
 
+function _SIM.petSnatchLoop()
+	local p1, p2 = _SIM.localPlayer, _SIM.players[2]
+	local DS = require(_SIM.serverModule("DataService"))
+	local HS = require(_SIM.serverModule("HeistService"))
+	local ES = require(_SIM.serverModule("EggService"))
+	local world = require(_SIM.serverModule("WorldService"))
+	local out = {}
+	-- p2 hatches + equips a pet (showcase slot 1)
+	out[#out + 1] = _SIM.fireServerAs(p2, "BuyEgg", "Basic")
+	_SIM.runDelayed()
+	local prof2 = DS.GetProfile(p2)
+	local eggUid = prof2.eggs[#prof2.eggs] and prof2.eggs[#prof2.eggs].uid
+	if not eggUid then return "petsnatch-no-egg" end
+	out[#out + 1] = _SIM.fireServerAs(p2, "PlaceEgg", eggUid)
+	_SIM.runDelayed()
+	ES.TestForceReady(p2)
+	_SIM.runDelayed()
+	out[#out + 1] = _SIM.fireServerAs(p2, "HatchEgg", eggUid)
+	_SIM.runDelayed()
+	local pet = prof2.pets[#prof2.pets]
+	if not pet then return "petsnatch-no-hatch" end
+	out[#out + 1] = _SIM.fireServerAs(p2, "EquipPet", pet.uid)
+	_SIM.runDelayed()
+	local equippedSlot = nil
+	for i, uid in ipairs(prof2.equipped or {}) do
+		if uid == pet.uid then equippedSlot = i break end
+	end
+	_SIM.check(equippedSlot == 1, "petsnatch", "p2 pet not showcased in slot 1")
+	-- p1 walks to plot 2 and snatches the showcased pet
+	local plot2 = world.GetPlotModel(2)
+	local f2 = plot2 and plot2:FindFirstChild("Foundation")
+	if not f2 then return "petsnatch-no-foundation" end
+	p1.Character:FindFirstChild("HumanoidRootPart").CFrame = f2.CFrame + Vector3.new(0, 5, 0)
+	local petsBefore = #prof2.pets
+	HS.TryGrabPet(p1, 2, equippedSlot or 1)
+	_SIM.runDelayed()
+	_SIM.check(HS.IsCarrying(p1), "petsnatch", "p1 not carrying after TryGrabPet")
+	_SIM.check(#prof2.pets == petsBefore - 1, "petsnatch", "pet not removed from victim")
+	-- beacon up at victim plot + tackle prompt on carrier
+	local furniture = plot2:FindFirstChild("ServerFurniture")
+	_SIM.check(furniture and furniture:FindFirstChild("HeistBeacon") ~= nil,
+		"petsnatch", "victim beacon missing during carry")
+	local tackle = p1.Character:FindFirstChild("HumanoidRootPart"):FindFirstChild("TacklePrompt")
+	_SIM.check(tackle ~= nil, "petsnatch", "tackle prompt missing on carrier")
+	-- p2 closes in and tackles: pet must be restored + re-equipped
+	p2.Character:FindFirstChild("HumanoidRootPart").CFrame =
+		p1.Character:FindFirstChild("HumanoidRootPart").CFrame
+	local sig = tackle and rawget(tackle, "Triggered")
+	if not sig then return "petsnatch-no-signal" end
+	sig:Fire(p2)
+	_SIM.runDelayed()
+	_SIM.check(not HS.IsCarrying(p1), "petsnatch", "p1 still carrying after tackle")
+	_SIM.check(#prof2.pets == petsBefore, "petsnatch", "pet not restored to victim")
+	local restored = false
+	for _, uid in ipairs(prof2.equipped or {}) do
+		if uid == pet.uid then restored = true break end
+	end
+	_SIM.check(restored, "petsnatch", "pet not re-equipped after tackle")
+	_SIM.check(furniture:FindFirstChild("HeistBeacon") == nil,
+		"petsnatch", "beacon not cleared after tackle")
+	HS.TestResetCooldowns()
+	return table.concat(out, " | ") .. " | petsnatch-ok"
+end
+
 function _SIM.huntLoop()
 	local ES = require(_SIM.serverModule("EventService"))
 	local DS = require(_SIM.serverModule("DataService"))

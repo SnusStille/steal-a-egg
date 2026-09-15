@@ -472,7 +472,7 @@ local STAND_OFFSETS = {
 local MAX_DISPLAYS = 4
 
 local displays = {} -- [plotIndex] = { {model=, parts=, basePos=, phase=}, ... }
-local standRefs = {} -- [plotIndex] = { [i] = { top = Vector3, label = TextLabel } }
+local standRefs = {} -- [plotIndex] = { [i] = { top, label, prompt } }
 
 local function displayFurniture(plotIndex)
 	local plot = registry.World.GetPlotModel(plotIndex)
@@ -554,7 +554,20 @@ function PetService.BuildStands(plotIndex)
 			text.TextScaled = true
 			text.TextStrokeTransparency = 0.5
 			text.Parent = billboard
-			standRefs[plotIndex][i] = { top = base + Vector3.new(0, 2.8, 0), label = text }
+			local steal = Instance.new("ProximityPrompt")
+			steal.Name = "StealPetPrompt"
+			steal.ActionText = "Steal"
+			steal.ObjectText = "Creature"
+			steal.HoldDuration = 0.5
+			steal.MaxActivationDistance = 10
+			steal.RequiresLineOfSight = false
+			steal.Enabled = false -- enabled when a creature is exhibited
+			steal.Parent = stand
+			local slot = i
+			steal.Triggered:Connect(function(triggerPlayer)
+				PetService.OnStealPrompt(triggerPlayer, plotIndex, slot)
+			end)
+			standRefs[plotIndex][i] = { top = base + Vector3.new(0, 2.8, 0), label = text, prompt = steal }
 		end
 	end
 end
@@ -614,6 +627,7 @@ function PetService.RebuildDisplays(player)
 		shown.Parent = furniture
 	end
 	displays[plotIndex] = {}
+	local occupied = {}
 	for slot, uid in ipairs(profile.equipped or {}) do
 		if slot > MAX_DISPLAYS then
 			break
@@ -642,7 +656,18 @@ function PetService.RebuildDisplays(player)
 					ref.label.Text = title .. "  +$" .. formatIncome(PetService.PetIncomePerSecond(pet)) .. "/s"
 					ref.label.TextColor3 = Rarities.GetColor((def and def.Rarity) or "Common")
 				end
+				if ref.prompt then
+					ref.prompt.Enabled = true
+					ref.prompt.ObjectText = title
+				end
+				occupied[slot] = true
 			end
+		end
+	end
+	for i = 1, MAX_DISPLAYS do
+		local ref = standRefs[plotIndex] and standRefs[plotIndex][i] or nil
+		if ref and ref.prompt and not occupied[i] then
+			ref.prompt.Enabled = false
 		end
 	end
 end
@@ -661,6 +686,64 @@ function updateDisplays()
 				applyGlue(primary, entry.parts)
 			end
 		end
+	end
+end
+
+--- Snatch: removes a DISPLAYED (equipped) pet from the owner's profile.
+--- Returns the pet record, or nil when there is nothing to take.
+function PetService.TakeDisplayedPet(owner, petUid)
+	local profile = profileOf(owner)
+	if not profile then
+		return nil
+	end
+	local pet, index = PetService.FindPet(profile, petUid)
+	if not pet or not index then
+		return nil
+	end
+	if not PetService.IsEquipped(profile, petUid) then
+		return nil -- only showcased pets can be snatched
+	end
+	table.remove(profile.pets, index)
+	for i, uid in ipairs(profile.equipped) do
+		if uid == petUid then
+			table.remove(profile.equipped, i)
+			break
+		end
+	end
+	registry.Data.MarkDirty(owner)
+	PetService.RebuildFollowers(owner)
+	PetService.RebuildDisplays(owner)
+	return pet
+end
+
+--- Snatch fail path: gives a taken pet back (re-equips when a slot is free).
+function PetService.RestoreTakenPet(owner, pet)
+	local profile = profileOf(owner)
+	if not profile or not pet then
+		return false
+	end
+	profile.pets[#profile.pets + 1] = pet
+	if #profile.equipped < PetService.MaxSlots(owner) then
+		profile.equipped[#profile.equipped + 1] = pet.uid
+	end
+	registry.Data.MarkDirty(owner)
+	PetService.RebuildFollowers(owner)
+	PetService.RebuildDisplays(owner)
+	return true
+end
+
+--- Stand Steal prompt (server-side): routes rival thieves into the heist.
+function PetService.OnStealPrompt(thief, plotIndex, slot)
+	local owner = registry.Base.GetOwnerOfPlot(plotIndex)
+	if not owner or owner == thief then
+		if owner == thief then
+			registry.Notify.Send(thief, "info", "Your showcase",
+				"That's your own creature!", 2)
+		end
+		return
+	end
+	if registry.Heist and registry.Heist.TryGrabPet then
+		registry.Heist.TryGrabPet(thief, plotIndex, slot)
 	end
 end
 

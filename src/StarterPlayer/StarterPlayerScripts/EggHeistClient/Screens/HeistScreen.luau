@@ -154,9 +154,15 @@ function HeistScreen.Init(context)
 			task.wait(0.05)
 			if carryFrame.Visible and carryEndsAt > 0 then
 				local left = math.max(0, carryEndsAt - os.clock())
-				carryLabel.Text = "CARRYING " .. string.upper(tostring(carryTarget))
-					.. " LOOT (" .. Format.Money(carryAmount) .. ")!\nReach EXTRACTION! "
-					.. string.format("%.0fs left", left)
+				if carryAmount > 0 then
+					carryLabel.Text = "CARRYING " .. string.upper(tostring(carryTarget))
+						.. " LOOT (" .. Format.Money(carryAmount) .. ")!\nReach EXTRACTION! "
+						.. string.format("%.0fs left", left)
+				else
+					carryLabel.Text = "CARRYING " .. string.upper(tostring(carryTarget))
+						.. "!\nReach EXTRACTION! "
+						.. string.format("%.0fs left", left)
+				end
 			end
 			if channelFrame.Visible then
 				local left = channelEndsAt - os.clock()
@@ -203,7 +209,7 @@ end
 function HeistScreen.OnState(state)
 	if state.carrying == true then
 		carryAmount = tonumber(state.amount) or 0
-		carryTarget = tostring(state.target or "Vault")
+		carryTarget = tostring(state.target or state.petName or state.eggName or "Vault")
 		carryEndsAt = os.clock() + (tonumber(state.timeLeft) or 60)
 		carryFrame.Visible = true
 		Effects.Pop(carryFrame, 1.05)

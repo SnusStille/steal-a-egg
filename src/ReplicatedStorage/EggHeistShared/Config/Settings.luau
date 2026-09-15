@@ -20,6 +20,8 @@ Settings.Heist = {
 	OwnerOnlineRequired = false, -- if true, can only steal from owners in-server
 	MinThiefLevel = 2,
 	ExtractionChannelTime = 3.0,
+	TackleHoldDuration = 1,
+	TackleDistance = 7,
 	-- Loot targets: quick grab (fast, quiet, small) vs full vault (slow, loud, big)
 	QuickGrabLootFraction = 0.4, -- of the computed full-vault loot
 	QuickGrabBreachMult = 0.5, -- breach channel multiplier for quick grabs
