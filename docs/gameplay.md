@@ -64,13 +64,17 @@ tiers with level gates and exponential costs. Owners get instant alerts
 
 - **Events** — rotating modifiers (income/luck/mutation mults, lighting,
   meteor-egg pickups). Fully data-driven in `Config/Events`.
-- **Quests & achievements** — dailies/weeklies + 34 achievements with cash,
+- **Quests & achievements** — dailies/weeklies + 37 achievements with cash,
   gem, and egg rewards; streaks and milestones included.
 - **Social** — leaderboards (wealth/pets/heists), most-wanted board, live
   Feed ticker, player-to-player trading with lock + timed confirm.
-- **Travel** — unlockable fast travel (spawn/market/event/heist/base);
-  blocked while carrying loot.
+- **Travel** — unlockable fast travel
+  (spawn/market/event/heist/base/extraction/grotto/beach); blocked while
+  carrying loot.
 - **Prestige** — reset for a permanent income multiplier when progression
   slows; the long-game lever.
 - **Golden Egg Hunt** — a glowing golden egg hides in the districts every
   few minutes; first claim wins gems + Feed fame.
+- **Map hotspots** — crystal grotto (gem harvest), sunny shores (message
+  bottle), wishing well (blessings), jump pads, lava river + obsidian
+  bridge, sky-vault parkour, and a hot-air balloon overhead.

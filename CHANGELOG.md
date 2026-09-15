@@ -1,5 +1,26 @@
 # Changelog
 
+## MAP — the map megapass (2026-09-15)
+
+Two new districts, five interactives, ambient life, and new content.
+Full gate green (syntax, refs, waits, sim `WARNS:0 ERRORS:0` incl. new
+activities + grotto-travel assertions).
+
+- CRYSTAL GROTTO (south-west): amethyst floor, neon spike ring, glowing
+  heart with a 15-gem harvest prompt (5-min cooldown), fireflies.
+- SUNNY SHORES (south-east): sand, wade-through lagoon, palms,
+  umbrellas, and a message-in-a-bottle treat that respawns.
+- WISHING WELL (plaza): toss 100 coins for blessings (+income, +luck,
+  coins, gems) on a 2-min cooldown.
+- JUMP PADS: touch to launch between spawn/market/heist/event.
+- LAVA RIVER + obsidian bridge by the volcano; base boulevard gardens,
+  event + base-row entry arches; sky-vault parkour (250 coins on top).
+- AMBIENT LIFE: orbiting hot-air balloon, garden butterflies, pond
+  fish, grotto motes.
+- CONTENT: Tide + Geode eggs, 4 map pets (Shelldon, Geodina,
+  Tidecaller, Prisma Horn), grotto/beach fast travel, 3 map quests,
+  3 achievements.
+
 ## GREAT — the polished-game pass (2026-09-15)
 
 Stealing is a headline feature now, and the game feels finished:
