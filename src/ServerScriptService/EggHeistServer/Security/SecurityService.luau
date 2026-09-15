@@ -353,6 +353,32 @@ function SecurityService.ToggleLockdown(player)
 			shield.CanCollide = false
 			shield.CanQuery = false
 			shield.Parent = plot
+			local billboard = Instance.new("BillboardGui")
+			billboard.Name = "LockdownLabel"
+			billboard.Size = UDim2.new(0, 280, 0, 54)
+			billboard.StudsOffset = Vector3.new(0, 17, 0)
+			billboard.AlwaysOnTop = true
+			billboard.Parent = shield
+			local text = Instance.new("TextLabel")
+			text.Size = UDim2.fromScale(1, 1)
+			text.BackgroundTransparency = 1
+			text.Text = "LOCKDOWN " .. tostring(lockdownDuration)
+			text.TextColor3 = Color3.fromRGB(140, 200, 255)
+			text.Font = Enum.Font.GothamBold
+			text.TextScaled = true
+			text.TextStrokeTransparency = 0.2
+			text.Parent = billboard
+			task.spawn(function()
+				for left = lockdownDuration, 0, -1 do
+					if not shield.Parent then
+						break
+					end
+					text.Text = "LOCKDOWN " .. tostring(left)
+					if left > 0 then
+						task.wait(1)
+					end
+				end
+			end)
 			task.delay(lockdownDuration + 1, function()
 				if shield and shield.Parent then
 					shield:Destroy()

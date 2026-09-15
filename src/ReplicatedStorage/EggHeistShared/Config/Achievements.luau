@@ -125,6 +125,12 @@ Achievements.List = {
 	{ Id = "crystal_harvest", Name = "Shiny Harvest", Text = "Harvest the crystal grotto",
 		Trigger = "ClaimCrystal",
 		Reward = { Gems = 5 } },
+	{ Id = "parade_shopper", Name = "Parade Shopper", Text = "Buy a pet off the pet parade",
+		Trigger = "ParadeBuy",
+		Reward = { Cash = 1000 } },
+	{ Id = "fuse_master", Name = "Fusion Chef", Text = "Fuse 3 pets into a better one",
+		Trigger = "FusePets",
+		Reward = { Cash = 1500 } },
 }
 
 Achievements.ById = {}

@@ -15,6 +15,7 @@ local Settings = require(ConfigFolder:WaitForChild("Settings"))
 local Validate = require(Shared:WaitForChild("Utilities"):WaitForChild("Validate"))
 local ModelFactory = require(Shared:WaitForChild("Utilities"):WaitForChild("ModelFactory"))
 local Rarities = require(ConfigFolder:WaitForChild("Rarities"))
+local Types = require(Shared:WaitForChild("Types"))
 
 local PetService = {}
 PetService.Name = "PetService"
@@ -687,6 +688,24 @@ function updateDisplays()
 			end
 		end
 	end
+end
+
+--- Grants a pet directly (pet parade, fusion). Mirrors hatch insert:
+--- fresh uid, collection count, dirty flag. Never equips.
+function PetService.GrantPet(player, petId, mut)
+	local profile = profileOf(player)
+	if not profile then
+		return nil
+	end
+	if not Pets.ById[petId] then
+		return nil
+	end
+	local pet = Types.NewPetRecord(registry.Data.GenerateUid(player), petId, mut)
+	profile.pets[#profile.pets + 1] = pet
+	local key = Types.CollectionKey(petId, mut)
+	profile.collection[key] = (profile.collection[key] or 0) + 1
+	registry.Data.MarkDirty(player)
+	return pet
 end
 
 --- Snatch: removes a DISPLAYED (equipped) pet from the owner's profile.

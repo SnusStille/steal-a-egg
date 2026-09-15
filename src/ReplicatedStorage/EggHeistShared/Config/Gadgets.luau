@@ -63,6 +63,16 @@ Gadgets.List = {
 		SprintMult = 1.3,
 		SprintSeconds = 60,
 	},
+	{
+		Id = "Slap",
+		DisplayName = "Slap Glove",
+		Description = "Smacks the nearest rival flying. Thieves hate it.",
+		Price = 2000,
+		MaxHeld = 5,
+		Kind = "Instant",
+		SlapRange = 14,
+		SlapPower = 65,
+	},
 }
 
 Gadgets.ById = {}

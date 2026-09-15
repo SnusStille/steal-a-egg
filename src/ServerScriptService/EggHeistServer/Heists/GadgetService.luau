@@ -201,6 +201,52 @@ function GadgetService.UseGadget(player, gadgetId)
 				"Your lasers and traps just went offline!", 4)
 		end
 		return true
+	elseif gadgetId == "Slap" then
+		local character = player.Character
+		local hrp = character and character:FindFirstChild("HumanoidRootPart")
+		if not hrp then
+			return false
+		end
+		local bestPart, bestDist = nil, def.SlapRange or 14
+		local bestPlayer = nil
+		for _, other in ipairs(Players:GetPlayers()) do
+			if other ~= player and other.Character then
+				local ohrp = other.Character:FindFirstChild("HumanoidRootPart")
+				if ohrp then
+					local dist = (hrp.Position - ohrp.Position).Magnitude
+					if dist < bestDist then
+						bestPart, bestDist, bestPlayer = ohrp, dist, other
+					end
+				end
+			end
+		end
+		if not bestPart then
+			registry.Notify.Send(player, "warning", "Nobody in range",
+				"Get closer to a rival first!", 3)
+			return false
+		end
+		if not consume(profile, gadgetId) then
+			return false
+		end
+		local push = bestPart.Position - hrp.Position
+		push = Vector3.new(push.X, 0, push.Z)
+		if push.Magnitude < 0.5 then
+			push = Vector3.new(0, 0, 1)
+		end
+		push = push.Unit * (def.SlapPower or 65) + Vector3.new(0, 35, 0)
+		pcall(function()
+			bestPart.AssemblyLinearVelocity = push
+		end)
+		profile.stats.gadgetsUsed = (profile.stats.gadgetsUsed or 0) + 1
+		registry.Data.MarkDirty(player)
+		registry.Notify.Send(player, "success", "SLAPPED!",
+			"That'll teach them to snoop around.", 4)
+		if bestPlayer then
+			registry.Notify.Send(bestPlayer, "warning", "Slapped!",
+				player.DisplayName .. " smacked you flying!", 4)
+		end
+		registry.Net.Fire(player, "Fx", "Gadget", gadgetId)
+		return true
 	end
 	return false
 end

@@ -25,6 +25,8 @@ Quests.DailyPool = {
 	{ Id = "wish_1",      Type = "MakeWishes",    Target = 1,   Difficulty = 1, Text = "Make a wish at the wishing well" },
 	{ Id = "crystal_1",   Type = "ClaimCrystals", Target = 1,   Difficulty = 1, Text = "Harvest the crystal grotto" },
 	{ Id = "skyvault_1",  Type = "SkyVault",      Target = 1,   Difficulty = 2, Text = "Claim the sky vault" },
+	{ Id = "parade_1",    Type = "ParadeBuy",     Target = 1,   Difficulty = 1, Text = "Buy a pet off the pet parade" },
+	{ Id = "fuse_1",      Type = "FusePets",      Target = 1,   Difficulty = 2, Text = "Fuse 3 pets into a better one" },
 }
 
 -- Weekly pool (2 assigned per week, bigger targets)

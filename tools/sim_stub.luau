@@ -1124,6 +1124,39 @@ function _SIM.activitiesLoop()
 	local hrp2 = p2.Character:FindFirstChild("HumanoidRootPart")
 	_SIM.check((hrp2.Position - parts.crystalPos).Magnitude < 40,
 		"activities", "grotto travel missed")
+	-- pet parade: buy the first affordable pet off the belt
+	local bought = false
+	for _, slot in ipairs(parts.parade) do
+		if slot.price <= prof.cash then
+			hrp.CFrame = CFrame.new(slot.pos + Vector3.new(0, 4, 0))
+			local petsBefore = #prof.pets
+			local cashBefore2 = prof.cash
+			rawget(slot.prompt, "Triggered"):Fire(p1)
+			_SIM.runDelayed()
+			_SIM.check(#prof.pets == petsBefore + 1, "activities", "parade buy did not grant")
+			_SIM.check(prof.cash == cashBefore2 - slot.price, "activities", "parade price wrong")
+			bought = true
+			break
+		end
+	end
+	_SIM.check(bought, "activities", "no affordable parade pet")
+	-- fusion: 3 granted commons become 1 better pet (net -2)
+	local PS = require(_SIM.serverModule("PetService"))
+	PS.GrantPet(p1, "chick", nil)
+	PS.GrantPet(p1, "chick", nil)
+	PS.GrantPet(p1, "chick", nil)
+	local nBefore = #prof.pets
+	local fused = AS.TestFuse(p1, "Common")
+	_SIM.check(fused ~= nil, "activities", "fusion failed")
+	_SIM.check(#prof.pets == nBefore - 2, "activities", "fusion count wrong")
+	-- slap: p1 smacks p2 flying
+	local GS = require(_SIM.serverModule("GadgetService"))
+	GS.GrantGadget(p1, "Slap", 1)
+	hrp.CFrame = CFrame.new(hrp2.Position + Vector3.new(0, 3, 0))
+	GS.UseGadget(p1, "Slap")
+	_SIM.runDelayed()
+	local vel = hrp2.AssemblyLinearVelocity
+	_SIM.check(vel and vel.Magnitude > 10, "activities", "slap did not launch")
 	return "activities-ok"
 end
 
