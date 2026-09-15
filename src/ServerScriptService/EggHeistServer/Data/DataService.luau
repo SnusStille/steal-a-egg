@@ -53,6 +53,23 @@ function DataService.GetDefaultSecurity()
 	return defaultSecurity()
 end
 
+local function defaultSettings()
+	return {
+		music = true,
+		musicVolume = 70,
+		sfx = true,
+		sfxVolume = 80,
+		notifications = true,
+		showPets = true,
+		autoHatch = false,
+		cameraShake = true,
+		reducedEffects = false,
+		performanceMode = false,
+		heistAlerts = true,
+		npcTips = true,
+	}
+end
+
 local function defaultProfile(userId)
 	return {
 		version = Settings.DataStoreVersion,
@@ -86,18 +103,7 @@ local function defaultProfile(userId)
 		},
 		daily = { lastClaimDay = -1, streak = 0 },
 		prestige = { count = 0, bonus = 0 },
-		settings = {
-			music = true,
-			sfx = true,
-			notifications = true,
-			showPets = true,
-			autoHatch = false,
-			cameraShake = true,
-			reducedEffects = false,
-			performanceMode = false,
-			heistAlerts = true,
-			npcTips = true,
-		},
+		settings = defaultSettings(),
 		tutorial = { done = false, step = 1 },
 		boosts = {}, -- { {id=..., expiresAt=...} }
 		stats = {
@@ -179,6 +185,12 @@ local function sanitizeProfile(p)
 	if type(p.gadgets) ~= "table" then p.gadgets = {} end
 	if type(p.achievements) ~= "table" then p.achievements = {} end
 	if type(p.collectionRewards) ~= "table" then p.collectionRewards = {} end
+	if type(p.settings) ~= "table" then p.settings = {} end
+	for key, default in pairs(defaultSettings()) do
+		if type(p.settings[key]) ~= type(default) then
+			p.settings[key] = default
+		end
+	end
 	-- clamp gadget counts (exploit/shenanigan guard)
 	for gadgetId, count in pairs(p.gadgets) do
 		if type(count) ~= "number" or count < 0 then
@@ -410,13 +422,24 @@ function DataService.Start()
 		if type(key) ~= "string" or #key > 32 then
 			return
 		end
-		if profile.settings[key] == nil then
+		local current = profile.settings[key]
+		if current == nil then
 			return
 		end
-		if type(value) ~= "boolean" then
+		if type(current) == "boolean" then
+			if type(value) ~= "boolean" then
+				return
+			end
+			profile.settings[key] = value
+		elseif type(current) == "number" then
+			value = tonumber(value)
+			if not value then
+				return
+			end
+			profile.settings[key] = math.clamp(math.floor(value), 0, 100)
+		else
 			return
 		end
-		profile.settings[key] = value
 		DataService.MarkDirty(player)
 	end)
 

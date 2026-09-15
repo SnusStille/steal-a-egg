@@ -220,7 +220,10 @@
 						Extract = "rbxasset://sounds/coins.wav",
 						}
 						
-						-- Background music (uploaded IDs go here; empty = no music).
+						-- Background music is GENERATIVE (SoundManager.StartMusic): an original
+						-- endless pentatonic music-box melody from pitched built-in plucks. No
+						-- uploaded tracks, nothing to license, nothing copied. This table stays so
+						-- an uploaded lobby track can be added later if ever wanted.
 						Audio.Music = {
 						-- Lobby = "rbxassetid://0000000000",
 						}
@@ -4180,6 +4183,23 @@
 						return defaultSecurity()
 						end
 						
+						local function defaultSettings()
+						return {
+						music = true,
+						musicVolume = 70,
+						sfx = true,
+						sfxVolume = 80,
+						notifications = true,
+						showPets = true,
+						autoHatch = false,
+						cameraShake = true,
+						reducedEffects = false,
+						performanceMode = false,
+						heistAlerts = true,
+						npcTips = true,
+						}
+						end
+						
 						local function defaultProfile(userId)
 						return {
 						version = Settings.DataStoreVersion,
@@ -4213,18 +4233,7 @@
 						},
 						daily = { lastClaimDay = -1, streak = 0 },
 						prestige = { count = 0, bonus = 0 },
-						settings = {
-						music = true,
-						sfx = true,
-						notifications = true,
-						showPets = true,
-						autoHatch = false,
-						cameraShake = true,
-						reducedEffects = false,
-						performanceMode = false,
-						heistAlerts = true,
-						npcTips = true,
-						},
+						settings = defaultSettings(),
 						tutorial = { done = false, step = 1 },
 						boosts = {}, -- { {id=..., expiresAt=...} }
 						stats = {
@@ -4306,6 +4315,12 @@
 						if type(p.gadgets) ~= "table" then p.gadgets = {} end
 						if type(p.achievements) ~= "table" then p.achievements = {} end
 						if type(p.collectionRewards) ~= "table" then p.collectionRewards = {} end
+						if type(p.settings) ~= "table" then p.settings = {} end
+						for key, default in pairs(defaultSettings()) do
+						if type(p.settings[key]) ~= type(default) then
+						p.settings[key] = default
+						end
+						end
 						-- clamp gadget counts (exploit/shenanigan guard)
 						for gadgetId, count in pairs(p.gadgets) do
 						if type(count) ~= "number" or count &lt; 0 then
@@ -4537,13 +4552,24 @@
 						if type(key) ~= "string" or #key &gt; 32 then
 						return
 						end
-						if profile.settings[key] == nil then
+						local current = profile.settings[key]
+						if current == nil then
 						return
 						end
+						if type(current) == "boolean" then
 						if type(value) ~= "boolean" then
 						return
 						end
 						profile.settings[key] = value
+						elseif type(current) == "number" then
+						value = tonumber(value)
+						if not value then
+						return
+						end
+						profile.settings[key] = math.clamp(math.floor(value), 0, 100)
+						else
+						return
+						end
 						DataService.MarkDirty(player)
 						end)
 						
@@ -14691,18 +14717,21 @@
 							return true
 							end
 							
-							-- pitch shifts PlaybackSpeed (1 = normal). Pass 1 +/- small random for variety.
-							function SoundManager.Play(soundName, volume, pitch)
-							if not sfxEnabled() then
-							return
+							-- Numeric volume setting (0..100) as a 0..1 multiplier.
+							local function volumeOf(key, fallback)
+							if dataController and dataController.GetSetting then
+							local v = tonumber(dataController.GetSetting(key))
+							if v then
+							return math.clamp(v / 100, 0, 1)
 							end
-							local assetId = SoundManager.Sounds[soundName]
-							if not assetId then
-							return
 							end
+							return fallback
+							end
+							
+							local function emit(assetId, volume, pitch)
 							local sound = Instance.new("Sound")
 							sound.SoundId = assetId
-							sound.Volume = volume or 0.6
+							sound.Volume = volume
 							sound.PlaybackSpeed = tonumber(pitch) or 1
 							sound.Parent = SoundService
 							sound.Ended:Connect(function()
@@ -14715,6 +14744,66 @@
 							task.delay(5, function()
 							if sound and sound.Parent then
 							sound:Destroy()
+							end
+							end)
+							end
+							
+							-- pitch shifts PlaybackSpeed (1 = normal). Pass 1 +/- small random for variety.
+							function SoundManager.Play(soundName, volume, pitch)
+							if not sfxEnabled() then
+							return
+							end
+							local assetId = SoundManager.Sounds[soundName]
+							if not assetId then
+							return
+							end
+							local finalVolume = (volume or 0.6) * volumeOf("sfxVolume", 0.8)
+							if finalVolume &lt;= 0.001 then
+							return
+							end
+							emit(assetId, finalVolume, pitch)
+							end
+							
+							-- Generative music-box: an original, endless, calm pentatonic melody built
+							-- from a built-in pluck at pitched playback speeds. Zero uploaded assets,
+							-- so there is nothing to license and nothing that can be a copy of
+							-- anything. Respects the music toggle + musicVolume slider live.
+							local MUSIC_STEPS = { 0, 2, 4, 7, 9, 12, 14, 16, 19, 21, 24 }
+							local musicStarted = false
+							
+							local function musicEnabled()
+							if dataController and dataController.GetSetting then
+							return dataController.GetSetting("music") ~= false
+							end
+							return true
+							end
+							
+							function SoundManager.StartMusic()
+							if musicStarted then
+							return
+							end
+							musicStarted = true
+							task.spawn(function()
+							local index = 5
+							local beat = 0
+							while true do
+							if musicEnabled() then
+							beat = beat + 1
+							-- random walk across two pentatonic octaves: calm + endless
+							index = math.clamp(index + math.random(-2, 2), 1, #MUSIC_STEPS)
+							local ratio = 2 ^ (MUSIC_STEPS[index] / 12)
+							local vol = 0.22 * volumeOf("musicVolume", 0.7)
+							if vol &gt; 0.01 and beat % 9 ~= 0 then -- breathing rest
+							if beat % 8 == 0 then
+							emit(SoundManager.Sounds.Success, vol, 0.5)
+							else
+							emit(SoundManager.Sounds.Notify, vol, 0.7 * ratio)
+							end
+							end
+							task.wait(0.42)
+							else
+							task.wait(1)
+							end
 							end
 							end)
 							end
@@ -17236,6 +17325,7 @@
 							function MainScreen.Init(context)
 							ctx = context
 							SoundManager.Init(ctx)
+							SoundManager.StartMusic()
 							local player = Players.LocalPlayer
 							local playerGui = player:WaitForChild("PlayerGui")
 							gui = UIFactory.ScreenGui("EggHeistMain", 10)
@@ -18288,7 +18378,9 @@
 							
 							local SETTING_DEFS = {
 							{ Key = "music", Label = "Music" },
+							{ Key = "musicVolume", Label = "Music volume", Kind = "Volume" },
 							{ Key = "sfx", Label = "Sound effects" },
+							{ Key = "sfxVolume", Label = "SFX volume", Kind = "Volume" },
 							{ Key = "notifications", Label = "Notifications" },
 							{ Key = "showPets", Label = "Show my pets" },
 							{ Key = "autoHatch", Label = "Auto-hatch hatched-on-buy" },
@@ -18335,7 +18427,31 @@
 							local label = UIFactory.Label(def.Label, UDim2.new(1, -80, 1, 0), Theme.Text, 14)
 							label.TextXAlignment = Enum.TextXAlignment.Left
 							label.Parent = card
-							if def.Key == "autoHatch" and not autoHatchOwned then
+							if def.Kind == "Volume" then
+							local value = math.clamp(math.floor(tonumber(settings[def.Key]) or 70), 0, 100)
+							local valueLabel = UIFactory.Label(tostring(value),
+							UDim2.new(0, 44, 0, 30), Theme.Text, 14)
+							valueLabel.Position = UDim2.new(1, -100, 0.5, -15)
+							valueLabel.Parent = card
+							local function step(delta)
+							value = math.clamp(value + delta, 0, 100)
+							valueLabel.Text = tostring(value)
+							ctx.Net.Fire("UpdateSetting", def.Key, value)
+							-- optimistic local update
+							local data = ctx.Data.Get()
+							if data and data.settings then
+							data.settings[def.Key] = value
+							end
+							end
+							local minus = UIFactory.Button("-", function() step(-10) end)
+							minus.Size = UDim2.new(0, 44, 0, 30)
+							minus.Position = UDim2.new(1, -148, 0.5, -15)
+							minus.Parent = card
+							local plus = UIFactory.Button("+", function() step(10) end)
+							plus.Size = UDim2.new(0, 44, 0, 30)
+							plus.Position = UDim2.new(1, -52, 0.5, -15)
+							plus.Parent = card
+							elseif def.Key == "autoHatch" and not autoHatchOwned then
 							local unlock = UIFactory.PrimaryButton("UNLOCK 299 G", function()
 							ctx.Net.Fire("BuyAutoHatch")
 							end)

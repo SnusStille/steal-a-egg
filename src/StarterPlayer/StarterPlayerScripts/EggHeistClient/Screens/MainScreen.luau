@@ -49,6 +49,7 @@ local NAV = {
 function MainScreen.Init(context)
 	ctx = context
 	SoundManager.Init(ctx)
+	SoundManager.StartMusic()
 	local player = Players.LocalPlayer
 	local playerGui = player:WaitForChild("PlayerGui")
 	gui = UIFactory.ScreenGui("EggHeistMain", 10)

@@ -21,7 +21,9 @@ local Theme = UIFactory.Theme
 
 local SETTING_DEFS = {
 	{ Key = "music", Label = "Music" },
+	{ Key = "musicVolume", Label = "Music volume", Kind = "Volume" },
 	{ Key = "sfx", Label = "Sound effects" },
+	{ Key = "sfxVolume", Label = "SFX volume", Kind = "Volume" },
 	{ Key = "notifications", Label = "Notifications" },
 	{ Key = "showPets", Label = "Show my pets" },
 	{ Key = "autoHatch", Label = "Auto-hatch hatched-on-buy" },
@@ -68,7 +70,31 @@ function SettingsScreen.Refresh()
 		local label = UIFactory.Label(def.Label, UDim2.new(1, -80, 1, 0), Theme.Text, 14)
 		label.TextXAlignment = Enum.TextXAlignment.Left
 		label.Parent = card
-		if def.Key == "autoHatch" and not autoHatchOwned then
+		if def.Kind == "Volume" then
+			local value = math.clamp(math.floor(tonumber(settings[def.Key]) or 70), 0, 100)
+			local valueLabel = UIFactory.Label(tostring(value),
+				UDim2.new(0, 44, 0, 30), Theme.Text, 14)
+			valueLabel.Position = UDim2.new(1, -100, 0.5, -15)
+			valueLabel.Parent = card
+			local function step(delta)
+				value = math.clamp(value + delta, 0, 100)
+				valueLabel.Text = tostring(value)
+				ctx.Net.Fire("UpdateSetting", def.Key, value)
+				-- optimistic local update
+				local data = ctx.Data.Get()
+				if data and data.settings then
+					data.settings[def.Key] = value
+				end
+			end
+			local minus = UIFactory.Button("-", function() step(-10) end)
+			minus.Size = UDim2.new(0, 44, 0, 30)
+			minus.Position = UDim2.new(1, -148, 0.5, -15)
+			minus.Parent = card
+			local plus = UIFactory.Button("+", function() step(10) end)
+			plus.Size = UDim2.new(0, 44, 0, 30)
+			plus.Position = UDim2.new(1, -52, 0.5, -15)
+			plus.Parent = card
+		elseif def.Key == "autoHatch" and not autoHatchOwned then
 			local unlock = UIFactory.PrimaryButton("UNLOCK 299 G", function()
 				ctx.Net.Fire("BuyAutoHatch")
 			end)

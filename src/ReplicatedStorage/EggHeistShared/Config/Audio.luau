@@ -22,7 +22,10 @@ Audio.Sfx = {
 	Extract = "rbxasset://sounds/coins.wav",
 }
 
--- Background music (uploaded IDs go here; empty = no music).
+-- Background music is GENERATIVE (SoundManager.StartMusic): an original
+-- endless pentatonic music-box melody from pitched built-in plucks. No
+-- uploaded tracks, nothing to license, nothing copied. This table stays so
+-- an uploaded lobby track can be added later if ever wanted.
 Audio.Music = {
 	-- Lobby = "rbxassetid://0000000000",
 }
