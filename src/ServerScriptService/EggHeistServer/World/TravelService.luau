@@ -31,6 +31,11 @@ local function resolveDestination(player, destId)
 		return registry.World.GetEventCFrame()
 	elseif destId == "heist" then
 		return registry.World.GetHeistCFrame()
+	elseif destId == "grotto" or destId == "beach" then
+		if registry.Activities and registry.Activities.GetSpotCFrame then
+			return registry.Activities.GetSpotCFrame(destId)
+		end
+		return nil
 	elseif destId == "base" then
 		local plotIndex = registry.Base.GetPlotOf(player)
 		local plot = plotIndex and registry.World.GetPlotModel(plotIndex)

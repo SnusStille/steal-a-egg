@@ -178,6 +178,15 @@
 						{ Id = "hatch_500", Name = "Hatch Factory", Text = "Hatch 500 eggs",
 						Trigger = "HatchEgg", Stat = { Key = "totalHatched", Value = 500 },
 						Reward = { Cash = 60000, Gems = 30 } },
+						{ Id = "make_wish", Name = "Wish Upon a Well", Text = "Make a wish at the wishing well",
+						Trigger = "MakeWish",
+						Reward = { Cash = 500 } },
+						{ Id = "sky_climb", Name = "Sky High", Text = "Claim the sky vault",
+						Trigger = "SkyVault",
+						Reward = { Cash = 500 } },
+						{ Id = "crystal_harvest", Name = "Shiny Harvest", Text = "Harvest the crystal grotto",
+						Trigger = "ClaimCrystal",
+						Reward = { Gems = 5 } },
 						}
 						
 						Achievements.ById = {}
@@ -457,6 +466,18 @@
 						HatchWeights = { Common = 700, Rare = 420, Epic = 110, Legendary = 18, Mythic = 3, Secret = 0 },
 						},
 						{
+						Id = "Tide",
+						Tier = 2,
+						HatchTime = 70,
+						DisplayName = "Tide Egg",
+						Description = "Smells like the beach. Tastes like profit.",
+						Price = 1500,
+						Currency = "Cash",
+						RequiredLevel = 4,
+						AssetModel = "CrystalEgg",
+						HatchWeights = { Common = 500, Rare = 450, Epic = 170, Legendary = 30, Mythic = 5, Secret = 0 },
+						},
+						{
 						Id = "Golden",
 						Tier = 3,
 						HatchTime = 90,
@@ -481,6 +502,18 @@
 						AssetModel = "CrystalEgg",
 						MarketStall = "Legendary",
 						HatchWeights = { Common = 100, Rare = 350, Epic = 400, Legendary = 200, Mythic = 45, Secret = 4 },
+						},
+						{
+						Id = "Geode",
+						Tier = 4,
+						HatchTime = 130,
+						DisplayName = "Geode Egg",
+						Description = "Cracked open at the grotto. Sparkles inside.",
+						Price = 60000,
+						Currency = "Cash",
+						RequiredLevel = 11,
+						AssetModel = "GalaxyEgg",
+						HatchWeights = { Common = 50, Rare = 250, Epic = 400, Legendary = 280, Mythic = 80, Secret = 7 },
 						},
 						{
 						Id = "Lava",
@@ -1228,6 +1261,11 @@
 						{ "monarch",    "Monarch Moth",    "Epic",   60,  "GoldenEgg", "Bright yellow",   "Royalty, but tiny.", { "IncomePct", 5 } },
 						{ "kraken",     "Pocket Kraken",   "Legendary", 190, "ShadowEgg", "Black",         "Eight arms, all counting cash.", { "HeistPayoutPct", 9 } },
 						{ "seraph",     "Seraph Cub",      "Mythic", 700,  "AncientEgg","White",           "Blesses your vault daily.", { "IncomePct", 12 } },
+						-- v11 additions (map megapass: beach + grotto pals)
+						{ "shelldon",   "Shelldon",        "Common", 4,   "CrystalEgg","White",           "Home is where the shell is." },
+						{ "geodina",    "Geodina",         "Rare",   17,  "CrystalEgg","Bright violet",   "Cracks reveal sparkle." },
+						{ "tidecaller", "Tidecaller",      "Epic",   58,  "CrystalEgg","Bright bluish green", "Summons profitable waves.", { "IncomePct", 5 } },
+						{ "prisma",     "Prisma Horn",     "Legendary", 175, "GalaxyEgg", "Royal purple", "Refracts luck into cash.", { "HeistPayoutPct", 7 } },
 						}
 						
 						Pets.List = {}
@@ -11932,6 +11970,9 @@
 						"The well gurgles. No blessing this time.", 4)
 						end
 						registry.Quest.AddProgress(player, "MakeWishes", 1)
+						if registry.Achievement then
+						registry.Achievement.Check(player, "MakeWish")
+						end
 						end)
 						end
 						
@@ -12026,6 +12067,9 @@
 						registry.Notify.Send(player, "success", "+15 gems!",
 						"The grotto shares its shine.", 5)
 						registry.Quest.AddProgress(player, "ClaimCrystals", 1)
+						if registry.Achievement then
+						registry.Achievement.Check(player, "ClaimCrystal")
+						end
 						end)
 						end
 						
@@ -12143,6 +12187,9 @@
 						registry.Notify.Send(player, "success", "Sky vault claimed!",
 						"+250 coins. Nice climbing!", 5)
 						registry.Quest.AddProgress(player, "SkyVault", 1)
+						if registry.Achievement then
+						registry.Achievement.Check(player, "SkyVault")
+						end
 						end)
 						end
 						
@@ -12173,6 +12220,15 @@
 						end
 						
 						function ActivitiesService.Start()
+						end
+						
+						-- Travel target: grotto floor / beach sand + a safe drop.
+						function ActivitiesService.GetSpotCFrame(spot)
+						local at = anchor(spot == "beach" and "beach" or "grotto")
+						if not at then
+						return nil
+						end
+						return CFrame.new(at.X, 6, at.Z)
 						end
 						
 						-- Sim/test hook: live prompt + position handles (never used by gameplay).
@@ -13298,6 +13354,11 @@
 						return registry.World.GetEventCFrame()
 						elseif destId == "heist" then
 						return registry.World.GetHeistCFrame()
+						elseif destId == "grotto" or destId == "beach" then
+						if registry.Activities and registry.Activities.GetSpotCFrame then
+						return registry.Activities.GetSpotCFrame(destId)
+						end
+						return nil
 						elseif destId == "base" then
 						local plotIndex = registry.Base.GetPlotOf(player)
 						local plot = plotIndex and registry.World.GetPlotModel(plotIndex)
@@ -20077,6 +20138,8 @@
 							{ Id = "market", Label = "Egg Market" },
 							{ Id = "event", Label = "Event Grounds" },
 							{ Id = "heist", Label = "Heist Zone" },
+							{ Id = "grotto", Label = "Crystal Grotto" },
+							{ Id = "beach", Label = "Sunny Shores" },
 							{ Id = "extraction", Label = "Extraction" },
 							}
 							

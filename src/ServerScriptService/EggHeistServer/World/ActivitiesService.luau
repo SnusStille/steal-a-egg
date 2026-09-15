@@ -156,6 +156,9 @@ local function buildWishingWell()
 				"The well gurgles. No blessing this time.", 4)
 		end
 		registry.Quest.AddProgress(player, "MakeWishes", 1)
+		if registry.Achievement then
+			registry.Achievement.Check(player, "MakeWish")
+		end
 	end)
 end
 
@@ -250,6 +253,9 @@ local function buildCrystalClaim()
 		registry.Notify.Send(player, "success", "+15 gems!",
 			"The grotto shares its shine.", 5)
 		registry.Quest.AddProgress(player, "ClaimCrystals", 1)
+		if registry.Achievement then
+			registry.Achievement.Check(player, "ClaimCrystal")
+		end
 	end)
 end
 
@@ -367,6 +373,9 @@ local function buildSkyVault()
 		registry.Notify.Send(player, "success", "Sky vault claimed!",
 			"+250 coins. Nice climbing!", 5)
 		registry.Quest.AddProgress(player, "SkyVault", 1)
+		if registry.Achievement then
+			registry.Achievement.Check(player, "SkyVault")
+		end
 	end)
 end
 
@@ -397,6 +406,15 @@ function ActivitiesService.Init(_, reg)
 end
 
 function ActivitiesService.Start()
+end
+
+-- Travel target: grotto floor / beach sand + a safe drop.
+function ActivitiesService.GetSpotCFrame(spot)
+	local at = anchor(spot == "beach" and "beach" or "grotto")
+	if not at then
+		return nil
+	end
+	return CFrame.new(at.X, 6, at.Z)
 end
 
 -- Sim/test hook: live prompt + position handles (never used by gameplay).

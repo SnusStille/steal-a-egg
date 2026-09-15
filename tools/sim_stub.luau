@@ -1118,6 +1118,12 @@ function _SIM.activitiesLoop()
 	_SIM.check(parts.bottle.Enabled == false, "activities", "bottle not consumed")
 	_SIM.runDelayed()
 	_SIM.check(parts.bottle.Enabled == true, "activities", "bottle did not respawn")
+	local p2 = _SIM.players[2]
+	_SIM.fireServerAs(p2, "Travel", "grotto")
+	_SIM.runDelayed()
+	local hrp2 = p2.Character:FindFirstChild("HumanoidRootPart")
+	_SIM.check((hrp2.Position - parts.crystalPos).Magnitude < 40,
+		"activities", "grotto travel missed")
 	return "activities-ok"
 end
 

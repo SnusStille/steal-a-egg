@@ -116,6 +116,15 @@ Achievements.List = {
 	{ Id = "hatch_500", Name = "Hatch Factory", Text = "Hatch 500 eggs",
 		Trigger = "HatchEgg", Stat = { Key = "totalHatched", Value = 500 },
 		Reward = { Cash = 60000, Gems = 30 } },
+	{ Id = "make_wish", Name = "Wish Upon a Well", Text = "Make a wish at the wishing well",
+		Trigger = "MakeWish",
+		Reward = { Cash = 500 } },
+	{ Id = "sky_climb", Name = "Sky High", Text = "Claim the sky vault",
+		Trigger = "SkyVault",
+		Reward = { Cash = 500 } },
+	{ Id = "crystal_harvest", Name = "Shiny Harvest", Text = "Harvest the crystal grotto",
+		Trigger = "ClaimCrystal",
+		Reward = { Gems = 5 } },
 }
 
 Achievements.ById = {}

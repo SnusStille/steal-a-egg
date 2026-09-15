@@ -54,6 +54,11 @@ local D = {
 	{ "monarch",    "Monarch Moth",    "Epic",   60,  "GoldenEgg", "Bright yellow",   "Royalty, but tiny.", { "IncomePct", 5 } },
 	{ "kraken",     "Pocket Kraken",   "Legendary", 190, "ShadowEgg", "Black",         "Eight arms, all counting cash.", { "HeistPayoutPct", 9 } },
 	{ "seraph",     "Seraph Cub",      "Mythic", 700,  "AncientEgg","White",           "Blesses your vault daily.", { "IncomePct", 12 } },
+	-- v11 additions (map megapass: beach + grotto pals)
+	{ "shelldon",   "Shelldon",        "Common", 4,   "CrystalEgg","White",           "Home is where the shell is." },
+	{ "geodina",    "Geodina",         "Rare",   17,  "CrystalEgg","Bright violet",   "Cracks reveal sparkle." },
+	{ "tidecaller", "Tidecaller",      "Epic",   58,  "CrystalEgg","Bright bluish green", "Summons profitable waves.", { "IncomePct", 5 } },
+	{ "prisma",     "Prisma Horn",     "Legendary", 175, "GalaxyEgg", "Royal purple", "Refracts luck into cash.", { "HeistPayoutPct", 7 } },
 }
 
 Pets.List = {}

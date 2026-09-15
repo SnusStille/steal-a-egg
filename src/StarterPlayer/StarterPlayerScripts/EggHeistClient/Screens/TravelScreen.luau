@@ -10,6 +10,8 @@ local DESTINATIONS = {
 	{ Id = "market", Label = "Egg Market" },
 	{ Id = "event", Label = "Event Grounds" },
 	{ Id = "heist", Label = "Heist Zone" },
+	{ Id = "grotto", Label = "Crystal Grotto" },
+	{ Id = "beach", Label = "Sunny Shores" },
 	{ Id = "extraction", Label = "Extraction" },
 }
 
