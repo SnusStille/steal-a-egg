@@ -1,5 +1,27 @@
 # Changelog
 
+## GREAT — the polished-game pass (2026-09-15)
+
+Stealing is a headline feature now, and the game feels finished:
+loading screen, original music, collection icons, defenders board.
+Full gate green (syntax, refs, waits, sim `WARNS:0 ERRORS:0` incl. new
+petsnatch + tackle + totem + volume + defenders assertions).
+
+- STEAL SHOWCASED PETS: rival pets on display stands can be snatched
+  (Steal prompt → slowed pet-carry → extract). The thief keeps the pet
+  (fresh uid, collection + quest credit); fails restore it to the victim.
+- TACKLE + HEIST BEACON: victims get a hold-to-tackle prompt on the
+  carrier, and a red beacon marks the robbed base during every carry.
+- EGG TOTEM INCOME: each Egg Totem is +10% pet income (capped +50%).
+- LOADING SCREEN: title, progress bar, rotating tips, loud fatal errors.
+- GENERATIVE MUSIC: original endless pentatonic music-box, zero assets,
+  nothing to license — plus music/SFX volume steppers in Settings.
+- COLLECTION ICONS: every entry shows its 3D creature (silhouette when
+  undiscovered). Every UI button clicks.
+- TOP DEFENDERS board: thieves stopped, in Ranks + rotating spawn board.
+- FIX: extraction channel could survive a failed carry and instant-finish
+  the next heist. Mobile confirmed fully playable (all heists via prompts).
+
 ## CARTOON — UI, map & functions glow-up (2026-09-15)
 
 Everything chunkier, brighter, and more playful. Full gate green

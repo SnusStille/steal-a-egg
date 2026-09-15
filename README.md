@@ -19,7 +19,7 @@ by automated checks (see [Testing](#testing)).
 
 Full instructions: [`SETUP.md`](SETUP.md).
 
-> **Download:** grab **`Egg-Heist-CARTOON-MAX.zip`** — the place file, the world
+> **Download:** grab **`Egg-Heist-FINAL-MAX.zip`** — the place file, the world
 > model, all source, tools, and docs. Nothing else needed.
 
 ## Project structure

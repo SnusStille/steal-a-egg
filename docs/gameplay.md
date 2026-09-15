@@ -44,8 +44,8 @@ always shows the single next step; the tutorial is 8 steps, all gameplay.
 | **Scout** | Intel screen: vault band, security totals, owner online status. Costs nothing, reveals no exacts. |
 | **Infiltrate** | Walk in. Doors add breach time; cameras extend alarm range; lasers damage/slow; traps trigger. |
 | **Breach** | Channel at the vault (seconds scale with door tier, scenario, pet/gadget bonuses). Owner is alarmed unless the breach is silent. |
-| **Grab** | Loot = vault fraction × protection × event/scenario/pet/gadget multipliers. Decoys can waste the run on a fake egg. Eggs can also be snatched straight off rival pads (Steal prompt → slowed carry → extract). |
-| **Carry** | Slowed, visible, timed. Dying, leaving, or timeout returns the loot. Death-watch is real: no free deaths. |
+| **Grab** | Loot = vault fraction × protection × event/scenario/pet/gadget multipliers. Decoys can waste the run on a fake egg. Eggs can be snatched off rival pads and pets off rival showcases (Steal prompt → slowed carry → extract); stolen pets are kept on success. |
+| **Carry** | Slowed, visible, timed. A red beacon marks the robbed base and the victim can TACKLE the carrier for an instant return (+defense stat). Dying, leaving, or timeout returns the loot. |
 | **Extract** | Channel at the extraction pad → cash + XP + streak bonus (+5%/win, cap +25%) + rep + Feed fame. |
 | **Fail** | Loot returns to the victim, fail stat + rep loss, cooldowns spent. |
 
