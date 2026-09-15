@@ -1078,6 +1078,13 @@ function _SIM.petSnatchLoop()
 	return table.concat(out, " | ") .. " | petsnatch-ok"
 end
 
+function _SIM.healthLoop()
+	local HS = require(_SIM.serverModule("HealthService"))
+	_SIM.check(HS.DidRun(), "health", "health check did not run at boot")
+	_SIM.check(HS.GetFailCount() == 0, "health", "health check failures present")
+	return "health-ok"
+end
+
 function _SIM.activitiesLoop()
 	local p1 = _SIM.localPlayer
 	local DS = require(_SIM.serverModule("DataService"))

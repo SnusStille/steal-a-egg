@@ -145,9 +145,15 @@ function SecurityService.RebuildPlotSecurity(plotIndex)
 		return
 	end
 	local state = { lasers = {}, traps = {}, cameras = {} }
+	local serverFurniture = plot:FindFirstChild("ServerFurniture")
+	if not serverFurniture then
+		serverFurniture = Instance.new("Folder")
+		serverFurniture.Name = "ServerFurniture"
+		serverFurniture.Parent = plot
+	end
 	local folder = Instance.new("Folder")
 	folder.Name = "SecurityRuntime"
-	folder.Parent = plot
+	folder.Parent = serverFurniture
 	state.folder = folder
 	plotSecurity[plotIndex] = state
 
@@ -337,9 +343,19 @@ function SecurityService.ToggleLockdown(player)
 		local plot = plotIndex and registry.World.GetPlotModel(plotIndex)
 		local foundation = plot and plot:FindFirstChild("Foundation")
 		if plot and foundation and foundation:IsA("BasePart") then
-			local oldShield = plot:FindFirstChild("LockdownShield")
+			local furniture = plot:FindFirstChild("ServerFurniture")
+			if not furniture then
+				furniture = Instance.new("Folder")
+				furniture.Name = "ServerFurniture"
+				furniture.Parent = plot
+			end
+			local oldShield = furniture:FindFirstChild("LockdownShield")
 			if oldShield then
 				oldShield:Destroy()
+			end
+			local staleShield = plot:FindFirstChild("LockdownShield")
+			if staleShield then
+				staleShield:Destroy()
 			end
 			local shield = Instance.new("Part")
 			shield.Name = "LockdownShield"
@@ -352,7 +368,7 @@ function SecurityService.ToggleLockdown(player)
 			shield.Anchored = true
 			shield.CanCollide = false
 			shield.CanQuery = false
-			shield.Parent = plot
+			shield.Parent = furniture
 			local billboard = Instance.new("BillboardGui")
 			billboard.Name = "LockdownLabel"
 			billboard.Size = UDim2.new(0, 280, 0, 54)

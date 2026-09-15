@@ -117,12 +117,7 @@ function NpcService.Start()
 		warn("[EggHeist] NpcService: no world root, skipping NPCs.")
 		return
 	end
-	local folder = root:FindFirstChild("Npcs")
-	if not folder then
-		folder = Instance.new("Folder")
-		folder.Name = "Npcs"
-		folder.Parent = root
-	end
+	local folder = registry.World.GetRuntimeFolder("Npcs")
 	for _, def in ipairs(Npcs.List) do
 		if not folder:FindFirstChild("Npc_" .. def.Id) then
 			local model, body, head = buildNpc(def)

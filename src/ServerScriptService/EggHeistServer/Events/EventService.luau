@@ -83,7 +83,7 @@ end
 
 local function spawnPickupEgg(eggId, lifetime)
 	if not meteorFolder then
-		local gameplay = registry.World.Find("Gameplay")
+		local gameplay = registry.World.GetRuntimeFolder("Gameplay")
 		if not gameplay then
 			return
 		end
@@ -164,7 +164,7 @@ local function ensurePickupFolder()
 	if meteorFolder then
 		return meteorFolder
 	end
-	local gameplay = registry.World.Find("Gameplay")
+	local gameplay = registry.World.GetRuntimeFolder("Gameplay")
 	if not gameplay then
 		return nil
 	end

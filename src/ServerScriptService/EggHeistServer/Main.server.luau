@@ -38,6 +38,7 @@ local LOAD_ORDER = {
 	"Social/LeaderboardService",
 	"Social/TradeService",
 	"Admin/AdminService",
+	"Admin/HealthService", -- health check LAST: validates the booted game
 }
 
 local registry = {}
@@ -123,11 +124,16 @@ print(string.format("[EggHeist] Boot summary: %d loaded (%d failed), %d init ok 
 pcall(function()
 	local Workspace = game:GetService("Workspace")
 	local ReplicatedStorage = game:GetService("ReplicatedStorage")
-	local okValue = Workspace:FindFirstChild("EggHeistServerOK")
+	local stale = Workspace:FindFirstChild("EggHeistServerOK")
+	if stale then
+		pcall(function() stale:Destroy() end)
+	end
+	local diagnostics = registry.World.GetRuntimeFolder("Diagnostics")
+	local okValue = diagnostics:FindFirstChild("ServerOK")
 	if not okValue then
 		okValue = Instance.new("BoolValue")
-		okValue.Name = "EggHeistServerOK"
-		okValue.Parent = Workspace
+		okValue.Name = "ServerOK"
+		okValue.Parent = diagnostics
 	end
 	local remotesOk = ReplicatedStorage:FindFirstChild("EggHeistRemotes") ~= nil
 	okValue.Value = remotesOk and bootStats.loadFail == 0

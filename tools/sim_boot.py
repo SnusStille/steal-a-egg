@@ -117,6 +117,7 @@ def main() -> int:
     print("CLAIM:", lua.eval("_SIM.claimBase()"), "| delayed ran:", lua.eval("_SIM.runDelayed()"))
     print("HATCH:", lua.eval("_SIM.hatchFirstEgg()"), "| delayed ran:", lua.eval("_SIM.runDelayed()"))
     print("RICH:", lua.eval("_SIM.setupRichAs(_SIM.localPlayer)"))
+    print("HEALTH:", lua.eval("_SIM.healthLoop()"))
     print("ECONOMY:", lua.eval("_SIM.economyLoop()"))
     lua.eval('_SIM.addPlayer("SimTrader", 2)')
     print("P2: joined; RICH:", lua.eval("_SIM.setupRichAs(_SIM.players[2])"))

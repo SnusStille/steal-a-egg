@@ -18,7 +18,7 @@ WorldService.Name = "WorldService"
 local registry = nil
 local root = nil -- workspace.EggHeist (real or fallback-built)
 local usingFallback = false
-local liveFolder = nil -- runtime instances (pets, meteors, loot)
+local runtimeFolder = nil -- EggHeist/Runtime: the ONE home for server-created instances
 local extractionPad = nil
 local spawnLocation = nil
 local defaultLighting = {}
@@ -312,13 +312,14 @@ local function buildFallbackWorld()
 			Color3.fromRGB(90, 200, 120), Enum.Material.Neon)
 	end
 
-	-- Runtime + decor + interactables shells
+	-- Runtime root: EVERYTHING the server creates lives under Runtime/*.
+	-- Static geometry is never mixed with boot-created content.
+	local runtime = Instance.new("Folder")
+	runtime.Name = "Runtime"
+	runtime.Parent = root
 	local gameplay = Instance.new("Folder")
 	gameplay.Name = "Gameplay"
-	gameplay.Parent = root
-	local interactables = Instance.new("Folder")
-	interactables.Name = "Interactables"
-	interactables.Parent = root
+	gameplay.Parent = runtime
 	local decorations = Instance.new("Folder")
 	decorations.Name = "Decorations"
 	decorations.Parent = root
@@ -452,19 +453,30 @@ function WorldService.Init(_, reg)
 		buildFallbackWorld()
 	else
 		print("[EggHeist] Found existing world: " .. root:GetFullName())
-		-- Ensure a Gameplay folder exists for runtime content
-		if not root:FindFirstChild("Gameplay") then
-			local gameplay = Instance.new("Folder")
-			gameplay.Name = "Gameplay"
-			gameplay.Parent = root
-		end
 	end
 
-	liveFolder = Workspace:FindFirstChild("EggHeistLive")
-	if not liveFolder then
-		liveFolder = Instance.new("Folder")
-		liveFolder.Name = "EggHeistLive"
-		liveFolder.Parent = Workspace
+	-- ONE runtime root. Static world stays pristine; everything the server
+	-- creates at boot or during play lives under EggHeist/Runtime/*.
+	runtimeFolder = root:FindFirstChild("Runtime")
+	if not runtimeFolder then
+		runtimeFolder = Instance.new("Folder")
+		runtimeFolder.Name = "Runtime"
+		runtimeFolder.Parent = root
+	end
+	-- Legacy cleanup: pre-foundation builds scattered runtime folders
+	-- beside the world (or directly under the root). They are always
+	-- boot-created, so removing them here is safe.
+	for _, legacy in ipairs({ "EggHeistLive", "EggHeistActivities", "EggHeistDecor" }) do
+		local stale = Workspace:FindFirstChild(legacy)
+		if stale then
+			pcall(function() stale:Destroy() end)
+		end
+	end
+	for _, legacy in ipairs({ "Gameplay", "Npcs" }) do
+		local stale = root:FindFirstChild(legacy)
+		if stale then
+			pcall(function() stale:Destroy() end)
+		end
 	end
 
 	-- Cartoon base lighting: bright candy day (events restore to THIS)
@@ -499,8 +511,22 @@ function WorldService.IsFallback()
 	return usingFallback
 end
 
+-- The ONE accessor for runtime folders. Creates on demand, so callers
+-- never touch Workspace directly. Known children: Live, Activities,
+-- Decor, Gameplay, Npcs, Spawns.
+function WorldService.GetRuntimeFolder(name)
+	assert(runtimeFolder, "[EggHeist] FATAL: Runtime folder not ready")
+	local folder = runtimeFolder:FindFirstChild(name)
+	if not folder then
+		folder = Instance.new("Folder")
+		folder.Name = name
+		folder.Parent = runtimeFolder
+	end
+	return folder
+end
+
 function WorldService.GetLiveFolder()
-	return liveFolder
+	return WorldService.GetRuntimeFolder("Live")
 end
 
 function WorldService.Find(...)
@@ -539,7 +565,7 @@ function WorldService.EnsureSpawn()
 		spawnLocation.Neutral = true
 		spawnLocation.AllowTeamChangeOnTouch = false
 		spawnLocation.Duration = 0
-		spawnLocation.Parent = Workspace
+		spawnLocation.Parent = WorldService.GetRuntimeFolder("Spawns")
 	end
 	spawnLocation.CFrame = WorldService.GetSpawnCFrame()
 		* CFrame.new(0, -3, 0) -- pad surface under feet
@@ -551,10 +577,7 @@ end
 --------------------------------------------------------------------------------
 
 function WorldService.EnsureExtraction()
-	local gameplay = find("Gameplay")
-	if not gameplay then
-		return
-	end
+	local gameplay = WorldService.GetRuntimeFolder("Gameplay")
 	extractionPad = gameplay:FindFirstChild("ExtractionPad")
 	if not extractionPad then
 		extractionPad = Instance.new("Part")

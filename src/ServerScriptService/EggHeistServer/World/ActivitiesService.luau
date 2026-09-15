@@ -19,7 +19,7 @@ local ActivitiesService = {}
 ActivitiesService.Name = "ActivitiesService"
 
 local registry = nil
-local folder = nil -- EggHeistActivities, next to the world + decor
+local folder = nil -- Runtime/Activities (via WorldService, never Workspace-direct)
 local cooldowns = {} -- ["userId:key"] = os.clock() ready-at
 local padDebounce = {} -- [userId] = os.clock()
 
@@ -238,7 +238,7 @@ end
 local crystalPrompt = nil
 
 local function buildCrystalClaim()
-	local decor = Workspace:FindFirstChild("EggHeistDecor")
+	local decor = registry.World.GetRuntimeFolder("Decor")
 	local heart = decor and decor:FindFirstChild("GrottoHeart")
 	if not heart or not heart:IsA("BasePart") then
 		return
@@ -702,12 +702,7 @@ end
 
 function ActivitiesService.Init(_, reg)
 	registry = reg
-	folder = Workspace:FindFirstChild("EggHeistActivities")
-	if not folder then
-		folder = Instance.new("Folder")
-		folder.Name = "EggHeistActivities"
-		folder.Parent = Workspace
-	end
+	folder = registry.World.GetRuntimeFolder("Activities")
 	local builders = {
 		buildWishingWell, buildJumpPads, buildCrystalClaim,
 		buildBottle, buildSkyVault, buildPetParade, buildFusion,

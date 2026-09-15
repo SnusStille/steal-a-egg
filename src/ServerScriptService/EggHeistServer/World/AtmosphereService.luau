@@ -769,12 +769,7 @@ function AtmosphereService.Init(_, reg)
 	applyMoodTable(Juice.Moods.Default)
 
 	-- decor root lives next to the world so it never pollutes gameplay folders
-	decorFolder = Workspace:FindFirstChild("EggHeistDecor")
-	if not decorFolder then
-		decorFolder = Instance.new("Folder")
-		decorFolder.Name = "EggHeistDecor"
-		decorFolder.Parent = Workspace
-	end
+	decorFolder = registry.World.GetRuntimeFolder("Decor")
 
 	anchors.plaza = districtPosition("Spawn", "PlazaBase", FALLBACK_POS.plaza)
 	anchors.plaza = districtPosition("Spawn", "PlazaInnerFloor", anchors.plaza)

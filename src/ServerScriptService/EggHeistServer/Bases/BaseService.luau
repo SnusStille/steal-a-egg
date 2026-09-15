@@ -28,6 +28,19 @@ local function profileOf(player)
 	return registry.Data.GetProfile(player)
 end
 
+-- THE rule for plot content: server-created instances live in the plot's
+-- ServerFurniture folder, never beside the static template parts. Plot
+-- release destroys this folder, so cleanup is automatic.
+local function serverFurniture(plot)
+	local furniture = plot:FindFirstChild("ServerFurniture")
+	if not furniture then
+		furniture = Instance.new("Folder")
+		furniture.Name = "ServerFurniture"
+		furniture.Parent = plot
+	end
+	return furniture
+end
+
 --------------------------------------------------------------------------------
 -- Plot assignment
 --------------------------------------------------------------------------------
@@ -67,7 +80,7 @@ local function buildPlotFromTemplate(plotIndex)
 	if not plot or not template then
 		return false
 	end
-	if plot:FindFirstChild("BuiltByServer") then
+	if serverFurniture(plot):FindFirstChild("BuiltByServer") then
 		return true -- already built
 	end
 	local plotFoundation = plot:FindFirstChild("Foundation")
@@ -98,7 +111,7 @@ local function buildPlotFromTemplate(plotIndex)
 	end
 	local marker = Instance.new("BoolValue")
 	marker.Name = "BuiltByServer"
-	marker.Parent = plot
+	marker.Parent = serverFurniture(plot)
 	return true
 end
 
@@ -202,12 +215,7 @@ local function ensurePlotTotem(index)
 	if not plot then
 		return
 	end
-	local furniture = plot:FindFirstChild("ServerFurniture")
-	if not furniture then
-		furniture = Instance.new("Folder")
-		furniture.Name = "ServerFurniture"
-		furniture.Parent = plot
-	end
+	local furniture = serverFurniture(plot)
 	if furniture:FindFirstChild("PlotTotem") then
 		return
 	end
@@ -492,7 +500,7 @@ function BaseService.RefreshUpgradeVisuals(player)
 	local vaultTier = math.min(10, profile.base.upgrades.Vault or 0)
 	local anchor = registry.World.GetVaultAnchor(plotIndex)
 	if anchor and anchor:IsA("BasePart") then
-		local glow = plot:FindFirstChild("VaultGlow")
+		local glow = serverFurniture(plot):FindFirstChild("VaultGlow")
 		if not glow then
 			glow = Instance.new("Part")
 			glow.Name = "VaultGlow"
@@ -502,7 +510,7 @@ function BaseService.RefreshUpgradeVisuals(player)
 			glow.CanQuery = false
 			glow.CanTouch = false
 			glow.Material = Enum.Material.Neon
-			glow.Parent = plot
+			glow.Parent = serverFurniture(plot)
 		end
 		local warmth = math.floor(vaultTier / 10 * 200)
 		glow.Color = Color3.fromRGB(80 + warmth, 220 - math.floor(warmth / 2), 120)
@@ -520,7 +528,7 @@ function BaseService.RefreshUpgradeVisuals(player)
 			light.Color = glow.Color
 		end
 		-- Gold pile: grows with vault fill fraction (thieves can eyeball it!)
-		local pile = plot:FindFirstChild("VaultPile")
+		local pile = serverFurniture(plot):FindFirstChild("VaultPile")
 		if not pile then
 			pile = Instance.new("Part")
 			pile.Name = "VaultPile"
@@ -531,7 +539,7 @@ function BaseService.RefreshUpgradeVisuals(player)
 			pile.CanTouch = false
 			pile.Color = Color3.fromRGB(255, 200, 60)
 			pile.Material = Enum.Material.SmoothPlastic
-			pile.Parent = plot
+			pile.Parent = serverFurniture(plot)
 		end
 		local capacity = math.max(1, BaseService.GetVaultCapacity(player))
 		local fill = math.clamp((profile.base.vault or 0) / capacity, 0, 1)
@@ -625,7 +633,7 @@ local function buildDecoration(plot, decorId)
 		part.CFrame = spot
 		part.Parent = model
 	end
-	model.Parent = plot
+	model.Parent = serverFurniture(plot)
 end
 
 function BaseService.BuyDecoration(player, decorId)
