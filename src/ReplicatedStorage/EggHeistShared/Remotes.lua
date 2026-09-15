@@ -20,6 +20,7 @@ Remotes.C2S = {
 	"UnequipPet",    -- (petUid)
 	"DeletePet",     -- (petUid) (sells for 50% value)
 	"SellPet",       -- (petUid)
+	"TogglePetLock", -- (petUid)
 	"ClaimBase",     -- ()
 	"BuyUpgrade",    -- (trackId)
 	"BuySecurity",   -- (itemId)
@@ -49,6 +50,7 @@ Remotes.C2S = {
 	"ScoutBase",     -- (plotIndex)  intel push arrives via S2C ScoutResult
 	"BuyAutoHatch",  -- ()  gems unlock for auto-hatch (no pass needed)
 	"Admin",         -- (command, ...)  (admins only, server re-checks)
+	"Travel",        -- (destId)  fast travel; server validates + rate-limits
 }
 
 -- Server -> Client
@@ -64,6 +66,7 @@ Remotes.S2C = {
 	"ServerTime",    -- (unixTime) clock sync for daily/weekly logic
 	"TradeUpdate",   -- (tradeTable) phase/offers/partner state
 	"ScoutResult",   -- (scoutTable) target base intel
+	"Feed",          -- (feedTable) {icon, text} server event ticker
 }
 
 -- RemoteFunctions (client invokes, server answers)
@@ -81,6 +84,8 @@ Remotes.RateLimits = {
 	UnequipPet = 10,
 	DeletePet = 4,
 	SellPet = 4,
+	TogglePetLock = 6,
+	Travel = 2,
 	BuyUpgrade = 4,
 	BuySecurity = 4,
 	ToggleLockdown = 1,

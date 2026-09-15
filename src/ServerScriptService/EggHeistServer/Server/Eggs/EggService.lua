@@ -181,12 +181,15 @@ local function doHatch(player, eggUid)
 
 	-- celebrations for big hits
 	local tier = Rarities.GetTier(roll.rarity)
+	local petName = (Pets.ById[roll.id] and Pets.ById[roll.id].DisplayName) or roll.id
 	if tier >= 6 or (roll.mut and (roll.mut == "Ancient" or roll.mut == "Void")) then
 		registry.Notify.Broadcast("secret", "SECRET HATCH!",
-			player.DisplayName .. " hatched a " .. (roll.mut or "") .. " " .. (Pets.ById[roll.id].DisplayName or roll.id) .. "!", 8)
+			player.DisplayName .. " hatched a " .. (roll.mut or "") .. " " .. petName .. "!", 8)
+		registry.Net.FireAll("Feed", { icon = "SECRET", text = player.DisplayName .. " hatched " .. petName })
 	elseif tier >= 4 then
 		registry.Notify.Broadcast("rare", "Rare hatch!",
-			player.DisplayName .. " hatched a " .. roll.rarity .. " " .. (Pets.ById[roll.id].DisplayName or roll.id) .. "!", 6)
+			player.DisplayName .. " hatched a " .. roll.rarity .. " " .. petName .. "!", 6)
+		registry.Net.FireAll("Feed", { icon = "HATCH", text = player.DisplayName .. " hatched " .. petName })
 	end
 
 	registry.Data.MarkDirty(player)
@@ -199,8 +202,9 @@ local function doHatch(player, eggUid)
 	}
 end
 
-function EggService.BuyEgg(player, eggId)
+function EggService.BuyEgg(player, eggId, count)
 	eggId = Validate.String(eggId, 32, nil)
+	count = math.clamp(math.floor(tonumber(count) or 1), 1, 10)
 	if not Eggs.IsPurchasable(eggId) then
 		return false
 	end
@@ -214,18 +218,23 @@ function EggService.BuyEgg(player, eggId)
 			"Requires level " .. tostring(eggDef.RequiredLevel) .. ".", 4)
 		return false
 	end
-	if #profile.eggs >= 200 then
+	if #profile.eggs + count > 200 then
 		registry.Notify.Send(player, "warning", "Egg pouch full", "Hatch some eggs first!", 4)
 		return false
 	end
-	if not registry.Economy.SpendCash(player, eggDef.Price) then
+	local total = eggDef.Price * count
+	if not registry.Economy.SpendCash(player, total) then
 		registry.Notify.Send(player, "warning", "Not enough cash",
-			"You need " .. tostring(eggDef.Price) .. " cash.", 4)
+			"You need " .. tostring(total) .. " cash.", 4)
 		return false
 	end
-	local egg = Types.NewEggRecord(registry.Data.GenerateUid(player), eggId)
-	profile.eggs[#profile.eggs + 1] = egg
-	profile.stats.eggsBought = (profile.stats.eggsBought or 0) + 1
+	local bought = {}
+	for _ = 1, count do
+		local egg = Types.NewEggRecord(registry.Data.GenerateUid(player), eggId)
+		profile.eggs[#profile.eggs + 1] = egg
+		bought[#bought + 1] = egg
+	end
+	profile.stats.eggsBought = (profile.stats.eggsBought or 0) + count
 	if registry.Achievement then
 		registry.Achievement.Check(player, "BuyEgg")
 	end
@@ -237,14 +246,19 @@ function EggService.BuyEgg(player, eggId)
 	-- Auto-hatch: gamepass OR permanent gems unlock
 	if profile.settings.autoHatch
 		and (profile.gamepasses.AutoHatch or profile.autoHatchUnlock) then
-		local result = doHatch(player, egg.uid)
-		if result then
+		local results = {}
+		for _, egg in ipairs(bought) do
+			local result = doHatch(player, egg.uid)
+			if result then
+				results[#results + 1] = result
+			end
+		end
+		if #results > 0 then
 			registry.Net.Fire(player, "HatchResult", {
 				eggId = eggId,
-				results = { result },
+				results = results,
 				auto = true,
 			})
-			return true
 		end
 	end
 	return true
@@ -290,8 +304,8 @@ function EggService.GiftEgg(player, eggId, source)
 end
 
 function EggService.Start()
-	registry.Net.OnRequest("BuyEgg", function(player, eggId)
-		EggService.BuyEgg(player, eggId)
+	registry.Net.OnRequest("BuyEgg", function(player, eggId, count)
+		EggService.BuyEgg(player, eggId, count)
 	end)
 
 	registry.Net.OnRequest("BuyAutoHatch", function(player)

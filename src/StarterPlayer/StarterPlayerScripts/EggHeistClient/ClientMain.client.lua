@@ -114,6 +114,8 @@ local UI_MODULES = {
 	"ObjectiveUI",
 	"TradeUI",
 	"HelpUI",
+	"FeedUI",
+	"TravelUI",
 }
 
 local ctx = {}

@@ -40,6 +40,7 @@ local NAV = {
 	{ Id = "Quests", Label = "Quests", UI = "QuestsUI", Badge = "quests" },
 	{ Id = "Daily", Label = "Daily", UI = "DailyUI", Badge = "daily" },
 	{ Id = "Trade", Label = "Trade", UI = "TradeUI" },
+	{ Id = "Travel", Label = "Travel", UI = "TravelUI" },
 	{ Id = "Ranks", Label = "Ranks", UI = "Ranks" },
 	{ Id = "Settings", Label = "Settings", UI = "SettingsUI" },
 }
@@ -197,6 +198,25 @@ function MainUI.Init(context)
 			MainUI.Refresh(snapshot)
 		end)
 	end
+
+	-- welcome splash: big title that pops and fades (first impressions!)
+	pcall(function()
+		local splash = UIFactory.Label("EGG HEIST", UDim2.new(0, 420, 0, 70), Theme.Accent, 52)
+		splash.AnchorPoint = Vector2.new(0.5, 0.5)
+		splash.Position = UDim2.new(0.5, 0, 0.5, 0)
+		splash.Font = Enum.Font.GothamBold
+		splash.Parent = gui
+		local sub = UIFactory.Label("Steal eggs. Stack cash. Don't get caught.",
+			UDim2.new(0, 420, 0, 26), Theme.Text, 16)
+		sub.AnchorPoint = Vector2.new(0.5, 0.5)
+		sub.Position = UDim2.new(0.5, 0, 0.5, 48)
+		sub.Parent = gui
+		Effects.Pop(splash, 1.15)
+		task.delay(3.2, function()
+				if splash then splash:Destroy() end
+				if sub then sub:Destroy() end
+			end)
+	end)
 
 	-- Fx channel
 	ctx.Net.On("Fx", function(fxName, ...)
@@ -366,11 +386,20 @@ function MainUI.HandleFx(fxName, arg1, _arg2)
 		Effects.Confetti(playerGui, 40)
 	elseif fxName == "Gadget" then
 		SoundManager.Play("Gadget", 0.7, 0.9 + math.random() * 0.2)
+	elseif fxName == "Travel" then
+		SoundManager.Play("Gadget", 0.5, 1.3)
 	elseif fxName == "TrapStun" then
 		SoundManager.Play("Error", 0.7)
 		Effects.ShakeCamera(0.8, 0.4)
 	elseif fxName == "DecoyGrab" then
 		SoundManager.Play("Error", 0.6)
+	elseif fxName == "HeistAlarm" then
+		local alertsOn = not ctx.Data or ctx.Data.GetSetting("heistAlerts") ~= false
+		if alertsOn then
+			SoundManager.Play("HeistAlert", 0.8)
+			Effects.Flash(playerGui, Color3.fromRGB(220, 40, 40), 0.7)
+			Effects.ShakeCamera(0.5, 0.4)
+		end
 	elseif fxName == "EventStart" then
 		SoundManager.Play("Rare", 0.8)
 	elseif fxName == "MeteorLand" then

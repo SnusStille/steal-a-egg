@@ -59,6 +59,9 @@ function ProgressionService.DoPrestige(player)
 	end
 	-- keep N best pets by income, convert the rest to gems
 	table.sort(p.pets, function(a, b)
+		if (a.locked or false) ~= (b.locked or false) then
+			return a.locked == true
+		end
 		return registry.Pet.PetIncomePerSecond(a) > registry.Pet.PetIncomePerSecond(b)
 	end)
 	local kept = {}
@@ -109,6 +112,8 @@ function ProgressionService.DoPrestige(player)
 	registry.Notify.Broadcast("secret", "PRESTIGE!",
 		player.DisplayName .. " prestiged to rank " .. tostring(p.prestige.count)
 			.. " (+" .. tostring(math.floor(p.prestige.bonus * 100)) .. "% income)!", 8)
+	registry.Net.FireAll("Feed", { icon = "STAR",
+		text = player.DisplayName .. " prestiged to rank " .. tostring(p.prestige.count) })
 	if registry.Achievement then
 		registry.Achievement.Check(player, "Prestige")
 	end

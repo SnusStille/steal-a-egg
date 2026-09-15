@@ -17,6 +17,7 @@ local LOAD_ORDER = {
 	"Net/NetService", -- remotes + routing first (everyone depends on Net)
 	"World/WorldService", -- world discovery / fallback before gameplay builds on it
 	"World/NpcService", -- world NPCs (needs the world root)
+	"World/TravelService", -- fast travel (needs world anchors + base/heist state)
 	"Data/DataService", -- profiles before any system touches player data
 	"Net/NotifyService",
 	"Economy/EconomyService",

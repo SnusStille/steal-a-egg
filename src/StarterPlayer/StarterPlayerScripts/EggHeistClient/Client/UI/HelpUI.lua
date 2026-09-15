@@ -5,12 +5,13 @@ local HelpUI = {}
 
 local HELP_TOPICS = {
 	{ "QUICK START", "1. Walk NORTH to the green plots and CLAIM a base (press E at the glowing totem).\n2. Open SHOP and buy your first egg.\n3. Open BACKPACK, HATCH the egg, then EQUIP the pet.\n4. Earn cash, upgrade your base, and HEIST other players' vaults!" },
-	{ "CONTROLS", "Move: WASD / left stick\nJump: Space\nInteract: E (claim plots, vaults, pickups)\nHeist tools: Q (smoke), F (full heist), X (phase)\nLockdown: L (protects your vault)" },
+	{ "CONTROLS", "Move: WASD / left stick\nJump: Space\nInteract: E (claim plots, vaults, pickups)\nBackpack: B, Quests: Q, Grab loot: H\nScreenshot mode: P (hides all UI)\nChat: /stats /players /time /help" },
 	{ "YOUR BASE", "Your vault fills up over time from pet income. Walk to the golden VAULT and press E to COLLECT. Buy INCOME, VAULT and SECURITY upgrades in the BASE panel. Security slows thieves down!" },
 	{ "HEISTS", "Walk onto another player's plot and press E at their vault to grab eggs and cash. Watch out for traps and lasers! Escape SOUTH to the green EXTRACTION pad to bank your loot. Getting caught sends you home empty-handed." },
-	{ "PETS & EGGS", "Eggs hatch into pets with rarities from Common to SECRET. Better eggs cost more and need higher levels. Equip up to 3 pets (unlock more slots with prestige). Pets boost income and heist power. Fuse duplicates in the FUSION panel!" },
+	{ "PETS & EGGS", "Eggs hatch into pets with rarities from Common to SECRET. Better eggs cost more and need higher levels. Equip up to 3 pets (unlock more slots with prestige). Pets boost income and heist power. Sell spares, fill your COLLECTION, and trade with friends!" },
 	{ "EVENTS & QUESTS", "World events (Meteor Shower, Blood Moon...) drop rare eggs - check the EVENT board. Daily quests and achievements give gems and rewards. Come back every day for the login streak!" },
-	{ "STUCK?", "Green signs at spawn point to every district. If windows ever stop opening, rejoin the server - your base, pets and cash are saved automatically." },
+	{ "TRAVEL & NEWS", "Open TRAVEL (top buttons) to teleport between districts - 10s cooldown, and never with stolen loot! The bottom-left FEED shows server news: big heists, rare hatches and prestiges." },
+	{ "STUCK?", "Green signs at spawn point to every district. Lock favorite pets (LOCK button) so prestige never sells them. If windows ever stop opening, rejoin - your base, pets and cash are saved automatically." },
 }
 
 function HelpUI.Init()

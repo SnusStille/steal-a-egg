@@ -18,6 +18,22 @@ Events.List = {
 		},
 		Lighting = { ClockTime = 17.5, Brightness = 2.5, Ambient = Color3.fromRGB(140, 110, 80) },
 	},
+	EggRain = {
+		DisplayName = "Egg Rain",
+		Description = "Toxic eggs rain from the sky. Grab them before they melt away!",
+		Color = Color3.fromRGB(120, 255, 60),
+		Duration = 180,
+		MinCooldown = 2400,
+		Weight = 20,
+		MinPlayers = 1,
+		Modifiers = {
+			IncomeMult = 1.25,
+		},
+		MeteorCount = 16,
+		MeteorEgg = "Toxic",
+		MeteorLifetime = 100,
+		Lighting = { ClockTime = 15.0, Brightness = 2.2, Ambient = Color3.fromRGB(100, 140, 80) },
+	},
 	MeteorShower = {
 		DisplayName = "Meteor Shower",
 		Description = "Galaxy eggs crash around the map. Grab them before they despawn!",

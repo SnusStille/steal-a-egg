@@ -1,5 +1,33 @@
 # Changelog
 
+## v6.0.0 — Mega (2026-09-15)
+
+Biggest content + systems drop yet. 23 services, 19 UIs, 38 client->server
+endpoints, 12 server->client pushes. All validators green.
+
+**New content**
+- 2 new shop eggs: Ember (75k, Lv12) and Phantom (650k, Lv20); market
+  stalls rebuilt as a 2x5 grid of 10 with live prices.
+- 4 new pets: Coral Pup, Monarch Moth, Pocket Kraken, Seraph Cub.
+- 6 new achievements, 6 new quests (4 daily + 2 weekly), 2 new
+  collection milestones (250/350), 1 new event (Egg Rain: Toxic eggs
+  fall from the sky), 2 new base decorations (Egg Totem, Crystal Spire),
+  1 new gadget (Vault Drill: +25% loot on next grab), 3 new heist
+  titles (Egg Baron, Vault Reaper, Living Myth).
+
+**New systems**
+- Fast travel: TravelService + TravelUI (Base/Spawn/Market/Event/Heist/
+  Extraction), 10s cooldown, blocked while carrying loot.
+- Server feed: live ticker (heists, rare hatches, prestiges, events).
+- Heist streaks: +5% per consecutive win up to +25%, lost on fail.
+- Most Wanted board in the heist zone, updated on every extraction.
+- Heist alarm: victims get siren + red flash + shake (toggleable).
+- Lockdown shield bubble, vault gold pile (eyeball-able loot!),
+  sky beacons on event pickups.
+- Bulk buy x1/x10 in the egg shop, pet LOCK (safe from prestige),
+  chat commands (/stats /players /time /help), screenshot mode (P),
+  welcome splash, bigger gadget/docs/help coverage.
+
 ## v5.0.0 — Rebuild: map, claim prompts, boot probes (2026-09-15)
 
 **Boot probes (client can never die silently again).** After an exhaustive

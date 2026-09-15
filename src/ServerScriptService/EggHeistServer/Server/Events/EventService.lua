@@ -125,6 +125,17 @@ local function spawnPickupEgg(eggId, lifetime)
 			end
 		end)
 	end
+	-- sky beacon so pickups are findable (dies with the model on collect/despawn)
+	local beacon = Instance.new("Part")
+	beacon.Name = "Beacon"
+	beacon.Size = Vector3.new(2, 60, 2)
+	beacon.CFrame = CFrame.new(position.X, 30, position.Z)
+	beacon.Color = Color3.fromRGB(180, 130, 255)
+	beacon.Material = Enum.Material.Neon
+	beacon.Anchored = true
+	beacon.CanCollide = false
+	beacon.CanQuery = false
+	beacon.Parent = model
 	model.Parent = meteorFolder
 	-- crash landing fx
 	registry.Net.FireAll("Fx", "MeteorLand", position)
@@ -180,8 +191,9 @@ function EventService.StartEvent(eventId, forced)
 	if registry.World.SetEventBoard then
 		registry.World.SetEventBoard("LIVE NOW: " .. def.DisplayName)
 	end
+	registry.Net.FireAll("Feed", { icon = "EVENT", text = def.DisplayName .. " has begun!" })
 
-	if eventId == "MeteorShower" then
+	if eventId == "MeteorShower" or eventId == "EggRain" then
 		local count = math.min(def.MeteorCount or 10, Settings.Performance.MaxMeteors)
 		for i = 1, count do
 			task.delay((i - 1) * 3, function()

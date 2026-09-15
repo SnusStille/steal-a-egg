@@ -32,6 +32,9 @@ Settings.Heist = {
 		{ Rep = 15, Title = "Shadow" },
 		{ Rep = 30, Title = "Ghost" },
 		{ Rep = 60, Title = "Heist Legend" },
+		{ Rep = 100, Title = "Egg Baron" },
+		{ Rep = 200, Title = "Vault Reaper" },
+		{ Rep = 400, Title = "Living Myth" },
 	},
 	-- Breach scenarios: rolled per attempt, shown in the channel label.
 	-- { Id, Weight, BreachMult, LootMult, SilentAlive (leave owner unpinged) }

@@ -71,9 +71,52 @@ local function handle(player, command, arg1, arg2)
 	end
 end
 
+-- Safe chat commands for EVERYONE (no admin needed): /stats /players /time /help
+local function handleChat(player, message)
+	if type(message) ~= "string" or string.sub(message, 1, 1) ~= "/" then
+		return
+	end
+	local command = string.lower(Validate.String(message:match("^/(%S+)") or "", 16, ""))
+	if command == "stats" then
+		local profile = registry.Data.GetProfile(player)
+		if profile then
+			registry.Notify.Send(player, "info", "Your stats",
+				"Lv" .. tostring(profile.level or 1)
+				.. " | $" .. tostring(profile.cash or 0)
+				.. " | " .. tostring(#(profile.pets or {})) .. " pets"
+				.. " | " .. tostring(profile.stats.heistsWon or 0) .. " heists won"
+				.. " | " .. tostring(profile.stats.totalHatched or 0) .. " hatched", 6)
+		end
+	elseif command == "players" then
+		local names = {}
+		for _, other in ipairs(Players:GetPlayers()) do
+			names[#names + 1] = other.DisplayName
+		end
+		registry.Notify.Send(player, "info", "Players online (" .. tostring(#names) .. ")",
+			table.concat(names, ", "), 6)
+	elseif command == "time" then
+		local lighting = game:GetService("Lighting")
+		registry.Notify.Send(player, "info", "World time",
+			"Clock: " .. string.format("%.1f", lighting.ClockTime), 4)
+	elseif command == "help" then
+		registry.Notify.Send(player, "info", "Chat commands",
+			"/stats /players /time /help - plus the ? button for the full guide!", 6)
+	end
+end
+
 function AdminService.Start()
 	registry.Net.OnRequest("Admin", function(player, command, arg1, arg2)
 		handle(player, command, arg1, arg2)
+	end)
+	for _, player in ipairs(Players:GetPlayers()) do
+		player.Chatted:Connect(function(message)
+			pcall(handleChat, player, message)
+		end)
+	end
+	Players.PlayerAdded:Connect(function(player)
+		player.Chatted:Connect(function(message)
+			pcall(handleChat, player, message)
+		end)
 	end)
 end
 

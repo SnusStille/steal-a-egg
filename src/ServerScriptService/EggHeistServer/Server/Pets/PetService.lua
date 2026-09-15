@@ -227,6 +227,11 @@ function PetService.Sell(player, petUid, fraction)
 	if not pet then
 		return false
 	end
+	if pet.locked then
+		registry.Notify.Send(player, "warning", "Pet locked",
+			"Unlock this pet before selling or deleting it.", 4)
+		return false
+	end
 	local value = math.floor(PetService.GetSellValue(pet) * (fraction or 1))
 	table.remove(profile.pets, index)
 	-- remove from equipped
@@ -242,6 +247,22 @@ function PetService.Sell(player, petUid, fraction)
 		registry.Data.MarkDirty(player)
 	end
 	PetService.RebuildFollowers(player)
+	return true
+end
+
+function PetService.ToggleLock(player, petUid)
+	local profile = profileOf(player)
+	if not profile then
+		return false
+	end
+	local pet = PetService.FindPet(profile, petUid)
+	if not pet then
+		return false
+	end
+	pet.locked = not pet.locked
+	registry.Data.MarkDirty(player)
+	registry.Notify.Send(player, "info", pet.locked and "Pet locked" or "Pet unlocked",
+		pet.locked and "Safe from selling, deleting and prestige." or "This pet can be sold again.", 3)
 	return true
 end
 
@@ -524,6 +545,12 @@ function PetService.Start()
 		petUid = Validate.Uid(petUid)
 		if petUid then
 			PetService.Sell(player, petUid, 0.5)
+		end
+	end)
+	registry.Net.OnRequest("TogglePetLock", function(player, petUid)
+		petUid = Validate.Uid(petUid)
+		if petUid then
+			PetService.ToggleLock(player, petUid)
 		end
 	end)
 

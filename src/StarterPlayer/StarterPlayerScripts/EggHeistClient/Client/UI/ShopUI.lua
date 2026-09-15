@@ -119,9 +119,23 @@ function ShopUI.Refresh()
 	-- Eggs tab
 	local eggsPage = pages.Eggs:FindFirstChildOfClass("ScrollingFrame")
 	UIFactory.ClearChildren(eggsPage, true)
+	local qtyCard = rowCard(44)
+	local qtyLabel = UIFactory.Label("Buy quantity:", UDim2.new(1, -130, 0, 24), Theme.Text, 14)
+	qtyLabel.TextXAlignment = Enum.TextXAlignment.Left
+	qtyLabel.Position = UDim2.new(0, 0, 0, 10)
+	qtyLabel.Parent = qtyCard
+	local qtyBtn = UIFactory.Button("x" .. tostring(ShopUI.EggQty or 1), function()
+		ShopUI.EggQty = (ShopUI.EggQty == 10) and 1 or 10
+		ShopUI.Refresh()
+	end)
+	qtyBtn.Size = UDim2.new(0, 110, 0, 36)
+	qtyBtn.Position = UDim2.new(1, -118, 0, 4)
+	qtyBtn.Parent = qtyCard
+	qtyCard.Parent = eggsPage
+	local eggQty = ShopUI.EggQty or 1
 	for _, def in ipairs(Eggs.GetShopEggs()) do
 		local locked = level < (def.RequiredLevel or 1)
-		local afford = cash >= def.Price
+		local afford = cash >= def.Price * eggQty
 		local card = rowCard(108)
 		local name = UIFactory.Label(def.DisplayName, UDim2.new(1, -130, 0, 24), Theme.Text, 15)
 		name.TextXAlignment = Enum.TextXAlignment.Left
@@ -140,8 +154,9 @@ function ShopUI.Refresh()
 		odds.Position = UDim2.new(0, 0, 0, 62)
 		odds.Font = Theme.FontRegular
 		odds.Parent = card
-		local buy = UIFactory.PrimaryButton(Format.Money(def.Price), function()
-			ctx.Controllers.EggController.BuyEgg(def.Id)
+		local buy = UIFactory.PrimaryButton(Format.Money(def.Price * eggQty)
+			.. (eggQty > 1 and " (x" .. tostring(eggQty) .. ")" or ""), function()
+			ctx.Controllers.EggController.BuyEgg(def.Id, eggQty)
 		end)
 		buy.Size = UDim2.new(0, 110, 0, 44)
 		buy.Position = UDim2.new(1, -118, 0, 24)

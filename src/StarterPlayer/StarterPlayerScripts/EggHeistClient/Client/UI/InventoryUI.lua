@@ -208,10 +208,23 @@ local function petCard(pet, isEquipped)
 	local sell = UIFactory.Button("Sell " .. Format.Money(petSellDisplay(pet)), function()
 		ctx.Controllers.PetController.Sell(pet.uid)
 	end)
-	sell.Size = UDim2.new(1, 0, 0, 30)
+	sell.Size = UDim2.new(0.5, -2, 0, 30)
 	sell.Position = UDim2.new(0, 0, 1, -36)
-	sell.TextSize = 12
+	sell.TextSize = 11
 	sell.Parent = card
+	local lock = UIFactory.Button(pet.locked and "UNLOCK" or "LOCK", function()
+		ctx.Controllers.PetController.ToggleLock(pet.uid)
+	end)
+	lock.Size = UDim2.new(0.5, -2, 0, 30)
+	lock.Position = UDim2.new(0.5, 2, 1, -36)
+	lock.TextSize = 11
+	lock.Parent = card
+	if pet.locked then
+		local tag = UIFactory.Label("LOCKED", UDim2.new(0, 64, 0, 20), Theme.Accent, 11)
+		tag.Position = UDim2.new(1, -68, 0, 4)
+		tag.Font = Enum.Font.GothamBold
+		tag.Parent = card
+	end
 	return card
 end
 

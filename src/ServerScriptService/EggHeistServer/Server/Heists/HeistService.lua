@@ -182,6 +182,7 @@ local function returnLootToVictim(thief, reason)
 	local thiefProfile = profileOf(thief)
 	if thiefProfile then
 		thiefProfile.stats.heistsFailed = (thiefProfile.stats.heistsFailed or 0) + 1
+		thiefProfile.stats.heistStreak = 0
 		addRep(thief, Settings.Heist.RepPerFail or -1)
 		registry.Data.MarkDirty(thief)
 	end
@@ -381,8 +382,16 @@ function HeistService.CompleteGrab(thief, victim, plotIndex, target, scenarioId)
 	if registry.Pet and registry.Pet.GetEquippedBonuses then
 		petPayoutPct = registry.Pet.GetEquippedBonuses(thief).HeistPayoutPct or 0
 	end
+	local drillMult = 1
+	if registry.Gadget and registry.Gadget.ConsumeLootBonus then
+		drillMult = registry.Gadget.ConsumeLootBonus(thief) or 1
+	end
 	local loot = math.floor(vault * Economy.HeistStealFraction * (1 - protection)
-		* payoutMult * scenarioLootMult * (1 + petPayoutPct / 100))
+		* payoutMult * scenarioLootMult * (1 + petPayoutPct / 100) * drillMult)
+	if drillMult > 1 then
+		registry.Notify.Send(thief, "info", "Vault Drill!",
+			"Drill bonus: +" .. tostring(math.floor((drillMult - 1) * 100)) .. "% loot!", 4)
+	end
 	if target == "quick" then
 		loot = math.floor(loot * (Settings.Heist.QuickGrabLootFraction or 0.4))
 	end
@@ -413,6 +422,7 @@ function HeistService.CompleteGrab(thief, victim, plotIndex, target, scenarioId)
 		"Carry it to EXTRACTION before time runs out!", 6)
 	registry.Notify.Send(victim, "error", "You've been robbed!",
 		thief.DisplayName .. " grabbed loot! Stop them before extraction!", 6)
+	registry.Net.Fire(victim, "Fx", "HeistAlarm", thief.DisplayName)
 	registry.Net.Fire(thief, "HeistUpdate", {
 		carrying = true,
 		amount = loot,
@@ -435,6 +445,26 @@ end
 -- Extraction flow
 --------------------------------------------------------------------------------
 
+local function updateMostWanted()
+	if not registry.World.SetMostWanted then
+		return
+	end
+	local bestName, bestWins = nil, 0
+	for _, player in ipairs(Players:GetPlayers()) do
+		local profile = registry.Data.GetProfile(player)
+		local wins = profile and (profile.stats.heistsWon or 0) or 0
+		if wins > bestWins then
+			bestWins = wins
+			bestName = player.DisplayName
+		end
+	end
+	if bestName then
+		registry.World.SetMostWanted("MOST WANTED: " .. bestName .. " (" .. tostring(bestWins) .. " heists)")
+	else
+		registry.World.SetMostWanted("MOST WANTED: none yet")
+	end
+end
+
 local function completeExtraction(thief)
 	local state = carrying[thief.UserId]
 	if not state then
@@ -448,6 +478,18 @@ local function completeExtraction(thief)
 	local thiefProfile = profileOf(thief)
 	if thiefProfile then
 		thiefProfile.stats.heistsWon = (thiefProfile.stats.heistsWon or 0) + 1
+		-- streak bonus: +5% per consecutive win, capped at +25%
+		local streak = (thiefProfile.stats.heistStreak or 0) + 1
+		thiefProfile.stats.heistStreak = streak
+		local bonusPct = math.min(streak * 5, 25)
+		if bonusPct > 0 and state.amount > 0 then
+			local bonus = math.floor(state.amount * bonusPct / 100)
+			if bonus > 0 then
+				registry.Economy.AddCash(thief, bonus, "heist_streak")
+				registry.Notify.Send(thief, "info", "Streak x" .. tostring(streak) .. "!",
+					"Streak bonus: +$" .. tostring(bonus) .. " (" .. tostring(bonusPct) .. "%)", 5)
+			end
+		end
 		registry.Data.MarkDirty(thief)
 	end
 	registry.Quest.AddProgress(thief, "CompleteHeists", 1)
@@ -464,6 +506,10 @@ local function completeExtraction(thief)
 	end
 	registry.Net.Fire(thief, "HeistUpdate", { carrying = false, extracted = true })
 	registry.Net.Fire(thief, "Fx", "HeistWin", state.amount)
+	local feedVictim = Players:GetPlayerByUserId(state.victimUserId)
+	registry.Net.FireAll("Feed", { icon = "HEIST",
+		text = thief.DisplayName .. " robbed " .. (feedVictim and feedVictim.DisplayName or "a vault")
+			.. " for $" .. tostring(state.amount) })
 	if state.amount >= 25000 then
 		registry.Notify.Broadcast("rare", "Big heist!",
 			thief.DisplayName .. " extracted a massive haul!", 6)
@@ -473,6 +519,7 @@ local function completeExtraction(thief)
 		registry.Notify.Send(victim, "error", "Loot extracted",
 			thief.DisplayName .. " got away with your loot!", 6)
 	end
+	updateMostWanted()
 end
 
 local function extractionLoop()
@@ -545,6 +592,11 @@ function HeistService.AbandonCarry(player)
 			registry.Notify.Send(victim, "info", "Loot dropped",
 				"The thief abandoned your loot. Vault refunded.", 4)
 		end
+	end
+	local abandonProfile = profileOf(player)
+	if abandonProfile then
+		abandonProfile.stats.heistStreak = 0
+		registry.Data.MarkDirty(player)
 	end
 	registry.Notify.Send(player, "info", "Loot abandoned",
 		"You dropped the loot and slipped away.", 4)

@@ -131,6 +131,15 @@ function GadgetService.UseGadget(player, gadgetId)
 			state.smokeUntil = now + (def.ArmExpirySeconds or 120)
 			registry.Notify.Send(player, "success", "Smoke armed!",
 				"Your next breach starts silent.", 4)
+		elseif gadgetId == "Drill" then
+			if (state.drillUntil or 0) > now then
+				registry.Notify.Send(player, "info", "Already armed",
+					"Drill is already armed for your next grab.", 3)
+				return false
+			end
+			state.drillUntil = now + (def.ArmExpirySeconds or 120)
+			registry.Notify.Send(player, "success", "Drill armed!",
+				"Your next grab steals 25% more loot.", 4)
 		else
 			return false
 		end
@@ -227,6 +236,20 @@ function GadgetService.ConsumeArmedForBreach(player)
 		end
 	end
 	return mods
+end
+
+-- Consumed on successful grab only (a failed run keeps the drill armed).
+function GadgetService.ConsumeLootBonus(player)
+	local state = armed[player and player.UserId]
+	if state and (state.drillUntil or 0) > os.clock() then
+		state.drillUntil = nil
+		local profile = profileOf(player)
+		if profile and consume(profile, "Drill") then
+			registry.Data.MarkDirty(player)
+			return (Gadgets.ById.Drill and Gadgets.ById.Drill.LootMult) or 1.25
+		end
+	end
+	return 1
 end
 
 function GadgetService.IsSprintActive(player)

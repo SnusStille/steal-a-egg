@@ -183,11 +183,11 @@ local function buildFallbackWorld()
 	-- One stall per purchasable egg: platform + pedestal + egg display + price sign
 	local shopEggs = Eggs.GetShopEggs and Eggs.GetShopEggs() or {}
 	for i, def in ipairs(shopEggs) do
-		local col = (i - 1) % 4
-		local row = math.floor((i - 1) / 4)
-		local x = 67.5 + col * 15
-		local z = -6 + row * 12
-		mkPart(market, def.Id .. "_Platform", Vector3.new(12, 1, 9), CFrame.new(x, 1.2, z),
+		local col = (i - 1) % 5
+		local row = math.floor((i - 1) / 5)
+		local x = 68 + col * 11
+		local z = -7.5 + row * 15
+		mkPart(market, def.Id .. "_Platform", Vector3.new(10, 1, 9), CFrame.new(x, 1.2, z),
 			FALLBACK_COLORS.Accent)
 		mkPart(market, def.Id .. "_Pedestal", Vector3.new(3, 2.5, 3), CFrame.new(x, 2.8, z),
 			FALLBACK_COLORS.Floor)
@@ -200,7 +200,7 @@ local function buildFallbackWorld()
 		local priceText = string.upper(def.DisplayName or def.Id)
 			.. " $" .. tostring(def.Price or 0) .. " Lv" .. tostring(def.RequiredLevel or 1)
 		mkSign(market, def.Id .. "_PriceLabel", CFrame.new(x, 8.5, z - 3.4), priceText,
-			Color3.fromRGB(255, 255, 255), Vector3.new(13, 2.5, 1))
+			Color3.fromRGB(255, 255, 255), Vector3.new(10.5, 2.5, 1))
 	end
 
 	-- Heist vault area
@@ -231,6 +231,9 @@ local function buildFallbackWorld()
 		Color3.fromRGB(255, 220, 60), Enum.Material.Neon)
 	mkPart(heist, "HazardStripE", Vector3.new(1, 2.2, 50), CFrame.new(24, 0.1, 120),
 		Color3.fromRGB(255, 220, 60), Enum.Material.Neon)
+	-- Most Wanted board: HeistService writes the top thief here
+	mkSign(heist, "WantedBoard", CFrame.new(0, 7, 100), "MOST WANTED: none yet",
+		Color3.fromRGB(255, 120, 120), Vector3.new(18, 4, 1))
 
 	-- Event stage
 	local eventArea = Instance.new("Folder")
@@ -661,6 +664,48 @@ function WorldService.CloneEggAsset(assetName)
 	mesh.Scale = Vector3.new(2.4, 3.2, 2.4)
 	mesh.Parent = body
 	return model
+end
+
+-- Teleport anchors: CFrame a few studs above a district floor part.
+local function districtCFrame(areaName, floorName, fallback)
+	local root = Workspace:FindFirstChild("EggHeist")
+	local map = root and root:FindFirstChild("Map")
+	local area = map and map:FindFirstChild(areaName)
+	local floor = area and area:FindFirstChild(floorName)
+	if floor and floor:IsA("BasePart") then
+		return floor.CFrame + Vector3.new(0, floor.Size.Y / 2 + 4, 0)
+	end
+	return fallback
+end
+
+function WorldService.GetMarketCFrame()
+	return districtCFrame("EggMarket", "MarketFloor")
+end
+
+function WorldService.GetEventCFrame()
+	return districtCFrame("EventArea", "EventFloor")
+end
+
+function WorldService.GetHeistCFrame()
+	return districtCFrame("HeistArea", "HeistFloor")
+end
+
+--- Writes the top-thief line on the heist wanted board (Map/HeistArea/WantedBoard).
+function WorldService.SetMostWanted(text)
+	local root = Workspace:FindFirstChild("EggHeist")
+	if not root then
+		return false
+	end
+	local map = root:FindFirstChild("Map")
+	local heist = map and map:FindFirstChild("HeistArea")
+	local board = heist and heist:FindFirstChild("WantedBoard")
+	local gui = board and board:FindFirstChild("SignGui")
+	local label = gui and gui:FindFirstChild("SignText")
+	if label and label:IsA("TextLabel") then
+		label.Text = tostring(text)
+		return true
+	end
+	return false
 end
 
 --- Writes a line of text on the event board (Map/EventArea/EventBoard).

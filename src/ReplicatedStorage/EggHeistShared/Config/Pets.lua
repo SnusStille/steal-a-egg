@@ -49,6 +49,11 @@ local D = {
 	{ "blizzard",   "Blizzard Wyrm",   "Legendary", 170, "CrystalEgg", "Institutional white", "Whiteout with teeth.", { "IncomePct", 7 } },
 	{ "cyclone",    "Cyclone Serpent", "Mythic", 600, "GalaxyEgg", "Royal purple",    "The heist IS the storm.", { "BreachSpeedPct", 12 } },
 	{ "aurora",     "Aurora Titan",    "Secret", 2500, "CrystalEgg","Bright bluish green", "Dawn, but profitable.", { "CarrySpeedPct", 12 } },
+	-- v6 additions
+	{ "coral",      "Coral Pup",       "Rare",   18,  "CrystalEgg","Bright reddish violet", "Barks in bubbles." },
+	{ "monarch",    "Monarch Moth",    "Epic",   60,  "GoldenEgg", "Bright yellow",   "Royalty, but tiny.", { "IncomePct", 5 } },
+	{ "kraken",     "Pocket Kraken",   "Legendary", 190, "ShadowEgg", "Black",         "Eight arms, all counting cash.", { "HeistPayoutPct", 9 } },
+	{ "seraph",     "Seraph Cub",      "Mythic", 700,  "AncientEgg","White",           "Blesses your vault daily.", { "IncomePct", 12 } },
 }
 
 Pets.List = {}

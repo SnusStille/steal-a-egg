@@ -19,6 +19,10 @@ function PetController.Sell(petUid)
 	ctx.Net.Fire("SellPet", petUid)
 end
 
+function PetController.ToggleLock(petUid)
+	ctx.Net.Fire("TogglePetLock", petUid)
+end
+
 function PetController.Delete(petUid)
 	ctx.Net.Fire("DeletePet", petUid)
 end

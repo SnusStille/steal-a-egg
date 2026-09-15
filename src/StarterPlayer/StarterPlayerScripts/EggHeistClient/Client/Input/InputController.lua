@@ -6,6 +6,7 @@
 -- Add a keybind: InputController.Bind(Enum.KeyCode.X, function() ... end, "Label")
 
 local UserInputService = game:GetService("UserInputService")
+local Players = game:GetService("Players")
 
 local InputController = {}
 
@@ -58,6 +59,19 @@ function InputController.Start()
 			ctx.Controllers.HeistController.Grab()
 		end
 	end, "Grab loot (near enemy vault)")
+	local uiHidden = false
+	InputController.Bind(Enum.KeyCode.P, function()
+		uiHidden = not uiHidden
+		local player = Players.LocalPlayer
+		local playerGui = player and player:FindFirstChildOfClass("PlayerGui")
+		if playerGui then
+			for _, child in ipairs(playerGui:GetChildren()) do
+				if child:IsA("ScreenGui") and string.sub(child.Name, 1, 8) == "EggHeist" then
+					child.Enabled = not uiHidden
+				end
+			end
+		end
+	end, "Screenshot mode (hide UI)")
 	InputController.Bind(Enum.KeyCode.Escape, function()
 		local main = ctx.UI and ctx.UI.MainUI
 		if main and type(main.CloseAll) == "function" then

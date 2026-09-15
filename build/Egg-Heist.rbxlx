@@ -160,6 +160,24 @@
 						{ Id = "untouchable", Name = "Untouchable", Text = "Trigger your defenses 25 times",
 						Trigger = "Defend", Stat = { Key = "defensesTriggered", Value = 25 },
 						Reward = { Cash = 5000 } },
+						{ Id = "heist_10", Name = "Cat Burglar", Text = "Complete 10 heists",
+						Trigger = "HeistWin", Stat = { Key = "heistsWon", Value = 10 },
+						Reward = { Cash = 8000 } },
+						{ Id = "heist_50", Name = "Ghost of the Vaults", Text = "Complete 50 heists",
+						Trigger = "HeistWin", Stat = { Key = "heistsWon", Value = 50 },
+						Reward = { Cash = 40000, Gems = 20 } },
+						{ Id = "secret_luck", Name = "Jackpot Soul", Text = "Hatch a SECRET pet",
+						Trigger = "HatchEgg", Stat = { Key = "secretsHatched", Value = 1 },
+						Reward = { Gems = 25 } },
+						{ Id = "level_25", Name = "Veteran", Text = "Reach level 25",
+						Trigger = "LevelUp", Level = 25,
+						Reward = { Cash = 20000, Gems = 10 } },
+						{ Id = "collector_100", Name = "Archivist", Text = "Discover 100 collection entries",
+						Trigger = "HatchEgg", Collection = 100,
+						Reward = { Cash = 25000, Gems = 25 } },
+						{ Id = "hatch_500", Name = "Hatch Factory", Text = "Hatch 500 eggs",
+						Trigger = "HatchEgg", Stat = { Key = "totalHatched", Value = 500 },
+						Reward = { Cash = 60000, Gems = 30 } },
 						}
 						
 						Achievements.ById = {}
@@ -191,6 +209,8 @@
 						{ Count = 100, Reward = { Cash = 30000, Gems = 20 } },
 						{ Count = 150, Reward = { Egg = "Void", Gems = 30 } },
 						{ Count = 200, Reward = { Gems = 100, Egg = "Ancient" } },
+						{ Count = 250, Reward = { Gems = 60, Egg = "Storm" } },
+						{ Count = 350, Reward = { Gems = 150, Egg = "Ancient" } },
 						}
 						
 						return Collection
@@ -400,6 +420,30 @@
 						HatchWeights = { Common = 40, Rare = 200, Epic = 380, Legendary = 300, Mythic = 90, Secret = 8 },
 						},
 						{
+						Id = "Ember",
+						Tier = 4,
+						DisplayName = "Ember Egg",
+						Description = "Warm to the touch. Hums with storm-fire.",
+						Price = 75000,
+						Currency = "Cash",
+						RequiredLevel = 12,
+						AssetModel = "LavaEgg",
+						MarketStall = nil,
+						HatchWeights = { Common = 60, Rare = 280, Epic = 390, Legendary = 260, Mythic = 65, Secret = 6 },
+						},
+						{
+						Id = "Phantom",
+						Tier = 6,
+						DisplayName = "Phantom Egg",
+						Description = "Half here, half somewhere richer.",
+						Price = 650000,
+						Currency = "Cash",
+						RequiredLevel = 20,
+						AssetModel = "ShadowEgg",
+						MarketStall = nil,
+						HatchWeights = { Common = 10, Rare = 110, Epic = 300, Legendary = 400, Mythic = 220, Secret = 28 },
+						},
+						{
 						Id = "Toxic",
 						Tier = 2,
 						DisplayName = "Toxic Egg",
@@ -504,6 +548,22 @@
 						},
 						Lighting = { ClockTime = 17.5, Brightness = 2.5, Ambient = Color3.fromRGB(140, 110, 80) },
 						},
+						EggRain = {
+						DisplayName = "Egg Rain",
+						Description = "Toxic eggs rain from the sky. Grab them before they melt away!",
+						Color = Color3.fromRGB(120, 255, 60),
+						Duration = 180,
+						MinCooldown = 2400,
+						Weight = 20,
+						MinPlayers = 1,
+						Modifiers = {
+						IncomeMult = 1.25,
+						},
+						MeteorCount = 16,
+						MeteorEgg = "Toxic",
+						MeteorLifetime = 100,
+						Lighting = { ClockTime = 15.0, Brightness = 2.2, Ambient = Color3.fromRGB(100, 140, 80) },
+						},
 						MeteorShower = {
 						DisplayName = "Meteor Shower",
 						Description = "Galaxy eggs crash around the map. Grab them before they despawn!",
@@ -604,6 +664,7 @@
 						--             DisableSeconds (must be near an enemy base to use).
 						--   Sprint:   instant; SprintMult move speed for SprintSeconds (stacks with
 						--             carry slow, capped at normal walk speed).
+						--   Drill:    armed; next successful grab steals LootMult x as much.
 						
 						local Gadgets = {}
 						
@@ -636,6 +697,16 @@
 						Kind = "Instant",
 						DisableSeconds = 30,
 						UseRange = 60,
+						},
+						{
+						Id = "Drill",
+						DisplayName = "Vault Drill",
+						Description = "Next grab steals 25% more loot. Used when a breach starts.",
+						Price = 7500,
+						MaxHeld = 3,
+						Kind = "Armed",
+						LootMult = 1.25,
+						ArmExpirySeconds = 120,
 						},
 						{
 						Id = "Sprint",
@@ -844,6 +915,11 @@
 						{ "blizzard",   "Blizzard Wyrm",   "Legendary", 170, "CrystalEgg", "Institutional white", "Whiteout with teeth.", { "IncomePct", 7 } },
 						{ "cyclone",    "Cyclone Serpent", "Mythic", 600, "GalaxyEgg", "Royal purple",    "The heist IS the storm.", { "BreachSpeedPct", 12 } },
 						{ "aurora",     "Aurora Titan",    "Secret", 2500, "CrystalEgg","Bright bluish green", "Dawn, but profitable.", { "CarrySpeedPct", 12 } },
+						-- v6 additions
+						{ "coral",      "Coral Pup",       "Rare",   18,  "CrystalEgg","Bright reddish violet", "Barks in bubbles." },
+						{ "monarch",    "Monarch Moth",    "Epic",   60,  "GoldenEgg", "Bright yellow",   "Royalty, but tiny.", { "IncomePct", 5 } },
+						{ "kraken",     "Pocket Kraken",   "Legendary", 190, "ShadowEgg", "Black",         "Eight arms, all counting cash.", { "HeistPayoutPct", 9 } },
+						{ "seraph",     "Seraph Cub",      "Mythic", 700,  "AncientEgg","White",           "Blesses your vault daily.", { "IncomePct", 12 } },
 						}
 						
 						Pets.List = {}
@@ -926,6 +1002,10 @@
 						{ Id = "vault_10k",   Type = "BankVault",     Target = 10000, Difficulty = 2, Text = "Bank $10,000 into your vault" },
 						{ Id = "play_15m",    Type = "PlayMinutes",   Target = 15,  Difficulty = 1, Text = "Play for 15 minutes" },
 						{ Id = "trade_1",     Type = "CompleteTrades",Target = 1,   Difficulty = 1, Text = "Complete 1 trade" },
+						{ Id = "hatch_30",    Type = "HatchEggs",     Target = 30,  Difficulty = 2, Text = "Hatch 30 eggs" },
+						{ Id = "earn_100k",   Type = "EarnCash",      Target = 100000, Difficulty = 3, Text = "Earn $100,000" },
+						{ Id = "heist_2",     Type = "CompleteHeists",Target = 2,   Difficulty = 3, Text = "Complete 2 heists" },
+						{ Id = "vault_50k",   Type = "BankVault",     Target = 50000, Difficulty = 3, Text = "Bank $50,000 into your vault" },
 						}
 						
 						-- Weekly pool (2 assigned per week, bigger targets)
@@ -936,6 +1016,8 @@
 						{ Id = "w_mutation",  Type = "HatchMutated",  Target = 5,      Difficulty = 3, Text = "Hatch 5 mutated pets" },
 						{ Id = "w_legendary", Type = "HatchLegendaryPlus", Target = 3, Difficulty = 3, Text = "Hatch 3 Legendary+ pets" },
 						{ Id = "w_security",  Type = "UpgradeSecurity", Target = 3,    Difficulty = 3, Text = "Buy 3 security upgrades" },
+						{ Id = "w_earn_1m",   Type = "EarnCash",      Target = 1000000, Difficulty = 3, Text = "Earn $1,000,000" },
+						{ Id = "w_trade_5",   Type = "CompleteTrades",Target = 5,      Difficulty = 3, Text = "Complete 5 trades" },
 						}
 						
 						Quests.DailiesPerDay = 3
@@ -1151,6 +1233,9 @@
 						{ Rep = 15, Title = "Shadow" },
 						{ Rep = 30, Title = "Ghost" },
 						{ Rep = 60, Title = "Heist Legend" },
+						{ Rep = 100, Title = "Egg Baron" },
+						{ Rep = 200, Title = "Vault Reaper" },
+						{ Rep = 400, Title = "Living Myth" },
 						},
 						-- Breach scenarios: rolled per attempt, shown in the channel label.
 						-- { Id, Weight, BreachMult, LootMult, SilentAlive (leave owner unpinged) }
@@ -1304,6 +1389,8 @@
 						{ Id = "BannerBlue",  DisplayName = "Blue Banner", Price = 1500,  Currency = "Cash" },
 						{ Id = "Fountain",    DisplayName = "Egg Fountain",Price = 50,    Currency = "Gems" },
 						{ Id = "StatueGold",  DisplayName = "Gold Statue", Price = 150,   Currency = "Gems" },
+						{ Id = "EggTotem",    DisplayName = "Egg Totem",   Price = 8000,  Currency = "Cash" },
+						{ Id = "CrystalSpire", DisplayName = "Crystal Spire", Price = 120, Currency = "Gems" },
 						}
 						
 						-- Temporary boosts catalog (also grantable via daily rewards/events)
@@ -1476,6 +1563,7 @@
 					"UnequipPet",    -- (petUid)
 					"DeletePet",     -- (petUid) (sells for 50% value)
 					"SellPet",       -- (petUid)
+					"TogglePetLock", -- (petUid)
 					"ClaimBase",     -- ()
 					"BuyUpgrade",    -- (trackId)
 					"BuySecurity",   -- (itemId)
@@ -1505,6 +1593,7 @@
 					"ScoutBase",     -- (plotIndex)  intel push arrives via S2C ScoutResult
 					"BuyAutoHatch",  -- ()  gems unlock for auto-hatch (no pass needed)
 					"Admin",         -- (command, ...)  (admins only, server re-checks)
+					"Travel",        -- (destId)  fast travel; server validates + rate-limits
 					}
 					
 					-- Server -&gt; Client
@@ -1520,6 +1609,7 @@
 					"ServerTime",    -- (unixTime) clock sync for daily/weekly logic
 					"TradeUpdate",   -- (tradeTable) phase/offers/partner state
 					"ScoutResult",   -- (scoutTable) target base intel
+					"Feed",          -- (feedTable) {icon, text} server event ticker
 					}
 					
 					-- RemoteFunctions (client invokes, server answers)
@@ -1537,6 +1627,8 @@
 					UnequipPet = 10,
 					DeletePet = 4,
 					SellPet = 4,
+					TogglePetLock = 6,
+					Travel = 2,
 					BuyUpgrade = 4,
 					BuySecurity = 4,
 					ToggleLockdown = 1,
@@ -1659,7 +1751,7 @@
 					end
 					
 					function Types.NewPetRecord(uid, petId, mutation)
-					return { uid = uid, id = petId, mut = mutation, lvl = 1, xp = 0 }
+					return { uid = uid, id = petId, mut = mutation, lvl = 1, xp = 0, locked = false }
 					end
 					
 					-- "petId:Mutation" key used by collection tracking (server + client must agree).
@@ -1991,15 +2083,15 @@
 			</Item>
 		</Item>
 	</Item>
-	<Item class="ServerScriptService" referent="RBX73">
+	<Item class="ServerScriptService" referent="RBX74">
 		<Properties>
 			<string name="Name">ServerScriptService</string>
 		</Properties>
-		<Item class="Folder" referent="RBX72">
+		<Item class="Folder" referent="RBX73">
 			<Properties>
 				<string name="Name">EggHeistServer</string>
 			</Properties>
-			<Item class="Folder" referent="RBX70">
+			<Item class="Folder" referent="RBX71">
 				<Properties>
 					<string name="Name">Server</string>
 				</Properties>
@@ -2083,9 +2175,52 @@
 							end
 							end
 							
+							-- Safe chat commands for EVERYONE (no admin needed): /stats /players /time /help
+							local function handleChat(player, message)
+							if type(message) ~= "string" or string.sub(message, 1, 1) ~= "/" then
+							return
+							end
+							local command = string.lower(Validate.String(message:match("^/(%S+)") or "", 16, ""))
+							if command == "stats" then
+							local profile = registry.Data.GetProfile(player)
+							if profile then
+							registry.Notify.Send(player, "info", "Your stats",
+							"Lv" .. tostring(profile.level or 1)
+							.. " | $" .. tostring(profile.cash or 0)
+							.. " | " .. tostring(#(profile.pets or {})) .. " pets"
+							.. " | " .. tostring(profile.stats.heistsWon or 0) .. " heists won"
+							.. " | " .. tostring(profile.stats.totalHatched or 0) .. " hatched", 6)
+							end
+							elseif command == "players" then
+							local names = {}
+							for _, other in ipairs(Players:GetPlayers()) do
+							names[#names + 1] = other.DisplayName
+							end
+							registry.Notify.Send(player, "info", "Players online (" .. tostring(#names) .. ")",
+							table.concat(names, ", "), 6)
+							elseif command == "time" then
+							local lighting = game:GetService("Lighting")
+							registry.Notify.Send(player, "info", "World time",
+							"Clock: " .. string.format("%.1f", lighting.ClockTime), 4)
+							elseif command == "help" then
+							registry.Notify.Send(player, "info", "Chat commands",
+							"/stats /players /time /help - plus the ? button for the full guide!", 6)
+							end
+							end
+							
 							function AdminService.Start()
 							registry.Net.OnRequest("Admin", function(player, command, arg1, arg2)
 							handle(player, command, arg1, arg2)
+							end)
+							for _, player in ipairs(Players:GetPlayers()) do
+							player.Chatted:Connect(function(message)
+							pcall(handleChat, player, message)
+							end)
+							end
+							Players.PlayerAdded:Connect(function(player)
+							player.Chatted:Connect(function(message)
+							pcall(handleChat, player, message)
+							end)
 							end)
 							end
 							
@@ -2388,6 +2523,7 @@
 							profile.base.vault = (profile.base.vault or 0) + banked
 							profile.stats.vaultBanked = (profile.stats.vaultBanked or 0) + banked
 							registry.Quest.AddProgress(player, "BankVault", banked)
+							BaseService.RefreshUpgradeVisuals(player)
 							end
 							return banked
 							end
@@ -2420,6 +2556,7 @@
 							registry.Notify.Send(player, "success", "Vault collected",
 							"Collected vault earnings.", 3)
 							registry.Net.Fire(player, "Fx", "VaultCollect", amount)
+							BaseService.RefreshUpgradeVisuals(player)
 							if registry.TutorialHook then
 							registry.TutorialHook(player, "CollectVault")
 							end
@@ -2528,6 +2665,25 @@
 							if light then
 							light.Color = glow.Color
 							end
+							-- Gold pile: grows with vault fill fraction (thieves can eyeball it!)
+							local pile = plot:FindFirstChild("VaultPile")
+							if not pile then
+							pile = Instance.new("Part")
+							pile.Name = "VaultPile"
+							pile.Shape = Enum.PartType.Ball
+							pile.Anchored = true
+							pile.CanCollide = false
+							pile.CanQuery = false
+							pile.CanTouch = false
+							pile.Color = Color3.fromRGB(255, 200, 60)
+							pile.Material = Enum.Material.SmoothPlastic
+							pile.Parent = plot
+							end
+							local capacity = math.max(1, BaseService.GetVaultCapacity(player))
+							local fill = math.clamp((profile.base.vault or 0) / capacity, 0, 1)
+							local pileSize = 1 + fill * 4
+							pile.Size = Vector3.new(pileSize, pileSize * 0.7, pileSize)
+							pile.CFrame = CFrame.new(anchor.Position + Vector3.new(4, 1, 3))
 							end
 							-- Security trim: boundary walls redden as total security tiers rise
 							local secTotal = 0
@@ -2590,6 +2746,21 @@
 							part.Size = Vector3.new(6, 2, 6)
 							part.Color = Color3.fromRGB(150, 200, 255)
 							part.Material = Enum.Material.Glass
+							part.CFrame = spot
+							part.Parent = model
+							elseif decorId == "EggTotem" then
+							part.Name = "Totem"
+							part.Size = Vector3.new(3, 5, 3)
+							part.Color = Color3.fromRGB(255, 220, 120)
+							part.Material = Enum.Material.Neon
+							part.CFrame = spot
+							part.Parent = model
+							part.Shape = Enum.PartType.Ball
+							elseif decorId == "CrystalSpire" then
+							part.Name = "Spire"
+							part.Size = Vector3.new(2, 8, 2)
+							part.Color = Color3.fromRGB(150, 220, 255)
+							part.Material = Enum.Material.Neon
 							part.CFrame = spot
 							part.Parent = model
 							else -- StatueGold
@@ -3720,12 +3891,15 @@
 							
 							-- celebrations for big hits
 							local tier = Rarities.GetTier(roll.rarity)
+							local petName = (Pets.ById[roll.id] and Pets.ById[roll.id].DisplayName) or roll.id
 							if tier &gt;= 6 or (roll.mut and (roll.mut == "Ancient" or roll.mut == "Void")) then
 							registry.Notify.Broadcast("secret", "SECRET HATCH!",
-							player.DisplayName .. " hatched a " .. (roll.mut or "") .. " " .. (Pets.ById[roll.id].DisplayName or roll.id) .. "!", 8)
+							player.DisplayName .. " hatched a " .. (roll.mut or "") .. " " .. petName .. "!", 8)
+							registry.Net.FireAll("Feed", { icon = "SECRET", text = player.DisplayName .. " hatched " .. petName })
 							elseif tier &gt;= 4 then
 							registry.Notify.Broadcast("rare", "Rare hatch!",
-							player.DisplayName .. " hatched a " .. roll.rarity .. " " .. (Pets.ById[roll.id].DisplayName or roll.id) .. "!", 6)
+							player.DisplayName .. " hatched a " .. roll.rarity .. " " .. petName .. "!", 6)
+							registry.Net.FireAll("Feed", { icon = "HATCH", text = player.DisplayName .. " hatched " .. petName })
 							end
 							
 							registry.Data.MarkDirty(player)
@@ -3738,8 +3912,9 @@
 							}
 							end
 							
-							function EggService.BuyEgg(player, eggId)
+							function EggService.BuyEgg(player, eggId, count)
 							eggId = Validate.String(eggId, 32, nil)
+							count = math.clamp(math.floor(tonumber(count) or 1), 1, 10)
 							if not Eggs.IsPurchasable(eggId) then
 							return false
 							end
@@ -3753,18 +3928,23 @@
 							"Requires level " .. tostring(eggDef.RequiredLevel) .. ".", 4)
 							return false
 							end
-							if #profile.eggs &gt;= 200 then
+							if #profile.eggs + count &gt; 200 then
 							registry.Notify.Send(player, "warning", "Egg pouch full", "Hatch some eggs first!", 4)
 							return false
 							end
-							if not registry.Economy.SpendCash(player, eggDef.Price) then
+							local total = eggDef.Price * count
+							if not registry.Economy.SpendCash(player, total) then
 							registry.Notify.Send(player, "warning", "Not enough cash",
-							"You need " .. tostring(eggDef.Price) .. " cash.", 4)
+							"You need " .. tostring(total) .. " cash.", 4)
 							return false
 							end
+							local bought = {}
+							for _ = 1, count do
 							local egg = Types.NewEggRecord(registry.Data.GenerateUid(player), eggId)
 							profile.eggs[#profile.eggs + 1] = egg
-							profile.stats.eggsBought = (profile.stats.eggsBought or 0) + 1
+							bought[#bought + 1] = egg
+							end
+							profile.stats.eggsBought = (profile.stats.eggsBought or 0) + count
 							if registry.Achievement then
 							registry.Achievement.Check(player, "BuyEgg")
 							end
@@ -3776,14 +3956,19 @@
 							-- Auto-hatch: gamepass OR permanent gems unlock
 							if profile.settings.autoHatch
 							and (profile.gamepasses.AutoHatch or profile.autoHatchUnlock) then
+							local results = {}
+							for _, egg in ipairs(bought) do
 							local result = doHatch(player, egg.uid)
 							if result then
+							results[#results + 1] = result
+							end
+							end
+							if #results &gt; 0 then
 							registry.Net.Fire(player, "HatchResult", {
 							eggId = eggId,
-							results = { result },
+							results = results,
 							auto = true,
 							})
-							return true
 							end
 							end
 							return true
@@ -3829,8 +4014,8 @@
 							end
 							
 							function EggService.Start()
-							registry.Net.OnRequest("BuyEgg", function(player, eggId)
-							EggService.BuyEgg(player, eggId)
+							registry.Net.OnRequest("BuyEgg", function(player, eggId, count)
+							EggService.BuyEgg(player, eggId, count)
 							end)
 							
 							registry.Net.OnRequest("BuyAutoHatch", function(player)
@@ -4020,6 +4205,17 @@
 							end
 							end)
 							end
+							-- sky beacon so pickups are findable (dies with the model on collect/despawn)
+							local beacon = Instance.new("Part")
+							beacon.Name = "Beacon"
+							beacon.Size = Vector3.new(2, 60, 2)
+							beacon.CFrame = CFrame.new(position.X, 30, position.Z)
+							beacon.Color = Color3.fromRGB(180, 130, 255)
+							beacon.Material = Enum.Material.Neon
+							beacon.Anchored = true
+							beacon.CanCollide = false
+							beacon.CanQuery = false
+							beacon.Parent = model
 							model.Parent = meteorFolder
 							-- crash landing fx
 							registry.Net.FireAll("Fx", "MeteorLand", position)
@@ -4075,8 +4271,9 @@
 							if registry.World.SetEventBoard then
 							registry.World.SetEventBoard("LIVE NOW: " .. def.DisplayName)
 							end
+							registry.Net.FireAll("Feed", { icon = "EVENT", text = def.DisplayName .. " has begun!" })
 							
-							if eventId == "MeteorShower" then
+							if eventId == "MeteorShower" or eventId == "EggRain" then
 							local count = math.min(def.MeteorCount or 10, Settings.Performance.MaxMeteors)
 							for i = 1, count do
 							task.delay((i - 1) * 3, function()
@@ -4343,6 +4540,15 @@
 							state.smokeUntil = now + (def.ArmExpirySeconds or 120)
 							registry.Notify.Send(player, "success", "Smoke armed!",
 							"Your next breach starts silent.", 4)
+							elseif gadgetId == "Drill" then
+							if (state.drillUntil or 0) &gt; now then
+							registry.Notify.Send(player, "info", "Already armed",
+							"Drill is already armed for your next grab.", 3)
+							return false
+							end
+							state.drillUntil = now + (def.ArmExpirySeconds or 120)
+							registry.Notify.Send(player, "success", "Drill armed!",
+							"Your next grab steals 25% more loot.", 4)
 							else
 							return false
 							end
@@ -4439,6 +4645,20 @@
 							end
 							end
 							return mods
+							end
+							
+							-- Consumed on successful grab only (a failed run keeps the drill armed).
+							function GadgetService.ConsumeLootBonus(player)
+							local state = armed[player and player.UserId]
+							if state and (state.drillUntil or 0) &gt; os.clock() then
+							state.drillUntil = nil
+							local profile = profileOf(player)
+							if profile and consume(profile, "Drill") then
+							registry.Data.MarkDirty(player)
+							return (Gadgets.ById.Drill and Gadgets.ById.Drill.LootMult) or 1.25
+							end
+							end
+							return 1
 							end
 							
 							function GadgetService.IsSprintActive(player)
@@ -4657,6 +4877,7 @@
 							local thiefProfile = profileOf(thief)
 							if thiefProfile then
 							thiefProfile.stats.heistsFailed = (thiefProfile.stats.heistsFailed or 0) + 1
+							thiefProfile.stats.heistStreak = 0
 							addRep(thief, Settings.Heist.RepPerFail or -1)
 							registry.Data.MarkDirty(thief)
 							end
@@ -4856,8 +5077,16 @@
 							if registry.Pet and registry.Pet.GetEquippedBonuses then
 							petPayoutPct = registry.Pet.GetEquippedBonuses(thief).HeistPayoutPct or 0
 							end
+							local drillMult = 1
+							if registry.Gadget and registry.Gadget.ConsumeLootBonus then
+							drillMult = registry.Gadget.ConsumeLootBonus(thief) or 1
+							end
 							local loot = math.floor(vault * Economy.HeistStealFraction * (1 - protection)
-							* payoutMult * scenarioLootMult * (1 + petPayoutPct / 100))
+							* payoutMult * scenarioLootMult * (1 + petPayoutPct / 100) * drillMult)
+							if drillMult &gt; 1 then
+							registry.Notify.Send(thief, "info", "Vault Drill!",
+							"Drill bonus: +" .. tostring(math.floor((drillMult - 1) * 100)) .. "% loot!", 4)
+							end
 							if target == "quick" then
 							loot = math.floor(loot * (Settings.Heist.QuickGrabLootFraction or 0.4))
 							end
@@ -4888,6 +5117,7 @@
 							"Carry it to EXTRACTION before time runs out!", 6)
 							registry.Notify.Send(victim, "error", "You've been robbed!",
 							thief.DisplayName .. " grabbed loot! Stop them before extraction!", 6)
+							registry.Net.Fire(victim, "Fx", "HeistAlarm", thief.DisplayName)
 							registry.Net.Fire(thief, "HeistUpdate", {
 							carrying = true,
 							amount = loot,
@@ -4910,6 +5140,26 @@
 							-- Extraction flow
 							--------------------------------------------------------------------------------
 							
+							local function updateMostWanted()
+							if not registry.World.SetMostWanted then
+							return
+							end
+							local bestName, bestWins = nil, 0
+							for _, player in ipairs(Players:GetPlayers()) do
+							local profile = registry.Data.GetProfile(player)
+							local wins = profile and (profile.stats.heistsWon or 0) or 0
+							if wins &gt; bestWins then
+							bestWins = wins
+							bestName = player.DisplayName
+							end
+							end
+							if bestName then
+							registry.World.SetMostWanted("MOST WANTED: " .. bestName .. " (" .. tostring(bestWins) .. " heists)")
+							else
+							registry.World.SetMostWanted("MOST WANTED: none yet")
+							end
+							end
+							
 							local function completeExtraction(thief)
 							local state = carrying[thief.UserId]
 							if not state then
@@ -4923,6 +5173,18 @@
 							local thiefProfile = profileOf(thief)
 							if thiefProfile then
 							thiefProfile.stats.heistsWon = (thiefProfile.stats.heistsWon or 0) + 1
+							-- streak bonus: +5% per consecutive win, capped at +25%
+							local streak = (thiefProfile.stats.heistStreak or 0) + 1
+							thiefProfile.stats.heistStreak = streak
+							local bonusPct = math.min(streak * 5, 25)
+							if bonusPct &gt; 0 and state.amount &gt; 0 then
+							local bonus = math.floor(state.amount * bonusPct / 100)
+							if bonus &gt; 0 then
+							registry.Economy.AddCash(thief, bonus, "heist_streak")
+							registry.Notify.Send(thief, "info", "Streak x" .. tostring(streak) .. "!",
+							"Streak bonus: +$" .. tostring(bonus) .. " (" .. tostring(bonusPct) .. "%)", 5)
+							end
+							end
 							registry.Data.MarkDirty(thief)
 							end
 							registry.Quest.AddProgress(thief, "CompleteHeists", 1)
@@ -4939,6 +5201,10 @@
 							end
 							registry.Net.Fire(thief, "HeistUpdate", { carrying = false, extracted = true })
 							registry.Net.Fire(thief, "Fx", "HeistWin", state.amount)
+							local feedVictim = Players:GetPlayerByUserId(state.victimUserId)
+							registry.Net.FireAll("Feed", { icon = "HEIST",
+							text = thief.DisplayName .. " robbed " .. (feedVictim and feedVictim.DisplayName or "a vault")
+							.. " for $" .. tostring(state.amount) })
 							if state.amount &gt;= 25000 then
 							registry.Notify.Broadcast("rare", "Big heist!",
 							thief.DisplayName .. " extracted a massive haul!", 6)
@@ -4948,6 +5214,7 @@
 							registry.Notify.Send(victim, "error", "Loot extracted",
 							thief.DisplayName .. " got away with your loot!", 6)
 							end
+							updateMostWanted()
 							end
 							
 							local function extractionLoop()
@@ -5020,6 +5287,11 @@
 							registry.Notify.Send(victim, "info", "Loot dropped",
 							"The thief abandoned your loot. Vault refunded.", 4)
 							end
+							end
+							local abandonProfile = profileOf(player)
+							if abandonProfile then
+							abandonProfile.stats.heistStreak = 0
+							registry.Data.MarkDirty(player)
 							end
 							registry.Notify.Send(player, "info", "Loot abandoned",
 							"You dropped the loot and slipped away.", 4)
@@ -5722,6 +5994,11 @@
 							if not pet then
 							return false
 							end
+							if pet.locked then
+							registry.Notify.Send(player, "warning", "Pet locked",
+							"Unlock this pet before selling or deleting it.", 4)
+							return false
+							end
 							local value = math.floor(PetService.GetSellValue(pet) * (fraction or 1))
 							table.remove(profile.pets, index)
 							-- remove from equipped
@@ -5737,6 +6014,22 @@
 							registry.Data.MarkDirty(player)
 							end
 							PetService.RebuildFollowers(player)
+							return true
+							end
+							
+							function PetService.ToggleLock(player, petUid)
+							local profile = profileOf(player)
+							if not profile then
+							return false
+							end
+							local pet = PetService.FindPet(profile, petUid)
+							if not pet then
+							return false
+							end
+							pet.locked = not pet.locked
+							registry.Data.MarkDirty(player)
+							registry.Notify.Send(player, "info", pet.locked and "Pet locked" or "Pet unlocked",
+							pet.locked and "Safe from selling, deleting and prestige." or "This pet can be sold again.", 3)
 							return true
 							end
 							
@@ -6021,6 +6314,12 @@
 							PetService.Sell(player, petUid, 0.5)
 							end
 							end)
+							registry.Net.OnRequest("TogglePetLock", function(player, petUid)
+							petUid = Validate.Uid(petUid)
+							if petUid then
+							PetService.ToggleLock(player, petUid)
+							end
+							end)
 							
 							Players.PlayerAdded:Connect(function(player)
 							player.CharacterAdded:Connect(function()
@@ -6258,6 +6557,9 @@
 							end
 							-- keep N best pets by income, convert the rest to gems
 							table.sort(p.pets, function(a, b)
+							if (a.locked or false) ~= (b.locked or false) then
+							return a.locked == true
+							end
 							return registry.Pet.PetIncomePerSecond(a) &gt; registry.Pet.PetIncomePerSecond(b)
 							end)
 							local kept = {}
@@ -6308,6 +6610,8 @@
 							registry.Notify.Broadcast("secret", "PRESTIGE!",
 							player.DisplayName .. " prestiged to rank " .. tostring(p.prestige.count)
 							.. " (+" .. tostring(math.floor(p.prestige.bonus * 100)) .. "% income)!", 8)
+							registry.Net.FireAll("Feed", { icon = "STAR",
+							text = player.DisplayName .. " prestiged to rank " .. tostring(p.prestige.count) })
 							if registry.Achievement then
 							registry.Achievement.Check(player, "Prestige")
 							end
@@ -7092,11 +7396,41 @@
 							if (profile.base.lockdownUntil or 0) &gt; now then
 							return false -- already active
 							end
-							profile.base.lockdownUntil = now + Security.Items.Lockdown.Duration
+							local lockdownDuration = Security.Items.Lockdown.Duration
+							profile.base.lockdownUntil = now + lockdownDuration
 							profile.base.lockdownCooldownUntil = now + Security.Items.Lockdown.Cooldown
 							registry.Data.MarkDirty(player)
 							registry.Notify.Send(player, "success", "LOCKDOWN ACTIVE",
 							"Your base is sealed for 30 seconds!", 5)
+							-- Shield bubble over the plot (auto-removed when lockdown expires)
+							pcall(function()
+							local plotIndex = registry.Base.GetPlotOf(player)
+							local plot = plotIndex and registry.World.GetPlotModel(plotIndex)
+							local foundation = plot and plot:FindFirstChild("Foundation")
+							if plot and foundation and foundation:IsA("BasePart") then
+							local oldShield = plot:FindFirstChild("LockdownShield")
+							if oldShield then
+							oldShield:Destroy()
+							end
+							local shield = Instance.new("Part")
+							shield.Name = "LockdownShield"
+							shield.Shape = Enum.PartType.Ball
+							shield.Size = Vector3.new(44, 26, 44)
+							shield.CFrame = CFrame.new(foundation.Position + Vector3.new(0, 8, 0))
+							shield.Color = Color3.fromRGB(80, 160, 255)
+							shield.Material = Enum.Material.ForceField
+							shield.Transparency = 0.55
+							shield.Anchored = true
+							shield.CanCollide = false
+							shield.CanQuery = false
+							shield.Parent = plot
+							task.delay(lockdownDuration + 1, function()
+							if shield and shield.Parent then
+							shield:Destroy()
+							end
+							end)
+							end
+							end)
 							-- eject intruders from the plot
 							local plotIndex = registry.Base.GetPlotOf(player)
 							if plotIndex and plotIndex &gt; 0 then
@@ -7170,6 +7504,7 @@
 							if intruder then
 							registry.Net.Fire(owner, "HeistUpdate", { alert = true, intruder = intruder.Name })
 							end
+							registry.Net.Fire(owner, "Fx", "HeistAlarm", intruder and intruder.DisplayName or "Someone")
 							end
 							
 							local function applyMovementEffects()
@@ -8286,7 +8621,7 @@
 						</Properties>
 					</Item>
 				</Item>
-				<Item class="Folder" referent="RBX69">
+				<Item class="Folder" referent="RBX70">
 					<Properties>
 						<string name="Name">World</string>
 					</Properties>
@@ -8435,6 +8770,100 @@
 						</Properties>
 					</Item>
 					<Item class="ModuleScript" referent="RBX68">
+						<Properties>
+							<string name="Name">TravelService</string>
+							<ProtectedString name="Source">-- EggHeist | Server/World/TravelService.lua
+							-- Fast travel between districts. Server-authoritative: fixed destinations,
+							-- 10s cooldown, and no teleporting while carrying stolen loot.
+							
+							local Players = game:GetService("Players")
+							
+							local TravelService = {}
+							TravelService.Name = "TravelService"
+							
+							local registry = nil
+							local cooldownUntil = {}
+							
+							local COOLDOWN = 10
+							
+							function TravelService.Init(_, reg)
+							registry = reg
+							end
+							
+							local function resolveDestination(player, destId)
+							if destId == "spawn" then
+							return registry.World.GetSpawnCFrame()
+							elseif destId == "extraction" then
+							local pad = registry.World.GetExtractionPad()
+							if pad and pad:IsA("BasePart") then
+							return pad.CFrame + Vector3.new(0, 5, 0)
+							end
+							return nil
+							elseif destId == "market" then
+							return registry.World.GetMarketCFrame()
+							elseif destId == "event" then
+							return registry.World.GetEventCFrame()
+							elseif destId == "heist" then
+							return registry.World.GetHeistCFrame()
+							elseif destId == "base" then
+							local plotIndex = registry.Base.GetPlotOf(player)
+							local plot = plotIndex and registry.World.GetPlotModel(plotIndex)
+							local foundation = plot and plot:FindFirstChild("Foundation")
+							if foundation and foundation:IsA("BasePart") then
+							return foundation.CFrame + Vector3.new(0, foundation.Size.Y / 2 + 4, 0)
+							end
+							return nil
+							end
+							return nil
+							end
+							
+							function TravelService.Start()
+							registry.Net.OnRequest("Travel", function(player, destId)
+							if type(destId) ~= "string" then
+							return
+							end
+							if registry.Heist and registry.Heist.IsCarrying(player) then
+							registry.Notify.Send(player, "warning", "Too heavy!",
+							"Can't fast-travel while carrying stolen loot.", 4)
+							return
+							end
+							local now = os.clock()
+							if (cooldownUntil[player.UserId] or 0) &gt; now then
+							local left = math.ceil((cooldownUntil[player.UserId] or 0) - now)
+							registry.Notify.Send(player, "info", "Warming up",
+							"Travel ready in " .. tostring(left) .. "s.", 3)
+							return
+							end
+							local character = player.Character
+							local hrp = character and character:FindFirstChild("HumanoidRootPart")
+							if not hrp then
+							return
+							end
+							local dest = resolveDestination(player, destId)
+							if not dest then
+							if destId == "base" then
+							registry.Notify.Send(player, "warning", "No base yet",
+							"Claim a plot first!", 4)
+							else
+							registry.Notify.Send(player, "warning", "Unknown destination",
+							"No teleport anchor for that district.", 4)
+							end
+							return
+							end
+							cooldownUntil[player.UserId] = now + COOLDOWN
+							hrp.CFrame = dest
+							registry.Net.Fire(player, "Fx", "Travel")
+							end)
+							Players.PlayerRemoving:Connect(function(player)
+							cooldownUntil[player.UserId] = nil
+							end)
+							end
+							
+							return TravelService
+							</ProtectedString>
+						</Properties>
+					</Item>
+					<Item class="ModuleScript" referent="RBX69">
 						<Properties>
 							<string name="Name">WorldService</string>
 							<ProtectedString name="Source">-- EggHeist | Server/World/WorldService.lua
@@ -8622,11 +9051,11 @@
 							-- One stall per purchasable egg: platform + pedestal + egg display + price sign
 							local shopEggs = Eggs.GetShopEggs and Eggs.GetShopEggs() or {}
 							for i, def in ipairs(shopEggs) do
-							local col = (i - 1) % 4
-							local row = math.floor((i - 1) / 4)
-							local x = 67.5 + col * 15
-							local z = -6 + row * 12
-							mkPart(market, def.Id .. "_Platform", Vector3.new(12, 1, 9), CFrame.new(x, 1.2, z),
+							local col = (i - 1) % 5
+							local row = math.floor((i - 1) / 5)
+							local x = 68 + col * 11
+							local z = -7.5 + row * 15
+							mkPart(market, def.Id .. "_Platform", Vector3.new(10, 1, 9), CFrame.new(x, 1.2, z),
 							FALLBACK_COLORS.Accent)
 							mkPart(market, def.Id .. "_Pedestal", Vector3.new(3, 2.5, 3), CFrame.new(x, 2.8, z),
 							FALLBACK_COLORS.Floor)
@@ -8639,7 +9068,7 @@
 							local priceText = string.upper(def.DisplayName or def.Id)
 							.. " $" .. tostring(def.Price or 0) .. " Lv" .. tostring(def.RequiredLevel or 1)
 							mkSign(market, def.Id .. "_PriceLabel", CFrame.new(x, 8.5, z - 3.4), priceText,
-							Color3.fromRGB(255, 255, 255), Vector3.new(13, 2.5, 1))
+							Color3.fromRGB(255, 255, 255), Vector3.new(10.5, 2.5, 1))
 							end
 							
 							-- Heist vault area
@@ -8670,6 +9099,9 @@
 							Color3.fromRGB(255, 220, 60), Enum.Material.Neon)
 							mkPart(heist, "HazardStripE", Vector3.new(1, 2.2, 50), CFrame.new(24, 0.1, 120),
 							Color3.fromRGB(255, 220, 60), Enum.Material.Neon)
+							-- Most Wanted board: HeistService writes the top thief here
+							mkSign(heist, "WantedBoard", CFrame.new(0, 7, 100), "MOST WANTED: none yet",
+							Color3.fromRGB(255, 120, 120), Vector3.new(18, 4, 1))
 							
 							-- Event stage
 							local eventArea = Instance.new("Folder")
@@ -9102,6 +9534,48 @@
 							return model
 							end
 							
+							-- Teleport anchors: CFrame a few studs above a district floor part.
+							local function districtCFrame(areaName, floorName, fallback)
+							local root = Workspace:FindFirstChild("EggHeist")
+							local map = root and root:FindFirstChild("Map")
+							local area = map and map:FindFirstChild(areaName)
+							local floor = area and area:FindFirstChild(floorName)
+							if floor and floor:IsA("BasePart") then
+							return floor.CFrame + Vector3.new(0, floor.Size.Y / 2 + 4, 0)
+							end
+							return fallback
+							end
+							
+							function WorldService.GetMarketCFrame()
+							return districtCFrame("EggMarket", "MarketFloor")
+							end
+							
+							function WorldService.GetEventCFrame()
+							return districtCFrame("EventArea", "EventFloor")
+							end
+							
+							function WorldService.GetHeistCFrame()
+							return districtCFrame("HeistArea", "HeistFloor")
+							end
+							
+							--- Writes the top-thief line on the heist wanted board (Map/HeistArea/WantedBoard).
+							function WorldService.SetMostWanted(text)
+							local root = Workspace:FindFirstChild("EggHeist")
+							if not root then
+							return false
+							end
+							local map = root:FindFirstChild("Map")
+							local heist = map and map:FindFirstChild("HeistArea")
+							local board = heist and heist:FindFirstChild("WantedBoard")
+							local gui = board and board:FindFirstChild("SignGui")
+							local label = gui and gui:FindFirstChild("SignText")
+							if label and label:IsA("TextLabel") then
+							label.Text = tostring(text)
+							return true
+							end
+							return false
+							end
+							
 							--- Writes a line of text on the event board (Map/EventArea/EventBoard).
 							function WorldService.SetEventBoard(text)
 							local root = Workspace:FindFirstChild("EggHeist")
@@ -9210,7 +9684,7 @@
 					</Item>
 				</Item>
 			</Item>
-			<Item class="Script" referent="RBX71">
+			<Item class="Script" referent="RBX72">
 				<Properties>
 					<string name="Name">ServerMain</string>
 					<bool name="Disabled">false</bool>
@@ -9233,6 +9707,7 @@
 					"Net/NetService", -- remotes + routing first (everyone depends on Net)
 					"World/WorldService", -- world discovery / fallback before gameplay builds on it
 					"World/NpcService", -- world NPCs (needs the world root)
+					"World/TravelService", -- fast travel (needs world anchors + base/heist state)
 					"Data/DataService", -- profiles before any system touches player data
 					"Net/NotifyService",
 					"Economy/EconomyService",
@@ -9356,23 +9831,23 @@
 			</Item>
 		</Item>
 	</Item>
-	<Item class="StarterPlayer" referent="RBX116">
+	<Item class="StarterPlayer" referent="RBX119">
 		<Properties>
 			<string name="Name">StarterPlayer</string>
 		</Properties>
-		<Item class="StarterPlayerScripts" referent="RBX115">
+		<Item class="StarterPlayerScripts" referent="RBX118">
 			<Properties>
 				<string name="Name">StarterPlayerScripts</string>
 			</Properties>
-			<Item class="Folder" referent="RBX114">
+			<Item class="Folder" referent="RBX117">
 				<Properties>
 					<string name="Name">EggHeistClient</string>
 				</Properties>
-				<Item class="Folder" referent="RBX112">
+				<Item class="Folder" referent="RBX115">
 					<Properties>
 						<string name="Name">Client</string>
 					</Properties>
-					<Item class="ModuleScript" referent="RBX74">
+					<Item class="ModuleScript" referent="RBX75">
 						<Properties>
 							<string name="Name">ClientNet</string>
 							<ProtectedString name="Source">-- EggHeist | Client/ClientNet.lua
@@ -9440,11 +9915,11 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="Folder" referent="RBX88">
+					<Item class="Folder" referent="RBX89">
 						<Properties>
 							<string name="Name">Controllers</string>
 						</Properties>
-						<Item class="ModuleScript" referent="RBX75">
+						<Item class="ModuleScript" referent="RBX76">
 							<Properties>
 								<string name="Name">BaseController</string>
 								<ProtectedString name="Source">-- EggHeist | Client/Controllers/BaseController.lua
@@ -9487,7 +9962,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX76">
+						<Item class="ModuleScript" referent="RBX77">
 							<Properties>
 								<string name="Name">CollectionController</string>
 								<ProtectedString name="Source">-- EggHeist | Client/Controllers/CollectionController.lua
@@ -9511,7 +9986,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX77">
+						<Item class="ModuleScript" referent="RBX78">
 							<Properties>
 								<string name="Name">DataController</string>
 								<ProtectedString name="Source">-- EggHeist | Client/Controllers/DataController.lua
@@ -9573,7 +10048,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX78">
+						<Item class="ModuleScript" referent="RBX79">
 							<Properties>
 								<string name="Name">EggController</string>
 								<ProtectedString name="Source">-- EggHeist | Client/Controllers/EggController.lua
@@ -9591,8 +10066,8 @@
 								end)
 								end
 								
-								function EggController.BuyEgg(eggId)
-								ctx.Net.Fire("BuyEgg", eggId)
+								function EggController.BuyEgg(eggId, count)
+								ctx.Net.Fire("BuyEgg", eggId, count or 1)
 								end
 								
 								function EggController.HatchEgg(eggUid)
@@ -9610,7 +10085,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX79">
+						<Item class="ModuleScript" referent="RBX80">
 							<Properties>
 								<string name="Name">EventController</string>
 								<ProtectedString name="Source">-- EggHeist | Client/Controllers/EventController.lua
@@ -9657,7 +10132,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX80">
+						<Item class="ModuleScript" referent="RBX81">
 							<Properties>
 								<string name="Name">GadgetController</string>
 								<ProtectedString name="Source">-- EggHeist | Client/Controllers/GadgetController.lua
@@ -9685,7 +10160,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX81">
+						<Item class="ModuleScript" referent="RBX82">
 							<Properties>
 								<string name="Name">HeistController</string>
 								<ProtectedString name="Source">-- EggHeist | Client/Controllers/HeistController.lua
@@ -9773,7 +10248,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX82">
+						<Item class="ModuleScript" referent="RBX83">
 							<Properties>
 								<string name="Name">NpcController</string>
 								<ProtectedString name="Source">-- EggHeist | Client/Controllers/NpcController.lua
@@ -9876,7 +10351,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX83">
+						<Item class="ModuleScript" referent="RBX84">
 							<Properties>
 								<string name="Name">PetController</string>
 								<ProtectedString name="Source">-- EggHeist | Client/Controllers/PetController.lua
@@ -9900,6 +10375,10 @@
 								ctx.Net.Fire("SellPet", petUid)
 								end
 								
+								function PetController.ToggleLock(petUid)
+								ctx.Net.Fire("TogglePetLock", petUid)
+								end
+								
 								function PetController.Delete(petUid)
 								ctx.Net.Fire("DeletePet", petUid)
 								end
@@ -9911,7 +10390,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX84">
+						<Item class="ModuleScript" referent="RBX85">
 							<Properties>
 								<string name="Name">QuestController</string>
 								<ProtectedString name="Source">-- EggHeist | Client/Controllers/QuestController.lua
@@ -9942,7 +10421,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX85">
+						<Item class="ModuleScript" referent="RBX86">
 							<Properties>
 								<string name="Name">ShopController</string>
 								<ProtectedString name="Source">-- EggHeist | Client/Controllers/ShopController.lua
@@ -9965,7 +10444,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX86">
+						<Item class="ModuleScript" referent="RBX87">
 							<Properties>
 								<string name="Name">TradeController</string>
 								<ProtectedString name="Source">-- EggHeist | Client/Controllers/TradeController.lua
@@ -10034,7 +10513,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX87">
+						<Item class="ModuleScript" referent="RBX88">
 							<Properties>
 								<string name="Name">TutorialController</string>
 								<ProtectedString name="Source">-- EggHeist | Client/Controllers/TutorialController.lua
@@ -10066,11 +10545,11 @@
 							</Properties>
 						</Item>
 					</Item>
-					<Item class="Folder" referent="RBX91">
+					<Item class="Folder" referent="RBX92">
 						<Properties>
 							<string name="Name">Effects</string>
 						</Properties>
-						<Item class="ModuleScript" referent="RBX89">
+						<Item class="ModuleScript" referent="RBX90">
 							<Properties>
 								<string name="Name">Effects</string>
 								<ProtectedString name="Source">-- EggHeist | Client/Effects/Effects.lua
@@ -10240,7 +10719,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX90">
+						<Item class="ModuleScript" referent="RBX91">
 							<Properties>
 								<string name="Name">SoundManager</string>
 								<ProtectedString name="Source">-- EggHeist | Client/Effects/SoundManager.lua
@@ -10314,11 +10793,11 @@
 							</Properties>
 						</Item>
 					</Item>
-					<Item class="Folder" referent="RBX93">
+					<Item class="Folder" referent="RBX94">
 						<Properties>
 							<string name="Name">Input</string>
 						</Properties>
-						<Item class="ModuleScript" referent="RBX92">
+						<Item class="ModuleScript" referent="RBX93">
 							<Properties>
 								<string name="Name">InputController</string>
 								<ProtectedString name="Source">-- EggHeist | Client/Input/InputController.lua
@@ -10329,6 +10808,7 @@
 								-- Add a keybind: InputController.Bind(Enum.KeyCode.X, function() ... end, "Label")
 								
 								local UserInputService = game:GetService("UserInputService")
+								local Players = game:GetService("Players")
 								
 								local InputController = {}
 								
@@ -10381,6 +10861,19 @@
 								ctx.Controllers.HeistController.Grab()
 								end
 								end, "Grab loot (near enemy vault)")
+								local uiHidden = false
+								InputController.Bind(Enum.KeyCode.P, function()
+								uiHidden = not uiHidden
+								local player = Players.LocalPlayer
+								local playerGui = player and player:FindFirstChildOfClass("PlayerGui")
+								if playerGui then
+								for _, child in ipairs(playerGui:GetChildren()) do
+								if child:IsA("ScreenGui") and string.sub(child.Name, 1, 8) == "EggHeist" then
+								child.Enabled = not uiHidden
+								end
+								end
+								end
+								end, "Screenshot mode (hide UI)")
 								InputController.Bind(Enum.KeyCode.Escape, function()
 								local main = ctx.UI and ctx.UI.MainUI
 								if main and type(main.CloseAll) == "function" then
@@ -10407,11 +10900,11 @@
 							</Properties>
 						</Item>
 					</Item>
-					<Item class="Folder" referent="RBX111">
+					<Item class="Folder" referent="RBX114">
 						<Properties>
 							<string name="Name">UI</string>
 						</Properties>
-						<Item class="ModuleScript" referent="RBX94">
+						<Item class="ModuleScript" referent="RBX95">
 							<Properties>
 								<string name="Name">BaseUI</string>
 								<ProtectedString name="Source">-- EggHeist | Client/UI/BaseUI.lua
@@ -10657,7 +11150,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX95">
+						<Item class="ModuleScript" referent="RBX96">
 							<Properties>
 								<string name="Name">CollectionUI</string>
 								<ProtectedString name="Source">-- EggHeist | Client/UI/CollectionUI.lua
@@ -10948,7 +11441,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX96">
+						<Item class="ModuleScript" referent="RBX97">
 							<Properties>
 								<string name="Name">DailyUI</string>
 								<ProtectedString name="Source">-- EggHeist | Client/UI/DailyUI.lua
@@ -11085,7 +11578,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX97">
+						<Item class="ModuleScript" referent="RBX98">
 							<Properties>
 								<string name="Name">EventBannerUI</string>
 								<ProtectedString name="Source">-- EggHeist | Client/UI/EventBannerUI.lua
@@ -11147,7 +11640,95 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX98">
+						<Item class="ModuleScript" referent="RBX99">
+							<Properties>
+								<string name="Name">FeedUI</string>
+								<ProtectedString name="Source">-- FeedUI: server event ticker (heists, rare hatches, prestige, events).
+								-- Bottom-left, keeps the last 6 entries, no interaction needed.
+								local UIFactory = require(script.Parent:WaitForChild("UIFactory"))
+								local Players = game:GetService("Players")
+								
+								local FeedUI = {}
+								
+								local MAX_ENTRIES = 6
+								
+								local ICON_COLORS = {
+								HEIST = Color3.fromRGB(255, 120, 120),
+								HATCH = Color3.fromRGB(150, 220, 255),
+								SECRET = Color3.fromRGB(255, 200, 80),
+								STAR = Color3.fromRGB(220, 160, 255),
+								EVENT = Color3.fromRGB(140, 255, 170),
+								}
+								
+								local entries = {}
+								
+								function FeedUI.Init(ctx)
+								local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
+								local gui = UIFactory.ScreenGui("EggHeistFeed", 5)
+								gui.ResetOnSpawn = false
+								
+								local list = Instance.new("Frame")
+								list.Name = "FeedList"
+								list.AnchorPoint = Vector2.new(0, 1)
+								list.Position = UDim2.new(0, 12, 1, -12)
+								list.Size = UDim2.new(0, 300, 0, 150)
+								list.BackgroundTransparency = 1
+								list.Parent = gui
+								local layout = Instance.new("UIListLayout")
+								layout.SortOrder = Enum.SortOrder.LayoutOrder
+								layout.VerticalAlignment = Enum.VerticalAlignment.Bottom
+								layout.Padding = UDim.new(0, 3)
+								layout.Parent = list
+								
+								local function addEntry(icon, text)
+								local row = Instance.new("Frame")
+								row.Size = UDim2.new(1, 0, 0, 22)
+								row.BackgroundColor3 = Color3.fromRGB(18, 20, 30)
+								row.BackgroundTransparency = 0.25
+								row.BorderSizePixel = 0
+								UIFactory.Corner(row, 6)
+								local tag = UIFactory.Label(icon or "NEWS", UDim2.new(0, 52, 1, 0),
+								ICON_COLORS[icon] or UIFactory.Theme.TextDim, 11)
+								tag.Font = Enum.Font.GothamBold
+								tag.Parent = row
+								local body = UIFactory.Label(text or "", UDim2.new(1, -56, 1, 0), UIFactory.Theme.Text, 12)
+								body.Position = UDim2.new(0, 54, 0, 0)
+								body.TextXAlignment = Enum.TextXAlignment.Left
+								body.TextTruncate = Enum.TextTruncate.AtEnd
+								body.Parent = row
+								row.LayoutOrder = os.clock()
+								row.Parent = list
+								entries[#entries + 1] = row
+								while #entries &gt; MAX_ENTRIES do
+								local oldest = table.remove(entries, 1)
+								if oldest then
+								oldest:Destroy()
+								end
+								end
+								-- fade out old news after a while (stays readable, never clutters)
+								task.delay(25, function()
+								if row and row.Parent then
+								row:Destroy()
+								end
+								end)
+								end
+								
+								if ctx and ctx.Net then
+								ctx.Net.On("Feed", function(payload)
+								if type(payload) == "table" then
+								addEntry(payload.icon, payload.text)
+								end
+								end)
+								end
+								
+								print("[EggHeist] FeedUI ready")
+								end
+								
+								return FeedUI
+								</ProtectedString>
+							</Properties>
+						</Item>
+						<Item class="ModuleScript" referent="RBX100">
 							<Properties>
 								<string name="Name">HatchUI</string>
 								<ProtectedString name="Source">-- EggHeist | Client/UI/HatchUI.lua
@@ -11337,7 +11918,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX99">
+						<Item class="ModuleScript" referent="RBX101">
 							<Properties>
 								<string name="Name">HeistUI</string>
 								<ProtectedString name="Source">-- EggHeist | Client/UI/HeistUI.lua
@@ -11617,7 +12198,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX100">
+						<Item class="ModuleScript" referent="RBX102">
 							<Properties>
 								<string name="Name">HelpUI</string>
 								<ProtectedString name="Source">-- HelpUI: "?" button + quick-start guide popup. Zero dependencies besides UIFactory.
@@ -11627,12 +12208,13 @@
 								
 								local HELP_TOPICS = {
 								{ "QUICK START", "1. Walk NORTH to the green plots and CLAIM a base (press E at the glowing totem).\n2. Open SHOP and buy your first egg.\n3. Open BACKPACK, HATCH the egg, then EQUIP the pet.\n4. Earn cash, upgrade your base, and HEIST other players' vaults!" },
-								{ "CONTROLS", "Move: WASD / left stick\nJump: Space\nInteract: E (claim plots, vaults, pickups)\nHeist tools: Q (smoke), F (full heist), X (phase)\nLockdown: L (protects your vault)" },
+								{ "CONTROLS", "Move: WASD / left stick\nJump: Space\nInteract: E (claim plots, vaults, pickups)\nBackpack: B, Quests: Q, Grab loot: H\nScreenshot mode: P (hides all UI)\nChat: /stats /players /time /help" },
 								{ "YOUR BASE", "Your vault fills up over time from pet income. Walk to the golden VAULT and press E to COLLECT. Buy INCOME, VAULT and SECURITY upgrades in the BASE panel. Security slows thieves down!" },
 								{ "HEISTS", "Walk onto another player's plot and press E at their vault to grab eggs and cash. Watch out for traps and lasers! Escape SOUTH to the green EXTRACTION pad to bank your loot. Getting caught sends you home empty-handed." },
-								{ "PETS &amp; EGGS", "Eggs hatch into pets with rarities from Common to SECRET. Better eggs cost more and need higher levels. Equip up to 3 pets (unlock more slots with prestige). Pets boost income and heist power. Fuse duplicates in the FUSION panel!" },
+								{ "PETS &amp; EGGS", "Eggs hatch into pets with rarities from Common to SECRET. Better eggs cost more and need higher levels. Equip up to 3 pets (unlock more slots with prestige). Pets boost income and heist power. Sell spares, fill your COLLECTION, and trade with friends!" },
 								{ "EVENTS &amp; QUESTS", "World events (Meteor Shower, Blood Moon...) drop rare eggs - check the EVENT board. Daily quests and achievements give gems and rewards. Come back every day for the login streak!" },
-								{ "STUCK?", "Green signs at spawn point to every district. If windows ever stop opening, rejoin the server - your base, pets and cash are saved automatically." },
+								{ "TRAVEL &amp; NEWS", "Open TRAVEL (top buttons) to teleport between districts - 10s cooldown, and never with stolen loot! The bottom-left FEED shows server news: big heists, rare hatches and prestiges." },
+								{ "STUCK?", "Green signs at spawn point to every district. Lock favorite pets (LOCK button) so prestige never sells them. If windows ever stop opening, rejoin - your base, pets and cash are saved automatically." },
 								}
 								
 								function HelpUI.Init()
@@ -11685,7 +12267,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX101">
+						<Item class="ModuleScript" referent="RBX103">
 							<Properties>
 								<string name="Name">InventoryUI</string>
 								<ProtectedString name="Source">-- EggHeist | Client/UI/InventoryUI.lua
@@ -11898,10 +12480,23 @@
 								local sell = UIFactory.Button("Sell " .. Format.Money(petSellDisplay(pet)), function()
 								ctx.Controllers.PetController.Sell(pet.uid)
 								end)
-								sell.Size = UDim2.new(1, 0, 0, 30)
+								sell.Size = UDim2.new(0.5, -2, 0, 30)
 								sell.Position = UDim2.new(0, 0, 1, -36)
-								sell.TextSize = 12
+								sell.TextSize = 11
 								sell.Parent = card
+								local lock = UIFactory.Button(pet.locked and "UNLOCK" or "LOCK", function()
+								ctx.Controllers.PetController.ToggleLock(pet.uid)
+								end)
+								lock.Size = UDim2.new(0.5, -2, 0, 30)
+								lock.Position = UDim2.new(0.5, 2, 1, -36)
+								lock.TextSize = 11
+								lock.Parent = card
+								if pet.locked then
+								local tag = UIFactory.Label("LOCKED", UDim2.new(0, 64, 0, 20), Theme.Accent, 11)
+								tag.Position = UDim2.new(1, -68, 0, 4)
+								tag.Font = Enum.Font.GothamBold
+								tag.Parent = card
+								end
 								return card
 								end
 								
@@ -11979,7 +12574,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX102">
+						<Item class="ModuleScript" referent="RBX104">
 							<Properties>
 								<string name="Name">MainUI</string>
 								<ProtectedString name="Source">-- EggHeist | Client/UI/MainUI.lua
@@ -12024,6 +12619,7 @@
 								{ Id = "Quests", Label = "Quests", UI = "QuestsUI", Badge = "quests" },
 								{ Id = "Daily", Label = "Daily", UI = "DailyUI", Badge = "daily" },
 								{ Id = "Trade", Label = "Trade", UI = "TradeUI" },
+								{ Id = "Travel", Label = "Travel", UI = "TravelUI" },
 								{ Id = "Ranks", Label = "Ranks", UI = "Ranks" },
 								{ Id = "Settings", Label = "Settings", UI = "SettingsUI" },
 								}
@@ -12181,6 +12777,25 @@
 								MainUI.Refresh(snapshot)
 								end)
 								end
+								
+								-- welcome splash: big title that pops and fades (first impressions!)
+								pcall(function()
+								local splash = UIFactory.Label("EGG HEIST", UDim2.new(0, 420, 0, 70), Theme.Accent, 52)
+								splash.AnchorPoint = Vector2.new(0.5, 0.5)
+								splash.Position = UDim2.new(0.5, 0, 0.5, 0)
+								splash.Font = Enum.Font.GothamBold
+								splash.Parent = gui
+								local sub = UIFactory.Label("Steal eggs. Stack cash. Don't get caught.",
+								UDim2.new(0, 420, 0, 26), Theme.Text, 16)
+								sub.AnchorPoint = Vector2.new(0.5, 0.5)
+								sub.Position = UDim2.new(0.5, 0, 0.5, 48)
+								sub.Parent = gui
+								Effects.Pop(splash, 1.15)
+								task.delay(3.2, function()
+								if splash then splash:Destroy() end
+								if sub then sub:Destroy() end
+								end)
+								end)
 								
 								-- Fx channel
 								ctx.Net.On("Fx", function(fxName, ...)
@@ -12350,11 +12965,20 @@
 								Effects.Confetti(playerGui, 40)
 								elseif fxName == "Gadget" then
 								SoundManager.Play("Gadget", 0.7, 0.9 + math.random() * 0.2)
+								elseif fxName == "Travel" then
+								SoundManager.Play("Gadget", 0.5, 1.3)
 								elseif fxName == "TrapStun" then
 								SoundManager.Play("Error", 0.7)
 								Effects.ShakeCamera(0.8, 0.4)
 								elseif fxName == "DecoyGrab" then
 								SoundManager.Play("Error", 0.6)
+								elseif fxName == "HeistAlarm" then
+								local alertsOn = not ctx.Data or ctx.Data.GetSetting("heistAlerts") ~= false
+								if alertsOn then
+								SoundManager.Play("HeistAlert", 0.8)
+								Effects.Flash(playerGui, Color3.fromRGB(220, 40, 40), 0.7)
+								Effects.ShakeCamera(0.5, 0.4)
+								end
 								elseif fxName == "EventStart" then
 								SoundManager.Play("Rare", 0.8)
 								elseif fxName == "MeteorLand" then
@@ -12372,7 +12996,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX103">
+						<Item class="ModuleScript" referent="RBX105">
 							<Properties>
 								<string name="Name">NotificationsUI</string>
 								<ProtectedString name="Source">-- EggHeist | Client/UI/NotificationsUI.lua
@@ -12521,7 +13145,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX104">
+						<Item class="ModuleScript" referent="RBX106">
 							<Properties>
 								<string name="Name">ObjectiveUI</string>
 								<ProtectedString name="Source">-- EggHeist | Client/UI/ObjectiveUI.lua
@@ -12682,7 +13306,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX105">
+						<Item class="ModuleScript" referent="RBX107">
 							<Properties>
 								<string name="Name">QuestsUI</string>
 								<ProtectedString name="Source">-- EggHeist | Client/UI/QuestsUI.lua
@@ -12937,7 +13561,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX106">
+						<Item class="ModuleScript" referent="RBX108">
 							<Properties>
 								<string name="Name">SettingsUI</string>
 								<ProtectedString name="Source">-- EggHeist | Client/UI/SettingsUI.lua
@@ -13121,7 +13745,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX107">
+						<Item class="ModuleScript" referent="RBX109">
 							<Properties>
 								<string name="Name">ShopUI</string>
 								<ProtectedString name="Source">-- EggHeist | Client/UI/ShopUI.lua
@@ -13245,9 +13869,23 @@
 								-- Eggs tab
 								local eggsPage = pages.Eggs:FindFirstChildOfClass("ScrollingFrame")
 								UIFactory.ClearChildren(eggsPage, true)
+								local qtyCard = rowCard(44)
+								local qtyLabel = UIFactory.Label("Buy quantity:", UDim2.new(1, -130, 0, 24), Theme.Text, 14)
+								qtyLabel.TextXAlignment = Enum.TextXAlignment.Left
+								qtyLabel.Position = UDim2.new(0, 0, 0, 10)
+								qtyLabel.Parent = qtyCard
+								local qtyBtn = UIFactory.Button("x" .. tostring(ShopUI.EggQty or 1), function()
+								ShopUI.EggQty = (ShopUI.EggQty == 10) and 1 or 10
+								ShopUI.Refresh()
+								end)
+								qtyBtn.Size = UDim2.new(0, 110, 0, 36)
+								qtyBtn.Position = UDim2.new(1, -118, 0, 4)
+								qtyBtn.Parent = qtyCard
+								qtyCard.Parent = eggsPage
+								local eggQty = ShopUI.EggQty or 1
 								for _, def in ipairs(Eggs.GetShopEggs()) do
 								local locked = level &lt; (def.RequiredLevel or 1)
-								local afford = cash &gt;= def.Price
+								local afford = cash &gt;= def.Price * eggQty
 								local card = rowCard(108)
 								local name = UIFactory.Label(def.DisplayName, UDim2.new(1, -130, 0, 24), Theme.Text, 15)
 								name.TextXAlignment = Enum.TextXAlignment.Left
@@ -13266,8 +13904,9 @@
 								odds.Position = UDim2.new(0, 0, 0, 62)
 								odds.Font = Theme.FontRegular
 								odds.Parent = card
-								local buy = UIFactory.PrimaryButton(Format.Money(def.Price), function()
-								ctx.Controllers.EggController.BuyEgg(def.Id)
+								local buy = UIFactory.PrimaryButton(Format.Money(def.Price * eggQty)
+								.. (eggQty &gt; 1 and " (x" .. tostring(eggQty) .. ")" or ""), function()
+								ctx.Controllers.EggController.BuyEgg(def.Id, eggQty)
 								end)
 								buy.Size = UDim2.new(0, 110, 0, 44)
 								buy.Position = UDim2.new(1, -118, 0, 24)
@@ -13418,7 +14057,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX108">
+						<Item class="ModuleScript" referent="RBX110">
 							<Properties>
 								<string name="Name">TradeUI</string>
 								<ProtectedString name="Source">-- EggHeist | Client/UI/TradeUI.lua
@@ -13853,7 +14492,68 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX109">
+						<Item class="ModuleScript" referent="RBX111">
+							<Properties>
+								<string name="Name">TravelUI</string>
+								<ProtectedString name="Source">-- TravelUI: fast-travel window (server validates + rate-limits).
+								local UIFactory = require(script.Parent:WaitForChild("UIFactory"))
+								local Players = game:GetService("Players")
+								
+								local TravelUI = {}
+								
+								local DESTINATIONS = {
+								{ Id = "base", Label = "My Base" },
+								{ Id = "spawn", Label = "Spawn Plaza" },
+								{ Id = "market", Label = "Egg Market" },
+								{ Id = "event", Label = "Event Grounds" },
+								{ Id = "heist", Label = "Heist Zone" },
+								{ Id = "extraction", Label = "Extraction" },
+								}
+								
+								local window = nil
+								local ctxRef = nil
+								
+								function TravelUI.Init(ctx)
+								ctxRef = ctx
+								local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
+								local gui = UIFactory.ScreenGui("EggHeistTravel", 12)
+								gui.ResetOnSpawn = false
+								
+								window = UIFactory.Window(gui, "FAST TRAVEL", UDim2.new(0, 360, 0, 380))
+								local note = UIFactory.Label("10s cooldown. No travel with stolen loot!",
+								UDim2.new(1, 0, 0, 22), UIFactory.Theme.TextDim, 12)
+								note.Parent = window.Content
+								
+								local grid = UIFactory.Grid(window.Content, UDim2.new(0, 150, 0, 52), 8)
+								grid.Position = UDim2.new(0, 0, 0, 28)
+								grid.Size = UDim2.new(1, 0, 1, -28)
+								for _, dest in ipairs(DESTINATIONS) do
+								local button = UIFactory.PrimaryButton(dest.Label, function()
+								if ctxRef and ctxRef.Net then
+								ctxRef.Net.Fire("Travel", dest.Id)
+								end
+								end)
+								button.Parent = grid
+								end
+								end
+								
+								function TravelUI.Toggle()
+								if window then
+								window.Toggle()
+								end
+								end
+								
+								function TravelUI.SetVisible(visible)
+								if window then
+								window.SetVisible(visible)
+								end
+								end
+								
+								return TravelUI
+								</ProtectedString>
+							</Properties>
+						</Item>
+						<Item class="ModuleScript" referent="RBX112">
 							<Properties>
 								<string name="Name">TutorialUI</string>
 								<ProtectedString name="Source">-- EggHeist | Client/UI/TutorialUI.lua
@@ -13947,7 +14647,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX110">
+						<Item class="ModuleScript" referent="RBX113">
 							<Properties>
 								<string name="Name">UIFactory</string>
 								<ProtectedString name="Source">-- EggHeist | Client/UI/UIFactory.lua
@@ -14283,7 +14983,7 @@
 						</Item>
 					</Item>
 				</Item>
-				<Item class="LocalScript" referent="RBX113">
+				<Item class="LocalScript" referent="RBX116">
 					<Properties>
 						<string name="Name">ClientMain</string>
 						<bool name="Disabled">false</bool>
@@ -14403,6 +15103,8 @@
 						"ObjectiveUI",
 						"TradeUI",
 						"HelpUI",
+						"FeedUI",
+						"TravelUI",
 						}
 						
 						local ctx = {}
@@ -14495,22 +15197,22 @@
 			</Item>
 		</Item>
 	</Item>
-	<Item class="StarterGui" referent="RBX117">
+	<Item class="StarterGui" referent="RBX120">
 		<Properties>
 			<string name="Name">StarterGui</string>
 		</Properties>
 	</Item>
-	<Item class="ServerStorage" referent="RBX118">
+	<Item class="ServerStorage" referent="RBX121">
 		<Properties>
 			<string name="Name">ServerStorage</string>
 		</Properties>
 	</Item>
-	<Item class="SoundService" referent="RBX119">
+	<Item class="SoundService" referent="RBX122">
 		<Properties>
 			<string name="Name">SoundService</string>
 		</Properties>
 	</Item>
-	<Item class="Teams" referent="RBX120">
+	<Item class="Teams" referent="RBX123">
 		<Properties>
 			<string name="Name">Teams</string>
 		</Properties>

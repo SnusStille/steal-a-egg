@@ -83,7 +83,7 @@ function Types.NewEggRecord(uid, eggId)
 end
 
 function Types.NewPetRecord(uid, petId, mutation)
-	return { uid = uid, id = petId, mut = mutation, lvl = 1, xp = 0 }
+	return { uid = uid, id = petId, mut = mutation, lvl = 1, xp = 0, locked = false }
 end
 
 -- "petId:Mutation" key used by collection tracking (server + client must agree).

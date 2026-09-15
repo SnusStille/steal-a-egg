@@ -13,8 +13,8 @@ function EggController.Init(context)
 	end)
 end
 
-function EggController.BuyEgg(eggId)
-	ctx.Net.Fire("BuyEgg", eggId)
+function EggController.BuyEgg(eggId, count)
+	ctx.Net.Fire("BuyEgg", eggId, count or 1)
 end
 
 function EggController.HatchEgg(eggUid)

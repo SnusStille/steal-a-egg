@@ -285,6 +285,7 @@ function BaseService.BankToVault(player, amount)
 		profile.base.vault = (profile.base.vault or 0) + banked
 		profile.stats.vaultBanked = (profile.stats.vaultBanked or 0) + banked
 		registry.Quest.AddProgress(player, "BankVault", banked)
+		BaseService.RefreshUpgradeVisuals(player)
 	end
 	return banked
 end
@@ -317,6 +318,7 @@ function BaseService.CollectVault(player)
 	registry.Notify.Send(player, "success", "Vault collected",
 		"Collected vault earnings.", 3)
 	registry.Net.Fire(player, "Fx", "VaultCollect", amount)
+	BaseService.RefreshUpgradeVisuals(player)
 	if registry.TutorialHook then
 		registry.TutorialHook(player, "CollectVault")
 	end
@@ -425,6 +427,25 @@ function BaseService.RefreshUpgradeVisuals(player)
 		if light then
 			light.Color = glow.Color
 		end
+		-- Gold pile: grows with vault fill fraction (thieves can eyeball it!)
+		local pile = plot:FindFirstChild("VaultPile")
+		if not pile then
+			pile = Instance.new("Part")
+			pile.Name = "VaultPile"
+			pile.Shape = Enum.PartType.Ball
+			pile.Anchored = true
+			pile.CanCollide = false
+			pile.CanQuery = false
+			pile.CanTouch = false
+			pile.Color = Color3.fromRGB(255, 200, 60)
+			pile.Material = Enum.Material.SmoothPlastic
+			pile.Parent = plot
+		end
+		local capacity = math.max(1, BaseService.GetVaultCapacity(player))
+		local fill = math.clamp((profile.base.vault or 0) / capacity, 0, 1)
+		local pileSize = 1 + fill * 4
+		pile.Size = Vector3.new(pileSize, pileSize * 0.7, pileSize)
+		pile.CFrame = CFrame.new(anchor.Position + Vector3.new(4, 1, 3))
 	end
 	-- Security trim: boundary walls redden as total security tiers rise
 	local secTotal = 0
@@ -487,6 +508,21 @@ local function buildDecoration(plot, decorId)
 		part.Size = Vector3.new(6, 2, 6)
 		part.Color = Color3.fromRGB(150, 200, 255)
 		part.Material = Enum.Material.Glass
+		part.CFrame = spot
+		part.Parent = model
+	elseif decorId == "EggTotem" then
+		part.Name = "Totem"
+		part.Size = Vector3.new(3, 5, 3)
+		part.Color = Color3.fromRGB(255, 220, 120)
+		part.Material = Enum.Material.Neon
+		part.CFrame = spot
+		part.Parent = model
+		part.Shape = Enum.PartType.Ball
+	elseif decorId == "CrystalSpire" then
+		part.Name = "Spire"
+		part.Size = Vector3.new(2, 8, 2)
+		part.Color = Color3.fromRGB(150, 220, 255)
+		part.Material = Enum.Material.Neon
 		part.CFrame = spot
 		part.Parent = model
 	else -- StatueGold

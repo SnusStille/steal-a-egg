@@ -9,6 +9,7 @@
 --             DisableSeconds (must be near an enemy base to use).
 --   Sprint:   instant; SprintMult move speed for SprintSeconds (stacks with
 --             carry slow, capped at normal walk speed).
+--   Drill:    armed; next successful grab steals LootMult x as much.
 
 local Gadgets = {}
 
@@ -41,6 +42,16 @@ Gadgets.List = {
 		Kind = "Instant",
 		DisableSeconds = 30,
 		UseRange = 60,
+	},
+	{
+		Id = "Drill",
+		DisplayName = "Vault Drill",
+		Description = "Next grab steals 25% more loot. Used when a breach starts.",
+		Price = 7500,
+		MaxHeld = 3,
+		Kind = "Armed",
+		LootMult = 1.25,
+		ArmExpirySeconds = 120,
 	},
 	{
 		Id = "Sprint",

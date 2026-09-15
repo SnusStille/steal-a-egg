@@ -325,11 +325,41 @@ function SecurityService.ToggleLockdown(player)
 	if (profile.base.lockdownUntil or 0) > now then
 		return false -- already active
 	end
-	profile.base.lockdownUntil = now + Security.Items.Lockdown.Duration
+	local lockdownDuration = Security.Items.Lockdown.Duration
+	profile.base.lockdownUntil = now + lockdownDuration
 	profile.base.lockdownCooldownUntil = now + Security.Items.Lockdown.Cooldown
 	registry.Data.MarkDirty(player)
 	registry.Notify.Send(player, "success", "LOCKDOWN ACTIVE",
 		"Your base is sealed for 30 seconds!", 5)
+	-- Shield bubble over the plot (auto-removed when lockdown expires)
+	pcall(function()
+		local plotIndex = registry.Base.GetPlotOf(player)
+		local plot = plotIndex and registry.World.GetPlotModel(plotIndex)
+		local foundation = plot and plot:FindFirstChild("Foundation")
+		if plot and foundation and foundation:IsA("BasePart") then
+			local oldShield = plot:FindFirstChild("LockdownShield")
+			if oldShield then
+				oldShield:Destroy()
+			end
+			local shield = Instance.new("Part")
+			shield.Name = "LockdownShield"
+			shield.Shape = Enum.PartType.Ball
+			shield.Size = Vector3.new(44, 26, 44)
+			shield.CFrame = CFrame.new(foundation.Position + Vector3.new(0, 8, 0))
+			shield.Color = Color3.fromRGB(80, 160, 255)
+			shield.Material = Enum.Material.ForceField
+			shield.Transparency = 0.55
+			shield.Anchored = true
+			shield.CanCollide = false
+			shield.CanQuery = false
+			shield.Parent = plot
+			task.delay(lockdownDuration + 1, function()
+				if shield and shield.Parent then
+					shield:Destroy()
+				end
+			end)
+		end
+	end)
 	-- eject intruders from the plot
 	local plotIndex = registry.Base.GetPlotOf(player)
 	if plotIndex and plotIndex > 0 then
@@ -403,6 +433,7 @@ function SecurityService.AlertOwner(owner, intruder, reason)
 	if intruder then
 		registry.Net.Fire(owner, "HeistUpdate", { alert = true, intruder = intruder.Name })
 	end
+	registry.Net.Fire(owner, "Fx", "HeistAlarm", intruder and intruder.DisplayName or "Someone")
 end
 
 local function applyMovementEffects()

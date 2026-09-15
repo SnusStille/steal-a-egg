@@ -11,6 +11,8 @@ Collection.Milestones = {
 	{ Count = 100, Reward = { Cash = 30000, Gems = 20 } },
 	{ Count = 150, Reward = { Egg = "Void", Gems = 30 } },
 	{ Count = 200, Reward = { Gems = 100, Egg = "Ancient" } },
+	{ Count = 250, Reward = { Gems = 60, Egg = "Storm" } },
+	{ Count = 350, Reward = { Gems = 150, Egg = "Ancient" } },
 }
 
 return Collection
