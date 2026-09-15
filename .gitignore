@@ -1,0 +1,8 @@
+.DS_Store
+.DS_Store?
+*.log
+
+# Roblox Studio local metadata
+*.rbxl.lock
+*.rbxlx.lock
+*.rbxm.lock
