@@ -371,9 +371,19 @@ def main():
         nodes = by_class[cname]
         ids = sorted(n.ref for n in nodes)
         assert ids == [n.ref for n in nodes], "refs must already be ascending per class"
+        is_service = cname in SERVICE_CLASSES
         payload = struct.pack("<II", my_cids[cname], len(cname.encode())) + cname.encode() \
-            + bytes([1 if cname in SERVICE_CLASSES else 0]) \
+            + bytes([1 if is_service else 0]) \
             + struct.pack("<I", len(ids)) + encode_deltas(ids)
+        if is_service:
+            # Service marker bytes ("isServiceRooted"): Studio REQUIRES one
+            # 0x01 byte per instance after the referent array when the
+            # service flag is set (see rbx_binary serializer/state.rs
+            # serialize_instances, and any Studio-saved place: service
+            # INST payloads end with 01). Missing bytes = Studio fails to
+            # open the place ("MemoryInputStream::read offset is out of
+            # bounds ... isServiceRooted ... chunk#[INST]").
+            payload += bytes([1]) * len(ids)
         out += frame_chunk("INST", payload)
 
     def extend_folder_prop(prop_name, ptype, world_body, wcount, my_nodes_sorted):
@@ -570,12 +580,21 @@ def verify(out_path, world_data, services, order, w_prnt, world_root, workspace_
     assert o_prnt[:len(expect_head)] == expect_head, "PRNT world prefix mismatch"
     # Name + Source props decode; sources match disk
     inst_ids = {}
+    n_service_markers = 0
     for k, p in chunks:
         if k != "INST":
             continue
         cid, nlen = struct.unpack("<II", p[0:8])
+        is_svc = p[8 + nlen]
         pos = 8 + nlen + 1
         (count,) = struct.unpack("<I", p[pos:pos + 4])
+        # service INSTs must carry the trailing 0x01 marker per instance
+        # (Studio refuses to open the place without them)
+        expect_len = pos + 4 + 4 * count + (count if is_svc else 0)
+        assert len(p) == expect_len, f"INST {cid} len {len(p)} != {expect_len}"
+        if is_svc:
+            assert p[pos + 4 + 4 * count:] == bytes([1]) * count
+            n_service_markers += count
         raw = uninterleave(p[pos + 4:pos + 4 + 4 * count], count)
         acc, ids = 0, []
         for v in raw:
@@ -622,7 +641,8 @@ def verify(out_path, world_data, services, order, w_prnt, world_root, workspace_
           f"{len(w_props) - n_verbatim} Folder PROPs extended, "
           f"{len(expect_head)} world PRNT pairs re-parented, "
           f"{len(order)} names ({n_merged_names} merged folders) + "
-          f"{n_src} sources roundtrip-clean; one INST per class")
+          f"{n_src} sources roundtrip-clean; one INST per class; "
+          f"{n_service_markers} service markers")
 
 
 if __name__ == "__main__":

@@ -26,6 +26,10 @@ place, sim `WARNS:0 ERRORS:0` in BOTH real-world and fallback modes).
 - Removed: `Egg-Heist.rbxlx` (mapless XML place) and `tools/build_place.py`
   (superseded). Docs rewritten for the single-file flow (SETUP has a Swedish
   quickstart).
+- HOTFIX: service INST chunks now carry the trailing 0x01 "isServiceRooted"
+  marker per instance (confirmed against rbx_binary's serializer + Studio-saved
+  files). Without them Studio refused to open the place
+  ("MemoryInputStream::read offset is out of bounds ... chunk#[INST]").
 
 ## CLEAN FOUNDATION — architecture repair (2026-09-15)
 
