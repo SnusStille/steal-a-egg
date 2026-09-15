@@ -16,6 +16,8 @@ Remotes.C2S = {
 	"BuyEgg",        -- (eggId)
 	"HatchEgg",      -- (eggUid)
 	"HatchAll",      -- ()
+	"PlaceEgg",      -- (eggUid)  place into first free pad of own base
+	"PickupEgg",     -- (eggUid)  return a placed egg to the pouch
 	"EquipPet",      -- (petUid)
 	"UnequipPet",    -- (petUid)
 	"DeletePet",     -- (petUid) (sells for 50% value)
@@ -80,6 +82,8 @@ Remotes.RateLimits = {
 	BuyEgg = 6,
 	HatchEgg = 8,
 	HatchAll = 2,
+	PlaceEgg = 4,
+	PickupEgg = 4,
 	EquipPet = 10,
 	UnequipPet = 10,
 	DeletePet = 4,

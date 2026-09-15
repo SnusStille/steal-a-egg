@@ -10,6 +10,8 @@ local ConfigFolder = Shared:WaitForChild("Config")
 local Economy = require(ConfigFolder:WaitForChild("Economy"))
 local Settings = require(ConfigFolder:WaitForChild("Settings"))
 local Validate = require(Shared:WaitForChild("Utilities"):WaitForChild("Validate"))
+local ModelFactory = require(Shared:WaitForChild("Utilities"):WaitForChild("ModelFactory"))
+local Eggs = require(ConfigFolder:WaitForChild("Eggs"))
 
 local HeistService = {}
 HeistService.Name = "HeistService"
@@ -145,12 +147,73 @@ local function attachLootVisual(player)
 	return nil
 end
 
+-- Carried-egg visual: the actual stolen egg floats above the thief's head.
+local function attachEggVisual(player, eggId)
+	local character = player.Character
+	if not character then
+		return nil
+	end
+	local head = character:FindFirstChild("Head")
+	if not head then
+		return nil
+	end
+	local ok, model = pcall(ModelFactory.BuildEgg, eggId, 0.5)
+	if not ok or not model then
+		return nil
+	end
+	model.Name = "EggCarryVisual"
+	for _, descendant in ipairs(model:GetDescendants()) do
+		if descendant:IsA("ProximityPrompt") or descendant:IsA("BillboardGui")
+			or descendant:IsA("SurfaceGui") or descendant:IsA("ParticleEmitter")
+			or descendant:IsA("PointLight") then
+			descendant:Destroy()
+		elseif descendant:IsA("BasePart") then
+			descendant.Anchored = false
+			descendant.CanCollide = false
+			descendant.CanQuery = false
+			descendant.CanTouch = false
+			descendant.Massless = true
+		end
+	end
+	local body = model.PrimaryPart
+	if not body then
+		pcall(function() model:Destroy() end)
+		return nil
+	end
+	body.CFrame = head.CFrame + Vector3.new(0, 2.4, 0)
+	local weld = Instance.new("WeldConstraint")
+	weld.Part0 = head
+	weld.Part1 = body
+	weld.Parent = body
+	model.Parent = character
+	local tag = Instance.new("BillboardGui")
+	tag.Name = "LootTag"
+	tag.Size = UDim2.new(0, 140, 0, 30)
+	tag.StudsOffset = Vector3.new(0, 4.2, 0)
+	tag.AlwaysOnTop = true
+	tag.Parent = body
+	local text = Instance.new("TextLabel")
+	text.Size = UDim2.fromScale(1, 1)
+	text.BackgroundTransparency = 1
+	text.Text = "STOLEN EGG!"
+	text.TextColor3 = Color3.fromRGB(255, 170, 60)
+	text.Font = Enum.Font.GothamBold
+	text.TextSize = 16
+	text.TextStrokeTransparency = 0.3
+	text.Parent = tag
+	return model
+end
+
 local function clearLootVisual(player)
 	local character = player.Character
 	if character then
 		local loot = character:FindFirstChild("CarriedLoot")
 		if loot then
 			loot:Destroy()
+		end
+		local eggLoot = character:FindFirstChild("EggCarryVisual")
+		if eggLoot then
+			eggLoot:Destroy()
 		end
 	end
 	local state = carrying[player.UserId]
@@ -179,6 +242,15 @@ local function returnLootToVictim(thief, reason)
 	carrying[thief.UserId] = nil
 	setCarrySlow(thief, false)
 	clearLootVisual(thief)
+	local isEgg = state.stolenEgg ~= nil
+	if isEgg then
+		local eggVictim = Players:GetPlayerByUserId(state.stolenEgg.victimUserId)
+		if eggVictim then
+			registry.Egg.RestoreTakenEgg(eggVictim, state.stolenEgg.egg)
+			registry.Notify.Send(eggVictim, "success", "Egg recovered!",
+				"The thief " .. tostring(reason or "failed") .. ". Your egg is back.", 5)
+		end
+	end
 	local victim = Players:GetPlayerByUserId(state.victimUserId)
 	if victim then
 		local victimProfile = profileOf(victim)
@@ -187,8 +259,10 @@ local function returnLootToVictim(thief, reason)
 			victimProfile.base.vault = math.min(capacity,
 				(victimProfile.base.vault or 0) + state.amount)
 			registry.Data.MarkDirty(victim)
-			registry.Notify.Send(victim, "success", "Loot recovered!",
-				"The thief " .. tostring(reason or "failed") .. ". Your vault was refunded.", 5)
+			if not isEgg then
+				registry.Notify.Send(victim, "success", "Loot recovered!",
+					"The thief " .. tostring(reason or "failed") .. ". Your vault was refunded.", 5)
+			end
 		end
 	end
 	local thiefProfile = profileOf(thief)
@@ -358,6 +432,136 @@ function HeistService.TryGrab(player, plotIndex, target)
 	end)
 end
 
+--------------------------------------------------------------------------------
+-- Egg snatch: physical egg theft from enemy pads -> carry -> extract.
+-- Called by the egg's Steal ProximityPrompt (EggService). Instant grab,
+-- then the normal slowed-carry extraction run.
+--------------------------------------------------------------------------------
+
+function HeistService.TryGrabEgg(thief, plotIndex, padIndex)
+	if not Settings.Features.Heists then
+		return
+	end
+	plotIndex = math.floor(tonumber(plotIndex) or 0)
+	padIndex = math.floor(tonumber(padIndex) or 0)
+	if plotIndex < 1 or plotIndex > Settings.MaxBasePlots then
+		return
+	end
+	if padIndex < 1 or padIndex > 6 then
+		return
+	end
+	if carrying[thief.UserId] or channeling[thief.UserId] then
+		registry.Notify.Send(thief, "warning", "Hands full",
+			"Finish your current heist first!", 3)
+		return
+	end
+	local victim = registry.Base.GetOwnerOfPlot(plotIndex)
+	if not victim or victim == thief then
+		return
+	end
+	local now = os.clock()
+	if (grabCooldownUntil[thief.UserId] or 0) > now then
+		registry.Notify.Send(thief, "warning", "Cooldown",
+			"You're still cooling down from the last grab!", 3)
+		return
+	end
+	if (victimCooldownUntil[victim.UserId] or 0) > now then
+		registry.Notify.Send(thief, "warning", "Too soon",
+		"That base was just hit!", 3)
+		return
+	end
+	-- range: thief must stand near the victim's base
+	local character = thief.Character
+	local hrp = character and character:FindFirstChild("HumanoidRootPart")
+	local plot = registry.World.GetPlotModel(plotIndex)
+	local foundation = plot and plot:FindFirstChild("Foundation")
+	if not hrp or not foundation or not foundation:IsA("BasePart") then
+		return
+	end
+	if (hrp.Position - foundation.Position).Magnitude > (Settings.Heist.GrabRange or 45) then
+		return
+	end
+	if registry.Security.IsLockedDown(victim) then
+		registry.Notify.Send(thief, "warning", "Lockdown!", "This base is sealed!", 3)
+		return
+	end
+	local victimProfile = profileOf(victim)
+	local thiefProfile = profileOf(thief)
+	if not victimProfile or not thiefProfile then
+		return
+	end
+	-- decoy wastes the run on a fake egg
+	if registry.Security.RollDecoy(victim) then
+		grabCooldownUntil[thief.UserId] = now + Settings.Heist.GrabCooldown
+		registry.Notify.Send(thief, "warning", "It's a decoy!",
+			"You grabbed a worthless fake egg!", 5)
+		registry.Notify.Send(victim, "success", "Decoy worked!",
+			thief.DisplayName .. " stole a fake egg!", 5)
+		return
+	end
+	-- alarm tips off the victim
+	local security = victimProfile.base.security or {}
+	if (security.Alarm or 0) > 0 then
+		registry.Notify.Send(victim, "error", "Intruder!",
+			thief.DisplayName .. " is at your egg pads!", 5)
+		registry.Net.Fire(victim, "Fx", "HeistAlarm", thief.DisplayName)
+	end
+	-- server-authoritative: find the egg ON THIS PAD (never trust a client uid)
+	local targetUid = nil
+	for _, egg in ipairs(victimProfile.eggs or {}) do
+		if egg.placedPad == padIndex then
+			targetUid = egg.uid
+			break
+		end
+	end
+	if not targetUid then
+		registry.Notify.Send(thief, "warning", "Gone", "That egg is no longer there!", 3)
+		return
+	end
+	local taken = registry.Egg.TakePlacedEgg(victim, targetUid)
+	if not taken then
+		registry.Notify.Send(thief, "warning", "Gone", "That egg is no longer there!", 3)
+		return
+	end
+	grabCooldownUntil[thief.UserId] = now + Settings.Heist.GrabCooldown
+	victimCooldownUntil[victim.UserId] = now + Settings.Heist.StealCooldownPerVictim
+	carrying[thief.UserId] = {
+		amount = 0,
+		victimUserId = victim.UserId,
+		plotIndex = plotIndex,
+		expiresAt = now + Settings.Heist.MaxCarryTime,
+		model = attachEggVisual(thief, taken.eggId),
+		stolenEgg = { egg = taken, victimUserId = victim.UserId },
+	}
+	setCarrySlow(thief, true)
+	local eggDef = Eggs.ById[taken.eggId]
+	local eggName = (eggDef and eggDef.DisplayName) or "an egg"
+	registry.Notify.Send(thief, "success", "Egg snatched!",
+		"Carry " .. eggName .. " to EXTRACTION!", 6)
+	registry.Notify.Send(victim, "error", "Egg stolen!",
+		thief.DisplayName .. " snatched " .. eggName .. "! Stop them!", 6)
+	registry.Net.Fire(victim, "Fx", "HeistAlarm", thief.DisplayName)
+	registry.Net.Fire(thief, "Fx", "GrabFx")
+	registry.Net.Fire(thief, "HeistUpdate", {
+		carrying = true,
+		amount = 0,
+		eggName = eggName,
+		timeLeft = Settings.Heist.MaxCarryTime,
+	})
+	-- death drops the egg
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	if humanoid then
+		local carryState = carrying[thief.UserId]
+		if carryState then
+			carryState.deathConn = humanoid.Died:Connect(function()
+				if carrying[thief.UserId] then
+					returnLootToVictim(thief, "died")
+				end
+			end)
+		end
+	end
+end
+
 function HeistService.CompleteGrab(thief, victim, plotIndex, target, scenarioId)
 	local victimProfile = profileOf(victim)
 	local thiefProfile = profileOf(thief)
@@ -491,6 +695,14 @@ local function completeExtraction(thief)
 	setCarrySlow(thief, false)
 	clearLootVisual(thief)
 	registry.Economy.AddCash(thief, state.amount, "heist")
+	if state.stolenEgg then
+		local eggId = state.stolenEgg.egg and state.stolenEgg.egg.eggId
+		if eggId then
+			registry.Egg.GiftEgg(thief, eggId, "heist")
+			registry.Notify.Send(thief, "secret", "Egg stolen!",
+				"You got away with a stolen egg! Place it in your base.", 6)
+		end
+	end
 	registry.Economy.AddXp(thief, Economy.XpPerHeistSuccess)
 	local thiefProfile = profileOf(thief)
 	if thiefProfile then
@@ -530,9 +742,16 @@ local function completeExtraction(thief)
 		end
 	end
 	local feedVictim = Players:GetPlayerByUserId(state.victimUserId)
-	registry.Net.FireAll("Feed", { icon = "HEIST",
-		text = thief.DisplayName .. " robbed " .. (feedVictim and feedVictim.DisplayName or "a vault")
-			.. " for $" .. tostring(state.amount) })
+	local feedText = thief.DisplayName .. " robbed "
+		.. (feedVictim and feedVictim.DisplayName or "a vault")
+		.. " for $" .. tostring(state.amount)
+	if state.stolenEgg then
+		local eggDef = Eggs.ById[state.stolenEgg.egg and state.stolenEgg.egg.eggId or ""]
+		local eggName = (eggDef and eggDef.DisplayName) or "an egg"
+		feedText = thief.DisplayName .. " stole " .. eggName .. " from "
+			.. (feedVictim and feedVictim.DisplayName or "a base") .. "!"
+	end
+	registry.Net.FireAll("Feed", { icon = "HEIST", text = feedText })
 	if state.amount >= 25000 then
 		registry.Notify.Broadcast("rare", "Big heist!",
 			thief.DisplayName .. " extracted a massive haul!", 6)
@@ -607,6 +826,14 @@ function HeistService.AbandonCarry(player)
 	extracting[player.UserId] = nil
 	setCarrySlow(player, false)
 	clearLootVisual(player)
+	if state.stolenEgg then
+		local eggVictim = Players:GetPlayerByUserId(state.stolenEgg.victimUserId)
+		if eggVictim then
+			registry.Egg.RestoreTakenEgg(eggVictim, state.stolenEgg.egg)
+			registry.Notify.Send(eggVictim, "info", "Egg recovered",
+				"The thief abandoned your stolen egg.", 4)
+		end
+	end
 	local victim = Players:GetPlayerByUserId(state.victimUserId)
 	if victim then
 		local victimProfile = profileOf(victim)
@@ -695,6 +922,13 @@ function HeistService.ScoutBase(player, plotIndex)
 	if registry.Achievement then
 		registry.Achievement.Check(player, "Scout")
 	end
+end
+
+--- Test backdoor (sim coverage only): clears all heist cooldowns.
+function HeistService.TestResetCooldowns()
+	grabCooldownUntil = {}
+	victimCooldownUntil = {}
+	scoutCooldownUntil = {}
 end
 
 function HeistService.HandlePlayerLeaving(player)

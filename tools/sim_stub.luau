@@ -793,11 +793,50 @@ function _SIM.claimBase()
 	return _SIM.fireServer("ClaimBase")
 end
 
+function _SIM.check(cond, where, msg)
+	if not cond then
+		_SIM.errors[#_SIM.errors + 1] = { where = tostring(where),
+			message = "CHECK-FAIL: " .. tostring(msg), trace = debug.traceback() }
+	end
+end
+
 function _SIM.hatchFirstEgg()
 	local DS = require(_SIM.serverModule("DataService"))
+	local ES = require(_SIM.serverModule("EggService"))
 	local prof = DS.GetProfile(_SIM.localPlayer)
 	if not prof or not prof.eggs or #prof.eggs == 0 then return "no eggs" end
-	return _SIM.fireServer("HatchEgg", prof.eggs[1].uid)
+	local uid = prof.eggs[1].uid
+	local out = {}
+	out[#out + 1] = _SIM.fireServer("PlaceEgg", uid)
+	_SIM.runDelayed()
+	_SIM.check(prof.eggs[1] and prof.eggs[1].placedPad ~= nil, "place", "starter egg not placed")
+	ES.TestForceReady(_SIM.localPlayer)
+	_SIM.runDelayed()
+	out[#out + 1] = _SIM.fireServer("HatchEgg", uid)
+	_SIM.runDelayed()
+	_SIM.check(#prof.pets >= 1, "hatch", "starter egg did not hatch")
+	return table.concat(out, " | ")
+end
+
+function _SIM.placeAllEggs()
+	local DS = require(_SIM.serverModule("DataService"))
+	local prof = DS.GetProfile(_SIM.localPlayer)
+	local n = 0
+	for _, egg in ipairs(prof.eggs or {}) do
+		if not egg.placedPad then
+			_SIM.fireServer("PlaceEgg", egg.uid)
+			n = n + 1
+		end
+	end
+	_SIM.runDelayed()
+	return "placed:" .. n
+end
+
+function _SIM.forceReadyEggs()
+	local ES = require(_SIM.serverModule("EggService"))
+	ES.TestForceReady(_SIM.localPlayer)
+	_SIM.runDelayed()
+	return "ready-forced"
 end
 
 function _SIM.addPlayer(name, userId)
@@ -854,6 +893,8 @@ function _SIM.economyLoop()
 	out[#out + 1] = _SIM.fireServer("BuyEgg", "Basic")
 	out[#out + 1] = _SIM.fireServer("BuyEgg", "Basic")
 	_SIM.runDelayed()
+	out[#out + 1] = _SIM.placeAllEggs()
+	out[#out + 1] = _SIM.forceReadyEggs()
 	out[#out + 1] = _SIM.fireServer("HatchAll")
 	_SIM.runDelayed()
 	local DS = require(_SIM.serverModule("DataService"))
@@ -900,6 +941,42 @@ function _SIM.tradeLoop()
 	out[#out + 1] = _SIM.fireServerAs(p2, "TradeConfirm")
 	_SIM.runDelayed()
 	return table.concat(out, " | ")
+end
+
+function _SIM.snatchLoop()
+	local p1, p2 = _SIM.localPlayer, _SIM.players[2]
+	local DS = require(_SIM.serverModule("DataService"))
+	local HS = require(_SIM.serverModule("HeistService"))
+	local world = require(_SIM.serverModule("WorldService"))
+	local out = {}
+	-- p2 buys + places an egg on plot 2
+	out[#out + 1] = _SIM.fireServerAs(p2, "BuyEgg", "Basic")
+	_SIM.runDelayed()
+	local prof2 = DS.GetProfile(p2)
+	local lastEgg = prof2.eggs[#prof2.eggs]
+	if not lastEgg then return "snatch-no-egg" end
+	out[#out + 1] = _SIM.fireServerAs(p2, "PlaceEgg", lastEgg.uid)
+	_SIM.runDelayed()
+	lastEgg = prof2.eggs[#prof2.eggs]
+	_SIM.check(lastEgg and lastEgg.placedPad ~= nil, "snatch", "p2 egg not placed")
+	-- p1 walks to plot 2 and snatches it off the pad
+	local plot2 = world.GetPlotModel(2)
+	local f2 = plot2 and plot2:FindFirstChild("Foundation")
+	if not f2 then return "snatch-no-foundation" end
+	p1.Character:FindFirstChild("HumanoidRootPart").CFrame = f2.CFrame + Vector3.new(0, 5, 0)
+	local eggCountBefore = #prof2.eggs
+	local pad = lastEgg and lastEgg.placedPad
+	HS.TryGrabEgg(p1, 2, pad)
+	_SIM.runDelayed()
+	_SIM.check(HS.IsCarrying(p1), "snatch", "p1 not carrying after TryGrabEgg")
+	_SIM.check(#prof2.eggs == eggCountBefore - 1, "snatch", "egg not removed from victim")
+	-- p1 abandons: victim must get the egg back
+	out[#out + 1] = _SIM.fireServerAs(p1, "AbandonLoot")
+	_SIM.runDelayed()
+	_SIM.check(not HS.IsCarrying(p1), "snatch", "p1 still carrying after abandon")
+	_SIM.check(#prof2.eggs == eggCountBefore, "snatch", "egg not restored to victim")
+	HS.TestResetCooldowns()
+	return table.concat(out, " | ") .. " | snatch-ok"
 end
 
 function _SIM.fireDied(player)

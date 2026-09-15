@@ -44,20 +44,39 @@ local function talkTo(npcId)
 	end
 end
 
+local function openShop()
+	local shop = ctx.Screens and ctx.Screens.ShopScreen
+	if shop then
+		if type(shop.ShowTab) == "function" then
+			shop.ShowTab("Eggs")
+		end
+		if type(shop.SetVisible) == "function" then
+			shop.SetVisible(true)
+		elseif type(shop.Toggle) == "function" then
+			shop.Toggle()
+		end
+	end
+end
+
 local function wirePrompt(prompt)
 	if not prompt:IsA("ProximityPrompt") then
 		return
 	end
-	if prompt.Name ~= "NpcPrompt" or wired[prompt] then
+	if wired[prompt] then
 		return
 	end
-	wired[prompt] = true
-	prompt.Triggered:Connect(function()
-		local npcId = prompt:GetAttribute("NpcId")
-		if npcId then
-			talkTo(npcId)
-		end
-	end)
+	if prompt.Name == "NpcPrompt" then
+		wired[prompt] = true
+		prompt.Triggered:Connect(function()
+			local npcId = prompt:GetAttribute("NpcId")
+			if npcId then
+				talkTo(npcId)
+			end
+		end)
+	elseif prompt.Name == "MarketPrompt" then
+		wired[prompt] = true
+		prompt.Triggered:Connect(openShop)
+	end
 end
 
 function NpcController.Start()

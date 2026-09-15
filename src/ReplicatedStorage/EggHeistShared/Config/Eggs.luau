@@ -8,6 +8,7 @@ Eggs.List = {
 	{
 		Id = "Basic",
 		Tier = 1,
+		HatchTime = 45,
 		DisplayName = "Basic Egg",
 		Description = "A humble egg. Every legend starts somewhere.",
 		Price = 100,
@@ -20,6 +21,7 @@ Eggs.List = {
 	{
 		Id = "Stone",
 		Tier = 2,
+		HatchTime = 60,
 		DisplayName = "Stone Egg",
 		Description = "Heavy, rough, and full of surprises.",
 		Price = 750,
@@ -32,6 +34,7 @@ Eggs.List = {
 	{
 		Id = "Golden",
 		Tier = 3,
+		HatchTime = 90,
 		DisplayName = "Golden Egg",
 		Description = "Shines with promise. Greatly improved odds.",
 		Price = 4000,
@@ -44,6 +47,7 @@ Eggs.List = {
 	{
 		Id = "Crystal",
 		Tier = 4,
+		HatchTime = 120,
 		DisplayName = "Crystal Egg",
 		Description = "Refracts luck itself. For serious collectors.",
 		Price = 25000,
@@ -56,6 +60,7 @@ Eggs.List = {
 	{
 		Id = "Lava",
 		Tier = 5,
+		HatchTime = 150,
 		DisplayName = "Lava Egg",
 		Description = "Burning with mythic potential.",
 		Price = 150000,
@@ -68,6 +73,7 @@ Eggs.List = {
 	{
 		Id = "Void",
 		Tier = 6,
+		HatchTime = 180,
 		DisplayName = "Void Egg",
 		Description = "It stares back. The rarest egg money can buy.",
 		Price = 1000000,
@@ -81,6 +87,7 @@ Eggs.List = {
 	{
 		Id = "Frost",
 		Tier = 3,
+		HatchTime = 90,
 		DisplayName = "Frost Egg",
 		Description = "Cold to the touch, warm with potential.",
 		Price = 9000,
@@ -93,6 +100,7 @@ Eggs.List = {
 	{
 		Id = "Storm",
 		Tier = 5,
+		HatchTime = 170,
 		DisplayName = "Storm Egg",
 		Description = "Crackles with legendary energy. Endgame odds.",
 		Price = 400000,
@@ -105,6 +113,7 @@ Eggs.List = {
 	{
 		Id = "Ember",
 		Tier = 4,
+		HatchTime = 120,
 		DisplayName = "Ember Egg",
 		Description = "Warm to the touch. Hums with storm-fire.",
 		Price = 75000,
@@ -117,6 +126,7 @@ Eggs.List = {
 	{
 		Id = "Phantom",
 		Tier = 6,
+		HatchTime = 200,
 		DisplayName = "Phantom Egg",
 		Description = "Half here, half somewhere richer.",
 		Price = 650000,
@@ -129,6 +139,7 @@ Eggs.List = {
 	{
 		Id = "Toxic",
 		Tier = 2,
+		HatchTime = 60,
 		DisplayName = "Toxic Egg",
 		Description = "Event egg. Oozes with mutated power.",
 		Price = 0,
@@ -142,6 +153,7 @@ Eggs.List = {
 	{
 		Id = "Shadow",
 		Tier = 3,
+		HatchTime = 100,
 		DisplayName = "Shadow Egg",
 		Description = "Blood Moon exclusive. Darkness hatches here.",
 		Price = 0,
@@ -155,6 +167,7 @@ Eggs.List = {
 	{
 		Id = "Galaxy",
 		Tier = 4,
+		HatchTime = 140,
 		DisplayName = "Galaxy Egg",
 		Description = "A universe in a shell. Meteor Shower exclusive.",
 		Price = 0,
@@ -168,6 +181,7 @@ Eggs.List = {
 	{
 		Id = "Ancient",
 		Tier = 5,
+		HatchTime = 170,
 		DisplayName = "Ancient Egg",
 		Description = "Older than the plaza stones. Prestige reward.",
 		Price = 0,
@@ -183,6 +197,11 @@ Eggs.List = {
 Eggs.ById = {}
 for _, def in ipairs(Eggs.List) do
 	Eggs.ById[def.Id] = def
+end
+
+function Eggs.GetHatchTime(eggId)
+	local def = Eggs.ById[eggId]
+	return (def and def.HatchTime) or 60
 end
 
 function Eggs.IsValid(eggId)

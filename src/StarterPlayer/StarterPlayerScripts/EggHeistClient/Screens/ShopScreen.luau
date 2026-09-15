@@ -12,6 +12,7 @@ local Rarities = require(ConfigFolder:WaitForChild("Rarities"))
 local Shop = require(ConfigFolder:WaitForChild("Shop"))
 local Format = require(Shared:WaitForChild("Utilities"):WaitForChild("Format"))
 local UIFactory = require(script.Parent:WaitForChild("UIFactory"))
+local IconFactory = require(script.Parent:WaitForChild("IconFactory"))
 
 local ShopScreen = {}
 local ctx = nil
@@ -137,21 +138,25 @@ function ShopScreen.Refresh()
 		local locked = level < (def.RequiredLevel or 1)
 		local afford = cash >= def.Price * eggQty
 		local card = rowCard(108)
-		local name = UIFactory.Label(def.DisplayName, UDim2.new(1, -130, 0, 24), Theme.Text, 15)
+		local icon = IconFactory.EggIcon(def.Id, UDim2.new(0, 88, 0, 88))
+		icon.Position = UDim2.new(0, 4, 0, 10)
+		icon.Parent = card
+		local name = UIFactory.Label(def.DisplayName, UDim2.new(1, -230, 0, 24), Theme.Text, 15)
 		name.TextXAlignment = Enum.TextXAlignment.Left
+		name.Position = UDim2.new(0, 100, 0, 0)
 		name.Parent = card
-		local desc = UIFactory.Label(def.Description or "", UDim2.new(1, -130, 0, 34),
+		local desc = UIFactory.Label(def.Description or "", UDim2.new(1, -230, 0, 34),
 			Theme.TextDim, 12)
 		desc.TextXAlignment = Enum.TextXAlignment.Left
 		desc.TextYAlignment = Enum.TextYAlignment.Top
 		desc.TextWrapped = true
-		desc.Position = UDim2.new(0, 0, 0, 26)
+		desc.Position = UDim2.new(0, 100, 0, 26)
 		desc.Font = Theme.FontRegular
 		desc.Parent = card
-		local odds = UIFactory.Label(oddsLine(def), UDim2.new(1, -130, 0, 18),
+		local odds = UIFactory.Label(oddsLine(def), UDim2.new(1, -230, 0, 18),
 			Theme.Accent, 11)
 		odds.TextXAlignment = Enum.TextXAlignment.Left
-		odds.Position = UDim2.new(0, 0, 0, 62)
+		odds.Position = UDim2.new(0, 100, 0, 62)
 		odds.Font = Theme.FontRegular
 		odds.Parent = card
 		local buy = UIFactory.PrimaryButton(Format.Money(def.Price * eggQty)

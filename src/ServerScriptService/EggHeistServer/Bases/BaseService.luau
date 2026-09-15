@@ -228,6 +228,12 @@ function BaseService.AssignPlot(player, preferredIndex)
 	if registry.Security then
 		registry.Security.RebuildPlotSecurity(index)
 	end
+	if registry.Egg then
+		registry.Egg.OnPlotAssigned(player, index)
+	end
+	if registry.Pet then
+		registry.Pet.OnPlotAssigned(player, index)
+	end
 	ensureClaimPrompt(index) -- owned now: removes the claim prompt
 	registry.World.SetPlotLabel(index, player.DisplayName .. "'s Base")
 	-- one-time starter vault so the first CollectVault feels rewarding
@@ -252,6 +258,17 @@ function BaseService.ReleasePlot(player)
 	userPlot[player.UserId] = nil
 	if plotOwner[index] == player.UserId then
 		plotOwner[index] = nil
+	end
+	if registry.Egg then
+		registry.Egg.OnPlotReleased(player, index)
+	end
+	if registry.Pet then
+		registry.Pet.OnPlotReleased(player, index)
+	end
+	local plot = registry.World.GetPlotModel(index)
+	local furniture = plot and plot:FindFirstChild("ServerFurniture")
+	if furniture then
+		pcall(function() furniture:Destroy() end)
 	end
 	if registry.Security then
 		registry.Security.ClearPlotSecurity(index)
@@ -660,6 +677,9 @@ function BaseService.Start()
 			local preferred = profile.base.plot
 			if preferred and preferred > 0 and not plotOwner[preferred] then
 				BaseService.AssignPlot(player, preferred)
+			elseif not userPlot[player.UserId] then
+				-- auto-assign: every player gets THIS IS MY BASE within seconds
+				BaseService.AssignPlot(player, nil)
 			end
 			BaseService.RestoreDecorations(player)
 		end)

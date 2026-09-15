@@ -93,6 +93,7 @@ function ProgressionService.DoPrestige(player)
 	p.cash = Economy.StartingCash
 	p.xp = 0
 	p.level = 1
+	registry.Egg.UnplaceAllEggs(player)
 	p.eggs = {}
 	p.base.upgrades = registry.Data.GetDefaultUpgrades()
 	p.base.security = registry.Data.GetDefaultSecurity()

@@ -305,6 +305,11 @@ function TradeService.OfferAdd(player, kind, ref, amount)
 		if not egg then
 			return
 		end
+		if egg.placedPad then
+			registry.Notify.Send(player, "warning", "Egg is placed",
+				"Pick it up from your base before trading it.", 3)
+			return
+		end
 		for _, existing in ipairs(offer.eggs) do
 			if existing == uid then
 				return
@@ -409,10 +414,14 @@ local function validateSide(session, giverId)
 	if #receiverProfile.pets + #offer.pets > petCap(receiverProfile) then
 		return false, receiver.DisplayName .. "'s pet storage is full"
 	end
-	-- eggs: owned, receiver has room
+	-- eggs: owned, unplaced, receiver has room
 	for _, uid in ipairs(offer.eggs) do
-		if not registry.Egg.FindEgg(giverProfile, uid) then
+		local egg = registry.Egg.FindEgg(giverProfile, uid)
+		if not egg then
 			return false, "Egg no longer available"
+		end
+		if egg.placedPad then
+			return false, "Offered egg is placed in a base"
 		end
 	end
 	if #receiverProfile.eggs + #offer.eggs > 200 then

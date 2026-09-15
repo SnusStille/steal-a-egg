@@ -13,6 +13,8 @@ local Mutations = require(ConfigFolder:WaitForChild("Mutations"))
 local Economy = require(ConfigFolder:WaitForChild("Economy"))
 local Settings = require(ConfigFolder:WaitForChild("Settings"))
 local Validate = require(Shared:WaitForChild("Utilities"):WaitForChild("Validate"))
+local ModelFactory = require(Shared:WaitForChild("Utilities"):WaitForChild("ModelFactory"))
+local Rarities = require(ConfigFolder:WaitForChild("Rarities"))
 
 local PetService = {}
 PetService.Name = "PetService"
@@ -198,6 +200,7 @@ function PetService.Equip(player, petUid)
 		registry.TutorialHook(player, "EquipPet")
 	end
 	PetService.RebuildFollowers(player)
+	PetService.RebuildDisplays(player)
 	return true
 end
 
@@ -211,6 +214,7 @@ function PetService.Unequip(player, petUid)
 			table.remove(profile.equipped, i)
 			registry.Data.MarkDirty(player)
 			PetService.RebuildFollowers(player)
+			PetService.RebuildDisplays(player)
 			return true
 		end
 	end
@@ -247,6 +251,7 @@ function PetService.Sell(player, petUid, fraction)
 		registry.Data.MarkDirty(player)
 	end
 	PetService.RebuildFollowers(player)
+	PetService.RebuildDisplays(player)
 	return true
 end
 
@@ -270,95 +275,46 @@ end
 -- Followers (3D pets trailing the player)
 --------------------------------------------------------------------------------
 
-local FACE_TEXT = {
-	Common = "(•‿•)",
-	Rare = "(◕‿◕)",
-	Epic = "(✧‿✧)",
-	Legendary = "(★‿★)",
-	Mythic = "(◉‿◉)",
-	Secret = "(♦‿♦)",
-}
+-- Captures each child part's CFrame relative to the primary so tilted
+-- parts (wings/ears/tails) keep local rotation while following.
+local function captureGlue(model, primary)
+	local parts = {}
+	if not primary then
+		return parts
+	end
+	for _, part in ipairs(model:GetDescendants()) do
+		if part:IsA("BasePart") and part ~= primary then
+			local rel = nil
+			pcall(function()
+				rel = primary.CFrame:ToObjectSpace(part.CFrame)
+			end)
+			if not rel then
+				rel = CFrame.new(part.Position - primary.Position)
+			end
+			parts[#parts + 1] = { part = part, rel = rel }
+		end
+	end
+	return parts
+end
 
-local function applyMutationVisuals(model, mutationId)
-	local body = model:FindFirstChild("Body")
-	if not body or not body:IsA("BasePart") then
-		return
-	end
-	local mut = Mutations.ById[mutationId]
-	if not mut then
-		return
-	end
-	body.Color = mut.Color
-	if mutationId == "Neon" or mutationId == "Galaxy" or mutationId == "Void" then
-		body.Material = Enum.Material.Neon
-	elseif mutationId == "Crystal" then
-		body.Material = Enum.Material.Glass
-	elseif mutationId == "Golden" then
-		body.Material = Enum.Material.SmoothPlastic
-	end
-	-- sparkle for flashy mutations
-	if mutationId == "Golden" or mutationId == "Galaxy" or mutationId == "Void"
-		or mutationId == "Ancient" or mutationId == "Neon" then
-		local sparkles = Instance.new("Sparkles")
-		sparkles.SparkleColor = mut.Color
-		sparkles.Parent = body
+local function applyGlue(primary, parts)
+	for _, child in ipairs(parts or {}) do
+		if child.part and child.part.Parent then
+			local ok = pcall(function()
+				child.part.CFrame = primary.CFrame:ToWorldSpace(child.rel)
+			end)
+			if not ok then
+				child.part.CFrame = CFrame.new(primary.Position + child.rel.Position)
+					* (primary.CFrame - primary.Position)
+			end
+		end
 	end
 end
 
 local function buildFollowerModel(pet)
-	local def = Pets.ById[pet.id]
-	local assetName = def and def.AssetModel or "BasicEgg"
-	local model = registry.World.CloneEggAsset(assetName)
+	local model = ModelFactory.BuildCreature(pet.id, pet.mut, 0.55)
 	model.Name = "Pet_" .. pet.uid
-	-- normalize: anchor everything, no collisions, scale to pal size
-	for _, descendant in ipairs(model:GetDescendants()) do
-		if descendant:IsA("BasePart") then
-			descendant.Anchored = true
-			descendant.CanCollide = false
-			descendant.CanQuery = false
-			descendant.CanTouch = false
-		end
-	end
-	local body = model:FindFirstChild("Body")
-	if body and body:IsA("BasePart") then
-		model.PrimaryPart = body
-		-- shrink to pal size (assets are display-sized); keep child-part
-		-- offsets proportional so multi-part eggs (bumps, facets) stay glued
-		local targetSize = Vector3.new(1.4, 1.8, 1.4)
-		local scale = targetSize.X / math.max(0.1, body.Size.X)
-		local bodyPos = body.Position
-		for _, descendant in ipairs(model:GetDescendants()) do
-			if descendant:IsA("SpecialMesh") then
-				descendant.Scale = descendant.Scale * scale
-			elseif descendant:IsA("BasePart") and descendant ~= body then
-				descendant.Size = descendant.Size * scale
-				local offset = descendant.Position - bodyPos
-				local _, _, _, r00, r01, r02, r10, r11, r12, r20, r21, r22 =
-					descendant.CFrame:GetComponents()
-				local newPos = bodyPos + offset * scale
-				descendant.CFrame = CFrame.new(newPos.X, newPos.Y, newPos.Z,
-					r00, r01, r02, r10, r11, r12, r20, r21, r22)
-			end
-		end
-		body.Size = targetSize
-		-- cute face
-		local face = Instance.new("SurfaceGui")
-		face.Name = "Face"
-		face.Face = Enum.NormalId.Front
-		face.CanvasSize = Vector2.new(128, 128)
-		face.Parent = body
-		local label = Instance.new("TextLabel")
-		label.Size = UDim2.fromScale(1, 1)
-		label.BackgroundTransparency = 1
-		label.Text = FACE_TEXT[def and def.Rarity or "Common"] or "(•‿•)"
-		label.TextColor3 = Color3.fromRGB(30, 30, 30)
-		label.Font = Enum.Font.GothamBold
-		label.TextScaled = true
-		label.Parent = face
-	end
-	applyMutationVisuals(model, pet.mut)
-	-- nametag
-	local adornee = model.PrimaryPart or model:FindFirstChildWhichIsA("BasePart")
+	local adornee = model.PrimaryPart or model:FindFirstChild("Body")
 	if adornee then
 		local tag = Instance.new("BillboardGui")
 		tag.Name = "Nametag"
@@ -370,6 +326,7 @@ local function buildFollowerModel(pet)
 		local text = Instance.new("TextLabel")
 		text.Size = UDim2.fromScale(1, 1)
 		text.BackgroundTransparency = 1
+		local def = Pets.ById[pet.id]
 		local displayName = def and def.DisplayName or "Pal"
 		if pet.mut then
 			displayName = pet.mut .. " " .. displayName
@@ -419,19 +376,7 @@ function PetService.RebuildFollowers(player)
 			local ok, model = pcall(buildFollowerModel, pet)
 			if ok and model then
 				model.Parent = petFolder
-				-- capture child-part offsets so multi-part eggs stay glued
-				local parts = {}
-				local primary = model.PrimaryPart
-				if primary then
-					for _, part in ipairs(model:GetDescendants()) do
-						if part:IsA("BasePart") and part ~= primary then
-							parts[#parts + 1] = {
-								part = part,
-								offset = part.Position - primary.Position,
-							}
-						end
-					end
-				end
+				local parts = captureGlue(model, model.PrimaryPart)
 				followers[userId][#followers[userId] + 1] = {
 					uid = uid,
 					model = model,
@@ -507,19 +452,227 @@ local function updateFollowers(dt)
 						if not entry.hidden then
 							local alpha = math.min(1, dt * Settings.Pets.FollowLerp)
 							primary.CFrame = primary.CFrame:Lerp(target, alpha)
-							-- keep child parts glued via captured offsets
-							for _, child in ipairs(entry.parts or {}) do
-								if child.part and child.part.Parent then
-									child.part.CFrame = CFrame.new(primary.Position + child.offset)
-										* (primary.CFrame - primary.Position)
-								end
-							end
+							applyGlue(primary, entry.parts)
 						end
 					end
 				end
 			end
 		end
 	end
+end
+
+--------------------------------------------------------------------------------
+-- Base displays (equipped creatures exhibited on plot stands)
+--------------------------------------------------------------------------------
+
+local STAND_OFFSETS = {
+	Vector3.new(-12, 0, -12), Vector3.new(-4, 0, -12),
+	Vector3.new(4, 0, -12), Vector3.new(12, 0, -12),
+}
+local MAX_DISPLAYS = 4
+
+local displays = {} -- [plotIndex] = { {model=, parts=, basePos=, phase=}, ... }
+local standRefs = {} -- [plotIndex] = { [i] = { top = Vector3, label = TextLabel } }
+
+local function displayFurniture(plotIndex)
+	local plot = registry.World.GetPlotModel(plotIndex)
+	if not plot then
+		return nil
+	end
+	local furniture = plot:FindFirstChild("ServerFurniture")
+	if not furniture then
+		furniture = Instance.new("Folder")
+		furniture.Name = "ServerFurniture"
+		furniture.Parent = plot
+	end
+	return furniture
+end
+
+--- Builds the 4 display stands for a plot. Idempotent.
+function PetService.BuildStands(plotIndex)
+	local furniture = displayFurniture(plotIndex)
+	if not furniture then
+		return
+	end
+	local plot = registry.World.GetPlotModel(plotIndex)
+	local foundation = plot and plot:FindFirstChild("Foundation")
+	if not foundation or not foundation:IsA("BasePart") then
+		return
+	end
+	local stands = furniture:FindFirstChild("DisplayStands")
+	if not stands then
+		stands = Instance.new("Folder")
+		stands.Name = "DisplayStands"
+		stands.Parent = furniture
+	end
+	standRefs[plotIndex] = standRefs[plotIndex] or {}
+	for i = 1, MAX_DISPLAYS do
+		if not stands:FindFirstChild("Stand" .. i) then
+			local spot = ModelFactory.FindClearSpot(plot, STAND_OFFSETS[i], 3.5, 15)
+			local base = foundation.Position
+				+ Vector3.new(0, foundation.Size.Y / 2, 0)
+				+ spot
+			local stand = Instance.new("Part")
+			stand.Name = "Stand" .. i
+			stand.Shape = Enum.PartType.Cylinder
+			stand.Size = Vector3.new(2.4, 4, 4)
+			stand.CFrame = CFrame.new(base + Vector3.new(0, 1.2, 0))
+				* CFrame.fromEulerAnglesXYZ(0, 0, math.pi / 2)
+			stand.Color = Color3.fromRGB(60, 63, 85)
+			stand.Material = Enum.Material.SmoothPlastic
+			stand.Anchored = true
+			stand.CanCollide = true
+			stand.TopSurface = Enum.SurfaceType.Smooth
+			stand.BottomSurface = Enum.SurfaceType.Smooth
+			stand.Parent = stands
+			local top = Instance.new("Part")
+			top.Name = "Top"
+			top.Shape = Enum.PartType.Cylinder
+			top.Size = Vector3.new(0.4, 4.6, 4.6)
+			top.CFrame = CFrame.new(base + Vector3.new(0, 2.6, 0))
+				* CFrame.fromEulerAnglesXYZ(0, 0, math.pi / 2)
+			top.Color = Color3.fromRGB(120, 160, 255)
+			top.Material = Enum.Material.Neon
+			top.Transparency = 0.35
+			top.Anchored = true
+			top.CanCollide = false
+			top.CanQuery = false
+			top.Parent = stand
+			local billboard = Instance.new("BillboardGui")
+			billboard.Name = "StandLabel"
+			billboard.Size = UDim2.new(0, 150, 0, 50)
+			billboard.StudsOffset = Vector3.new(0, 6, 0)
+			billboard.AlwaysOnTop = false
+			billboard.MaxDistance = 70
+			billboard.Parent = stand
+			local text = Instance.new("TextLabel")
+			text.Size = UDim2.fromScale(1, 1)
+			text.BackgroundTransparency = 1
+			text.Text = "Display"
+			text.TextColor3 = Color3.fromRGB(160, 165, 190)
+			text.Font = Enum.Font.GothamBold
+			text.TextScaled = true
+			text.TextStrokeTransparency = 0.5
+			text.Parent = billboard
+			standRefs[plotIndex][i] = { top = base + Vector3.new(0, 2.8, 0), label = text }
+		end
+	end
+end
+
+--- Destroys displayed creature models on a plot (stands stay).
+function PetService.ClearDisplays(plotIndex)
+	local list = displays[plotIndex]
+	if list then
+		for _, entry in ipairs(list) do
+			if entry.model then
+				pcall(function() entry.model:Destroy() end)
+			end
+		end
+		displays[plotIndex] = nil
+	end
+	local refs = standRefs[plotIndex]
+	if refs then
+		for i = 1, MAX_DISPLAYS do
+			local ref = refs[i]
+			if ref and ref.label and ref.label.Parent then
+				ref.label.Text = "Display"
+				ref.label.TextColor3 = Color3.fromRGB(160, 165, 190)
+			end
+		end
+	end
+end
+
+local function formatIncome(value)
+	if value >= 1000000 then
+		return string.format("%.1fM", value / 1000000)
+	elseif value >= 1000 then
+		return string.format("%.1fK", value / 1000)
+	end
+	return string.format("%.0f", value)
+end
+
+--- Exhibits the first equipped pets on the plot stands.
+function PetService.RebuildDisplays(player)
+	local profile = profileOf(player)
+	if not profile then
+		return
+	end
+	local plotIndex = profile.base.plot or 0
+	if plotIndex <= 0 then
+		return
+	end
+	PetService.BuildStands(plotIndex)
+	PetService.ClearDisplays(plotIndex)
+	local furniture = displayFurniture(plotIndex)
+	if not furniture then
+		return
+	end
+	local shown = furniture:FindFirstChild("DisplayedPets")
+	if not shown then
+		shown = Instance.new("Folder")
+		shown.Name = "DisplayedPets"
+		shown.Parent = furniture
+	end
+	displays[plotIndex] = {}
+	for slot, uid in ipairs(profile.equipped or {}) do
+		if slot > MAX_DISPLAYS then
+			break
+		end
+		local pet = PetService.FindPet(profile, uid)
+		local ref = standRefs[plotIndex] and standRefs[plotIndex][slot] or nil
+		if pet and ref then
+			local ok, model = pcall(ModelFactory.BuildCreature, pet.id, pet.mut, 0.8)
+			if ok and model then
+				model.Name = "Display_" .. pet.uid
+				model.Parent = shown
+				ModelFactory.Pose(model, CFrame.new(ref.top + Vector3.new(0, 1.1, 0)))
+				local primary = model.PrimaryPart
+				displays[plotIndex][#displays[plotIndex] + 1] = {
+					model = model,
+					parts = captureGlue(model, primary),
+					basePos = (primary and primary.Position) or ref.top,
+					phase = math.random() * math.pi * 2,
+				}
+				local def = Pets.ById[pet.id]
+				local title = (def and def.DisplayName) or pet.id
+				if pet.mut then
+					title = pet.mut .. " " .. title
+				end
+				if ref.label and ref.label.Parent then
+					ref.label.Text = title .. "  +$" .. formatIncome(PetService.PetIncomePerSecond(pet)) .. "/s"
+					ref.label.TextColor3 = Rarities.GetColor((def and def.Rarity) or "Common")
+				end
+			end
+		end
+	end
+end
+
+-- Idle bob for every displayed creature (same heartbeat as followers).
+function updateDisplays()
+	local time = os.clock()
+	for _, list in pairs(displays) do
+		for _, entry in ipairs(list) do
+			local model = entry.model
+			local primary = model and model.PrimaryPart
+			if primary and model.Parent then
+				local dy = math.sin(time * 1.5 + entry.phase) * 0.25
+				primary.CFrame = CFrame.new(entry.basePos + Vector3.new(0, dy, 0))
+					* (primary.CFrame - primary.Position)
+				applyGlue(primary, entry.parts)
+			end
+		end
+	end
+end
+
+--- Plot lifecycle hooks called by BaseService.
+function PetService.OnPlotAssigned(player, _plotIndex)
+	PetService.RebuildDisplays(player)
+end
+
+function PetService.OnPlotReleased(_player, plotIndex)
+	PetService.ClearDisplays(plotIndex)
+	standRefs[plotIndex] = nil
+	displays[plotIndex] = nil
 end
 
 function PetService.Start()
@@ -559,6 +712,7 @@ function PetService.Start()
 			task.delay(0.5, function()
 				if player.Parent then
 					PetService.RebuildFollowers(player)
+					PetService.RebuildDisplays(player)
 				end
 			end)
 		end)
@@ -569,17 +723,22 @@ function PetService.Start()
 			task.delay(0.5, function()
 				if player.Parent then
 					PetService.RebuildFollowers(player)
+					PetService.RebuildDisplays(player)
 				end
 			end)
 		end)
 		task.delay(2, function()
 			if player.Parent then
 				PetService.RebuildFollowers(player)
+				PetService.RebuildDisplays(player)
 			end
 		end)
 	end
 
-	RunService.Heartbeat:Connect(updateFollowers)
+	RunService.Heartbeat:Connect(function(dt)
+		updateFollowers(dt)
+		updateDisplays()
+	end)
 end
 
 return PetService

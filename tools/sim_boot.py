@@ -122,6 +122,7 @@ def main() -> int:
     print("P2: joined; RICH:", lua.eval("_SIM.setupRichAs(_SIM.players[2])"))
     print("P2CLAIM:", lua.eval("_SIM.claimBaseAs(_SIM.players[2], 2)"), "| delayed ran:", lua.eval("_SIM.runDelayed()"))
     print("TRADE:", lua.eval("_SIM.tradeLoop()"))
+    print("SNATCH:", lua.eval("_SIM.snatchLoop()"))
     print("HEIST:", lua.eval("_SIM.heistLoop()"))
     print("EVENT:", lua.eval('_SIM.startEvent("GoldenHour")'))
     print("EVENT:", lua.eval('_SIM.startEvent("EggRain")'))

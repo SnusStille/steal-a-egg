@@ -1,5 +1,31 @@
 # Changelog
 
+## PLAYABLE — systems wired into the world (2026-09-15)
+
+Every backend system is now player-usable in the 3D world. Full gate green
+(syntax, refs, waits, sim `WARNS:0 ERRORS:0` incl. new snatch assertions).
+
+- EGGS ARE PHYSICAL: buy → PLACE on your base's glowing pads (6, auto-nudged
+  clear of buildings) → live countdown billboards → hold E to HATCH.
+  Inventory drives the loop (PLACE / WAIT m:ss / HATCH per egg).
+- PROCEDURAL CREATURES: all 37 pets render as 3D creatures (15 archetypes,
+  mutation visuals) — as followers, base exhibits (4 stands + income signs),
+  shop/inventory/hatch 3D icons (ViewportFrames, zero uploaded assets).
+- AUTO-CLAIM: every player gets a base within seconds (manual claim kept);
+  ownership labels, plot lifecycle hooks, visual wipes on release/prestige.
+- EGG SNATCHING: Steal prompt on rival pads → slowed carry (egg floats over
+  your head) → extract for the egg; die/timeout/abandon and it returns.
+  Decoys, alarms, lockdowns, and cooldowns all apply.
+- SHOP↔WORLD: every market stall pedestal (rbxm + fallback worlds) has a
+  Shop prompt opening the Eggs tab; physical richest-players leaderboard
+  board at spawn; NPC shortcuts already wired (merchant/guard/scout/fence).
+- ANTI-EXPLOIT: placed eggs can't be traded, hatch requires placed+ready,
+  snatch resolves server-side by pad (no client uids), hatch timers and
+  income stay server-authoritative.
+- FIXES: fallback vault house no longer floats 60 studs up (heists work
+  without the rbxm); tutorial gains the place step; prestige/trade keep
+  world visuals in sync.
+
 ## JUICE — Map + game-feel update (2026-09-15)
 
 Everything cooler, zero systems broken (validation still fully green,

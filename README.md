@@ -19,7 +19,7 @@ by automated checks (see [Testing](#testing)).
 
 Full instructions: [`SETUP.md`](SETUP.md).
 
-> **Download:** grab **`Egg-Heist-MAX.zip`** — the place file, the world
+> **Download:** grab **`Egg-Heist-PLAYABLE-MAX.zip`** — the place file, the world
 > model, all source, tools, and docs. Nothing else needed.
 
 ## Project structure
@@ -34,20 +34,20 @@ Egg-Heist/
 │       └── EggHeistWorld.rbxm  # Original world model (byte-identical, never modified)
 ├── src/                        # Source of truth (mirrors the DataModel, Rojo-style)
 │   ├── ServerScriptService/EggHeistServer/
-│   │   ├── Main.server.luau    # BOOTSTRAP: loads 23 services in dependency order
+│   │   ├── Main.server.luau    # BOOTSTRAP: loads 24 services in dependency order
 │   │   └── <Domain>/           # Admin, Bases, Data, Economy, Eggs, Events,
 │   │                           # Heists, Monetization, Net, Pets, Progression,
 │   │                           # Quests, Rewards, Security, Social, Utilities, World
 │   ├── ReplicatedStorage/EggHeistShared/
-│   │   ├── Remotes.luau        # Remote registry (38 C2S / 12 S2C / 2 Fn)
+│   │   ├── Remotes.luau        # Remote registry (40 C2S / 12 S2C / 2 Fn)
 │   │   ├── Types.luau          # Shared record constructors
-│   │   ├── Config/             # 17 data modules: eggs, pets, economy, ...
-│   │   └── Utilities/          # Signal, Validate, Format, TableUtil
+│   │   ├── Config/             # 19 data modules: eggs, pets, creatures, economy, ...
+│   │   └── Utilities/          # Signal, Validate, Format, TableUtil, ModelFactory
 │   └── StarterPlayer/StarterPlayerScripts/EggHeistClient/
 │       ├── Main.client.luau    # BOOTSTRAP: network → controllers → screens
 │       ├── ClientNet.luau      # Remote access layer (waits, timeouts, asserts)
 │       ├── Controllers/        # 14 controllers (client logic per system)
-│       ├── Screens/            # 18 screens + UIFactory (all UI)
+│       ├── Screens/            # 19 screens + UIFactory + IconFactory (all UI)
 │       ├── Effects/            # VFX + SoundManager
 │       └── Input/              # Keybinds (touch uses on-screen buttons)
 ├── tools/                      # Build + validators + headless game simulator
@@ -69,7 +69,7 @@ StarterPlayerScripts/EggHeistClient/{ Main, ClientNet, Controllers, Screens, ...
 | Server services | 24 | Data, Economy, Eggs, Pets, Bases, Security, Heists, Gadgets, Quests, Rewards, Collection, Progression, Achievements, Events, Shop, Leaderboards, Trade, NPCs, Travel, World, Atmosphere, Net, Notify, Admin |
 | Client controllers | 14 | Data, Egg, Pet, Base, Heist, Quest, Shop, Event, Tutorial, Gadget, Collection, NPC, Trade, Input |
 | Screens | 19 | Main, Inventory, Shop, Collection, Base, Quests, Daily, Settings, Hatch, Heist, Event banner, Announce, Tutorial, Objective, Trade, Help, Feed, Travel, Notifications |
-| Remotes | 38 + 12 + 2 | Validated + rate-limited; server never trusts the client |
+| Remotes | 40 + 12 + 2 | Validated + rate-limited; server never trusts the client |
 
 ## Content (all data-driven — see `docs/development.md`)
 
@@ -84,11 +84,11 @@ StarterPlayerScripts/EggHeistClient/{ Main, ClientNet, Controllers, Screens, ...
 
 ```bash
 python3 tools/build_place.py     # src/ -> Egg-Heist.rbxlx
-python3 tools/validate_syntax.py # all 84 .luau files parse
+python3 tools/validate_syntax.py # all 91 .luau files parse
 python3 tools/check_refs.py      # requires, registries, endpoints, configs
 python3 tools/check_waits.py     # every WaitForChild target exists in the build
 python3 tools/sim_boot.py        # headless run: server+client boot, 2-player
-                                 # join/claim/trade/heist/events — 0 warns, 0 errors
+                                 # join/claim/place/hatch/trade/snatch/heist/events — 0 warns, 0 errors
 ```
 
 Docs: [`docs/architecture.md`](docs/architecture.md) ·

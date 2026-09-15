@@ -270,24 +270,24 @@ local function buildFallbackWorld()
 	template.Parent = bases
 	mkPart(template, "Foundation", Vector3.new(36, 2, 36), CFrame.new(0, -30, -160), FALLBACK_COLORS.Plot)
 	-- Vault house, built on claim: 3 walls + roof + safe + trigger floor + upgrade pads.
-	-- Template coords map to plot-relative: (dx, 30 + dy, -160 + dz).
-	mkPart(template, "VaultAreaFloor", Vector3.new(10, 2, 10), CFrame.new(8, 31, -165),
+	-- Template coords map to plot world: (plotX + dx, 30 + dy, 70 + dz).
+	mkPart(template, "VaultAreaFloor", Vector3.new(10, 2, 10), CFrame.new(8, -29, -165),
 		Color3.fromRGB(150, 60, 60))
-	mkPart(template, "VaultSafe", Vector3.new(4, 5, 4), CFrame.new(8, 34.5, -165),
+	mkPart(template, "VaultSafe", Vector3.new(4, 5, 4), CFrame.new(8, -25.5, -165),
 		Color3.fromRGB(45, 45, 55))
-	mkPart(template, "VaultTrim", Vector3.new(4.6, 0.6, 4.6), CFrame.new(8, 37.2, -165),
+	mkPart(template, "VaultTrim", Vector3.new(4.6, 0.6, 4.6), CFrame.new(8, -22.8, -165),
 		Color3.fromRGB(255, 200, 80), Enum.Material.Neon)
-	mkPart(template, "HouseBack", Vector3.new(14, 8, 1), CFrame.new(8, 35, -171),
+	mkPart(template, "HouseBack", Vector3.new(14, 8, 1), CFrame.new(8, -25, -171),
 		Color3.fromRGB(190, 160, 130))
-	mkPart(template, "HouseLeft", Vector3.new(1, 8, 9), CFrame.new(1, 35, -167),
+	mkPart(template, "HouseLeft", Vector3.new(1, 8, 9), CFrame.new(1, -25, -167),
 		Color3.fromRGB(190, 160, 130))
-	mkPart(template, "HouseRight", Vector3.new(1, 8, 9), CFrame.new(15, 35, -167),
+	mkPart(template, "HouseRight", Vector3.new(1, 8, 9), CFrame.new(15, -25, -167),
 		Color3.fromRGB(190, 160, 130))
-	mkPart(template, "HouseRoof", Vector3.new(16, 1, 11), CFrame.new(8, 39.5, -167),
+	mkPart(template, "HouseRoof", Vector3.new(16, 1, 11), CFrame.new(8, -20.5, -167),
 		Color3.fromRGB(140, 60, 60))
 	for slot = 1, 3 do
 		mkPart(template, "UpgradeSlot" .. tostring(slot), Vector3.new(4, 0.6, 4),
-			CFrame.new(-15 + slot * 5, 31.3, -154), FALLBACK_COLORS.Accent).CanCollide = false
+			CFrame.new(-15 + slot * 5, -28.7, -154), FALLBACK_COLORS.Accent).CanCollide = false
 	end
 	for i = 1, Settings.MaxBasePlots do
 		local plot = Instance.new("Model")
@@ -802,7 +802,72 @@ function WorldService.RestoreLighting()
 	Lighting.OutdoorAmbient = defaultLighting.OutdoorAmbient
 end
 
+--------------------------------------------------------------------------------
+-- World leaderboard: physical richest-players board at spawn
+--------------------------------------------------------------------------------
+
+local leaderboardLabel = nil
+
+local function formatCashShort(value)
+	value = math.floor(tonumber(value) or 0)
+	if value >= 1000000000 then
+		return string.format("%.1fB", value / 1000000000)
+	elseif value >= 1000000 then
+		return string.format("%.1fM", value / 1000000)
+	elseif value >= 1000 then
+		return string.format("%.1fK", value / 1000)
+	end
+	return tostring(value)
+end
+
+function WorldService.RefreshLeaderboard()
+	if leaderboardLabel == nil then
+		local map = root and root:FindFirstChild("Map")
+		local spawn = map and map:FindFirstChild("Spawn")
+		if not spawn then
+			return
+		end
+		local board = spawn:FindFirstChild("Leaderboard")
+		if not board then
+			local base = WorldService.GetSpawnCFrame()
+			mkPart(spawn, "LeaderboardPost", Vector3.new(1, 7, 1),
+				base * CFrame.new(10, 3.5, 8), Color3.fromRGB(70, 70, 80))
+			board = mkSign(spawn, "Leaderboard", base * CFrame.new(10, 9, 8),
+				"RICHEST PLAYERS", Color3.fromRGB(255, 215, 100), Vector3.new(12, 6, 1))
+		end
+		local gui = board and board:FindFirstChildOfClass("SurfaceGui") or nil
+		leaderboardLabel = gui and gui:FindFirstChildOfClass("TextLabel") or nil
+	end
+	if not leaderboardLabel then
+		return
+	end
+	local entries = {}
+	for _, player in ipairs(Players:GetPlayers()) do
+		local profile = registry.Data and registry.Data.GetProfile(player) or nil
+		if profile then
+			entries[#entries + 1] = { name = player.DisplayName, cash = profile.cash or 0 }
+		end
+	end
+	table.sort(entries, function(a, b) return a.cash > b.cash end)
+	local lines = { "RICHEST PLAYERS" }
+	for i = 1, math.min(5, #entries) do
+		lines[#lines + 1] = string.format("%d. %s  $%s", i, entries[i].name,
+			formatCashShort(entries[i].cash))
+	end
+	if #entries == 0 then
+		lines[#lines + 1] = "no tycoons yet"
+	end
+	leaderboardLabel.Text = table.concat(lines, "\n")
+end
+
 function WorldService.Start()
+	WorldService.RefreshLeaderboard()
+	task.spawn(function()
+		while true do
+			task.wait(30)
+			WorldService.RefreshLeaderboard()
+		end
+	end)
 	-- Void failsafe: nobody should ever fall forever
 	task.spawn(function()
 		while true do

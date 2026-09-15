@@ -21,6 +21,14 @@ function EggController.HatchEgg(eggUid)
 	ctx.Net.Fire("HatchEgg", eggUid)
 end
 
+function EggController.PlaceEgg(eggUid)
+	ctx.Net.Fire("PlaceEgg", eggUid)
+end
+
+function EggController.PickupEgg(eggUid)
+	ctx.Net.Fire("PickupEgg", eggUid)
+end
+
 function EggController.HatchAll()
 	ctx.Net.Fire("HatchAll")
 end

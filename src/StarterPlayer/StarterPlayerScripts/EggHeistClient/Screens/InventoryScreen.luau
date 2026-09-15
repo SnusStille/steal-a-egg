@@ -13,6 +13,7 @@ local Mutations = require(ConfigFolder:WaitForChild("Mutations"))
 local Economy = require(ConfigFolder:WaitForChild("Economy"))
 local Format = require(Shared:WaitForChild("Utilities"):WaitForChild("Format"))
 local UIFactory = require(script.Parent:WaitForChild("UIFactory"))
+local IconFactory = require(script.Parent:WaitForChild("IconFactory"))
 
 local InventoryScreen = {}
 local ctx = nil
@@ -150,15 +151,29 @@ local function eggCard(egg)
 		UDim2.new(1, 0, 0, 22), Theme.Text, 13)
 	name.TextWrapped = true
 	name.Parent = card
-	local emoji = UIFactory.Label("EGG", UDim2.new(1, 0, 0, 40), Theme.Accent, 28)
-	emoji.Position = UDim2.new(0, 0, 0, 28)
-	emoji.Parent = card
-	local hatch = UIFactory.PrimaryButton("HATCH", function()
-		ctx.Controllers.EggController.HatchEgg(egg.uid)
+	local icon = IconFactory.EggIcon(egg.eggId, UDim2.new(1, 0, 0, 62))
+	icon.Position = UDim2.new(0, 0, 0, 26)
+	icon.Parent = card
+	-- PLACE (backpack) -> WAIT (incubating) -> HATCH (ready)
+	local now = os.time()
+	local label, goHatch, goPlace = "HATCH", true, false
+	if not egg.placedPad then
+		label, goHatch, goPlace = "PLACE", false, true
+	elseif (egg.hatchAt or 0) > now then
+		local left = (egg.hatchAt or now) - now
+		label = string.format("WAIT %d:%02d", math.floor(left / 60), left % 60)
+		goHatch = false
+	end
+	local action = UIFactory.PrimaryButton(label, function()
+		if goPlace then
+			ctx.Controllers.EggController.PlaceEgg(egg.uid)
+		elseif goHatch then
+			ctx.Controllers.EggController.HatchEgg(egg.uid)
+		end
 	end)
-	hatch.Size = UDim2.new(1, 0, 0, 34)
-	hatch.Position = UDim2.new(0, 0, 1, -40)
-	hatch.Parent = card
+	action.Size = UDim2.new(1, 0, 0, 34)
+	action.Position = UDim2.new(0, 0, 1, -40)
+	action.Parent = card
 	return card
 end
 
@@ -174,21 +189,24 @@ local function petCard(pet, isEquipped)
 	UIFactory.Padding(card, 8)
 
 	local title = (pet.mut and (pet.mut .. " ") or "") .. (def and def.DisplayName or pet.id)
-	local name = UIFactory.Label(title, UDim2.new(1, 0, 0, 30), rarityColor, 12)
+	local name = UIFactory.Label(title, UDim2.new(1, -64, 0, 30), rarityColor, 12)
 	name.TextWrapped = true
 	name.Parent = card
+	local icon = IconFactory.PetIcon(pet.id, pet.mut, UDim2.new(0, 60, 0, 60))
+	icon.Position = UDim2.new(1, -60, 0, 0)
+	icon.Parent = card
 	local bonusText = def and Pets.BonusText(def.Id) or nil
 	local info = UIFactory.Label(
 		(def and def.Rarity or "?") .. " Lv" .. tostring(pet.lvl or 1)
 			.. "\n" .. Format.Money(petIncomeDisplay(pet)) .. "/s",
 		UDim2.new(1, 0, 0, 40), Theme.TextDim, 12)
-	info.Position = UDim2.new(0, 0, 0, 36)
+	info.Position = UDim2.new(0, 0, 0, 58)
 	info.Font = Theme.FontRegular
 	info.Parent = card
 	if bonusText then
 		local bonus = UIFactory.Label(bonusText .. " (equipped)",
 			UDim2.new(1, 0, 0, 18), Theme.Accent, 11)
-		bonus.Position = UDim2.new(0, 0, 0, 78)
+		bonus.Position = UDim2.new(0, 0, 0, 100)
 		bonus.Font = Theme.FontRegular
 		bonus.Parent = card
 	end

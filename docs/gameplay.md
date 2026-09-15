@@ -9,11 +9,16 @@ server-side; the client only renders and requests.
 ## The core loop
 
 1. **Join** → spawn at the plaza, profile loads (or is created).
-2. **Claim a base** → walk onto a free plot, hold the claim prompt.
+2. **Claim a base** → a free plot auto-assigns within seconds
+   (or hold the claim prompt on any glowing plot yourself).
 3. **Starter grant** → free cash + a Basic egg, first objective shown.
-4. **Buy eggs** → market stalls / Shop screen (10 shop eggs, 100 → 1M cash).
-5. **Hatch** → Egg Pals with rarities (Common → Secret), mutations, bonuses.
-6. **Equip pals** → they follow you and generate income per second.
+4. **Buy eggs** → market stall prompts / Shop screen (10 shop eggs, 100 → 1M cash).
+5. **Place eggs** → set them on your base's glowing pads to incubate
+   (live countdown billboards, 45s → 200s per egg).
+6. **Hatch** → hold E on a READY egg → Egg Pals with rarities
+   (Common → Secret), mutations, bonuses.
+7. **Equip pals** → they follow you as 3D creatures, star in your base
+   exhibits, and generate income per second.
 7. **Upgrade** → 5 tracks (Income, EggSlots, Hatchery, Vault, Comfort).
 8. **Secure** → doors, cameras, lasers, traps, alarms, lockdown, decoys.
 9. **Scout** → inspect rival bases (vault band + security totals, no exacts).
@@ -24,12 +29,13 @@ server-side; the client only renders and requests.
 
 ## First 10 minutes (new-player script)
 
-Minutes 0–2: claim plot → starter cash + egg → buy a 2nd egg → hatch both →
-equip best pal → income ticks in. Minutes 2–6: first Income upgrade → first
+Minutes 0–2: plot auto-claims → starter cash + egg → buy a 2nd egg →
+place both on your pads → first READY hatch → equip best pal →
+income ticks in. Minutes 2–6: first Income upgrade → first
 security item → quest board introduces dailies → Feed shows a rival's hatch.
 Minutes 6–10: scout a neighbor → buy a Lockpick gadget → attempt a first
 (quick) grab → win or lose, the loop is understood. The Objective screen
-always shows the single next step; the tutorial is 7 steps, all gameplay.
+always shows the single next step; the tutorial is 8 steps, all gameplay.
 
 ## Heists (the signature system)
 
@@ -38,7 +44,7 @@ always shows the single next step; the tutorial is 7 steps, all gameplay.
 | **Scout** | Intel screen: vault band, security totals, owner online status. Costs nothing, reveals no exacts. |
 | **Infiltrate** | Walk in. Doors add breach time; cameras extend alarm range; lasers damage/slow; traps trigger. |
 | **Breach** | Channel at the vault (seconds scale with door tier, scenario, pet/gadget bonuses). Owner is alarmed unless the breach is silent. |
-| **Grab** | Loot = vault fraction × protection × event/scenario/pet/gadget multipliers. Decoys can waste the run on a fake egg. |
+| **Grab** | Loot = vault fraction × protection × event/scenario/pet/gadget multipliers. Decoys can waste the run on a fake egg. Eggs can also be snatched straight off rival pads (Steal prompt → slowed carry → extract). |
 | **Carry** | Slowed, visible, timed. Dying, leaving, or timeout returns the loot. Death-watch is real: no free deaths. |
 | **Extract** | Channel at the extraction pad → cash + XP + streak bonus (+5%/win, cap +25%) + rep + Feed fame. |
 | **Fail** | Loot returns to the victim, fail stat + rep loss, cooldowns spent. |

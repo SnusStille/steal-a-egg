@@ -45,15 +45,15 @@
 			<Color3 name="OutdoorAmbient"><R>0.47058823529411764</R><G>0.47058823529411764</G><B>0.47058823529411764</B></Color3>
 		</Properties>
 	</Item>
-	<Item class="ReplicatedStorage" referent="RBX31">
+	<Item class="ReplicatedStorage" referent="RBX33">
 		<Properties>
 			<string name="Name">ReplicatedStorage</string>
 		</Properties>
-		<Item class="Folder" referent="RBX30">
+		<Item class="Folder" referent="RBX32">
 			<Properties>
 				<string name="Name">EggHeistShared</string>
 			</Properties>
-			<Item class="Folder" referent="RBX22">
+			<Item class="Folder" referent="RBX23">
 				<Properties>
 					<string name="Name">Config</string>
 				</Properties>
@@ -255,6 +255,73 @@
 				</Item>
 				<Item class="ModuleScript" referent="RBX7">
 					<Properties>
+						<string name="Name">CreatureModels</string>
+						<ProtectedString name="Source">-- EggHeist | Shared/Config/CreatureModels.luau
+						-- Maps every pet to a procedural creature archetype built by
+						-- Shared/Utilities/ModelFactory. Body color comes from Pets.BodyColor
+						-- (brick name); this file only picks shape + accent + scale.
+						--
+						-- Fields: A = archetype, S = scale (default 1), Acc = accent {r,g,b},
+						-- Heads/Tentacles/Stem = archetype params.
+						
+						local CreatureModels = {}
+						
+						CreatureModels.Map = {
+						-- Common
+						chick = { A = "chick" },
+						sprout = { A = "blob", Stem = true },
+						pebble = { A = "rock" },
+						bunny = { A = "bunny" },
+						mossy = { A = "blob" },
+						-- Rare
+						ember = { A = "drake", S = 0.85 },
+						splash = { A = "fish" },
+						rocky = { A = "rock", S = 1.25 },
+						zippy = { A = "bird" },
+						gloom = { A = "shroom" },
+						frostmite = { A = "blob", S = 0.8 },
+						coral = { A = "pup" },
+						-- Epic
+						aurum = { A = "drake" },
+						frost = { A = "pup", Ears = "pointy" },
+						magma = { A = "rock", Acc = { 255, 120, 30 } },
+						vined = { A = "serpent" },
+						jolt = { A = "bot" },
+						glacier = { A = "blob", S = 1.4 },
+						temprocs = { A = "bird", S = 1.45 },
+						monarch = { A = "moth" },
+						-- Legendary
+						phoenix = { A = "bird", Acc = { 255, 140, 40 } },
+						leviathan = { A = "whale", S = 0.8 },
+						golem = { A = "golem" },
+						sultan = { A = "pup", Ears = "crown" },
+						wisp = { A = "ghost" },
+						blizzard = { A = "serpent", S = 1.3 },
+						kraken = { A = "kraken" },
+						-- Mythic
+						hydra = { A = "drake", Heads = 3 },
+						umbra = { A = "pup", Ears = "pointy" },
+						nebula = { A = "whale" },
+						titan = { A = "bot", S = 1.5 },
+						cyclone = { A = "serpent", S = 1.4 },
+						seraph = { A = "bird", S = 1.3 },
+						-- Secret
+						voidlord = { A = "golem", Acc = { 150, 80, 255 } },
+						starchild = { A = "ghost", Acc = { 255, 240, 180 } },
+						nullking = { A = "golem", S = 1.4 },
+						aurora = { A = "golem", Acc = { 150, 230, 255 } },
+						}
+						
+						function CreatureModels.Get(petId)
+						return CreatureModels.Map[petId]
+						end
+						
+						return CreatureModels
+						</ProtectedString>
+					</Properties>
+				</Item>
+				<Item class="ModuleScript" referent="RBX8">
+					<Properties>
 						<string name="Name">Economy</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Config/Economy.luau
 						-- EVERY tunable economy number lives here. Systems must require this module
@@ -348,7 +415,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX8">
+				<Item class="ModuleScript" referent="RBX9">
 					<Properties>
 						<string name="Name">Eggs</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Config/Eggs.luau
@@ -361,6 +428,7 @@
 						{
 						Id = "Basic",
 						Tier = 1,
+						HatchTime = 45,
 						DisplayName = "Basic Egg",
 						Description = "A humble egg. Every legend starts somewhere.",
 						Price = 100,
@@ -373,6 +441,7 @@
 						{
 						Id = "Stone",
 						Tier = 2,
+						HatchTime = 60,
 						DisplayName = "Stone Egg",
 						Description = "Heavy, rough, and full of surprises.",
 						Price = 750,
@@ -385,6 +454,7 @@
 						{
 						Id = "Golden",
 						Tier = 3,
+						HatchTime = 90,
 						DisplayName = "Golden Egg",
 						Description = "Shines with promise. Greatly improved odds.",
 						Price = 4000,
@@ -397,6 +467,7 @@
 						{
 						Id = "Crystal",
 						Tier = 4,
+						HatchTime = 120,
 						DisplayName = "Crystal Egg",
 						Description = "Refracts luck itself. For serious collectors.",
 						Price = 25000,
@@ -409,6 +480,7 @@
 						{
 						Id = "Lava",
 						Tier = 5,
+						HatchTime = 150,
 						DisplayName = "Lava Egg",
 						Description = "Burning with mythic potential.",
 						Price = 150000,
@@ -421,6 +493,7 @@
 						{
 						Id = "Void",
 						Tier = 6,
+						HatchTime = 180,
 						DisplayName = "Void Egg",
 						Description = "It stares back. The rarest egg money can buy.",
 						Price = 1000000,
@@ -434,6 +507,7 @@
 						{
 						Id = "Frost",
 						Tier = 3,
+						HatchTime = 90,
 						DisplayName = "Frost Egg",
 						Description = "Cold to the touch, warm with potential.",
 						Price = 9000,
@@ -446,6 +520,7 @@
 						{
 						Id = "Storm",
 						Tier = 5,
+						HatchTime = 170,
 						DisplayName = "Storm Egg",
 						Description = "Crackles with legendary energy. Endgame odds.",
 						Price = 400000,
@@ -458,6 +533,7 @@
 						{
 						Id = "Ember",
 						Tier = 4,
+						HatchTime = 120,
 						DisplayName = "Ember Egg",
 						Description = "Warm to the touch. Hums with storm-fire.",
 						Price = 75000,
@@ -470,6 +546,7 @@
 						{
 						Id = "Phantom",
 						Tier = 6,
+						HatchTime = 200,
 						DisplayName = "Phantom Egg",
 						Description = "Half here, half somewhere richer.",
 						Price = 650000,
@@ -482,6 +559,7 @@
 						{
 						Id = "Toxic",
 						Tier = 2,
+						HatchTime = 60,
 						DisplayName = "Toxic Egg",
 						Description = "Event egg. Oozes with mutated power.",
 						Price = 0,
@@ -495,6 +573,7 @@
 						{
 						Id = "Shadow",
 						Tier = 3,
+						HatchTime = 100,
 						DisplayName = "Shadow Egg",
 						Description = "Blood Moon exclusive. Darkness hatches here.",
 						Price = 0,
@@ -508,6 +587,7 @@
 						{
 						Id = "Galaxy",
 						Tier = 4,
+						HatchTime = 140,
 						DisplayName = "Galaxy Egg",
 						Description = "A universe in a shell. Meteor Shower exclusive.",
 						Price = 0,
@@ -521,6 +601,7 @@
 						{
 						Id = "Ancient",
 						Tier = 5,
+						HatchTime = 170,
 						DisplayName = "Ancient Egg",
 						Description = "Older than the plaza stones. Prestige reward.",
 						Price = 0,
@@ -536,6 +617,11 @@
 						Eggs.ById = {}
 						for _, def in ipairs(Eggs.List) do
 						Eggs.ById[def.Id] = def
+						end
+						
+						function Eggs.GetHatchTime(eggId)
+						local def = Eggs.ById[eggId]
+						return (def and def.HatchTime) or 60
 						end
 						
 						function Eggs.IsValid(eggId)
@@ -561,7 +647,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX9">
+				<Item class="ModuleScript" referent="RBX10">
 					<Properties>
 						<string name="Name">Events</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Config/Events.luau
@@ -686,7 +772,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX10">
+				<Item class="ModuleScript" referent="RBX11">
 					<Properties>
 						<string name="Name">Gadgets</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Config/Gadgets.luau
@@ -771,7 +857,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX11">
+				<Item class="ModuleScript" referent="RBX12">
 					<Properties>
 						<string name="Name">Juice</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Config/Juice.luau
@@ -942,7 +1028,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX12">
+				<Item class="ModuleScript" referent="RBX13">
 					<Properties>
 						<string name="Name">Mutations</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Config/Mutations.luau
@@ -983,7 +1069,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX13">
+				<Item class="ModuleScript" referent="RBX14">
 					<Properties>
 						<string name="Name">Npcs</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Config/Npcs.luau
@@ -1068,7 +1154,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX14">
+				<Item class="ModuleScript" referent="RBX15">
 					<Properties>
 						<string name="Name">Pets</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Config/Pets.luau
@@ -1186,7 +1272,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX15">
+				<Item class="ModuleScript" referent="RBX16">
 					<Properties>
 						<string name="Name">Quests</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Config/Quests.luau
@@ -1234,7 +1320,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX16">
+				<Item class="ModuleScript" referent="RBX17">
 					<Properties>
 						<string name="Name">Rarities</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Config/Rarities.luau
@@ -1289,7 +1375,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX17">
+				<Item class="ModuleScript" referent="RBX18">
 					<Properties>
 						<string name="Name">Security</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Config/Security.luau
@@ -1403,7 +1489,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX18">
+				<Item class="ModuleScript" referent="RBX19">
 					<Properties>
 						<string name="Name">Settings</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Config/Settings.luau
@@ -1516,7 +1602,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX19">
+				<Item class="ModuleScript" referent="RBX20">
 					<Properties>
 						<string name="Name">Shop</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Config/Shop.luau
@@ -1610,7 +1696,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX20">
+				<Item class="ModuleScript" referent="RBX21">
 					<Properties>
 						<string name="Name">Tutorial</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Config/Tutorial.luau
@@ -1642,11 +1728,18 @@
 						Highlight = "Market",
 						},
 						{
+						Id = "place_egg",
+						Title = "Place your egg",
+						Text = "Walk to a glowing pad in YOUR base and place the egg. It must incubate before it can hatch!",
+						Action = "PlaceEgg",
+						Highlight = "Bases",
+						},
+						{
 						Id = "hatch_egg",
 						Title = "Hatch it!",
-						Text = "Open your backpack and hatch the egg. Good luck!",
+						Text = "Wait for the timer to hit READY, then hold E on your egg to hatch it. Good luck!",
 						Action = "HatchEgg",
-						Highlight = "Backpack",
+						Highlight = "Bases",
 						},
 						{
 						Id = "equip_pet",
@@ -1675,7 +1768,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX21">
+				<Item class="ModuleScript" referent="RBX22">
 					<Properties>
 						<string name="Name">Upgrades</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Config/Upgrades.luau
@@ -1745,7 +1838,7 @@
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="ModuleScript" referent="RBX23">
+			<Item class="ModuleScript" referent="RBX24">
 				<Properties>
 					<string name="Name">Remotes</string>
 					<ProtectedString name="Source">-- EggHeist | Shared/Remotes.luau
@@ -1766,6 +1859,8 @@
 					"BuyEgg",        -- (eggId)
 					"HatchEgg",      -- (eggUid)
 					"HatchAll",      -- ()
+					"PlaceEgg",      -- (eggUid)  place into first free pad of own base
+					"PickupEgg",     -- (eggUid)  return a placed egg to the pouch
 					"EquipPet",      -- (petUid)
 					"UnequipPet",    -- (petUid)
 					"DeletePet",     -- (petUid) (sells for 50% value)
@@ -1830,6 +1925,8 @@
 					BuyEgg = 6,
 					HatchEgg = 8,
 					HatchAll = 2,
+					PlaceEgg = 4,
+					PickupEgg = 4,
 					EquipPet = 10,
 					UnequipPet = 10,
 					DeletePet = 4,
@@ -1870,7 +1967,7 @@
 					</ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX24">
+			<Item class="ModuleScript" referent="RBX25">
 				<Properties>
 					<string name="Name">Types</string>
 					<ProtectedString name="Source">-- EggHeist | Shared/Types.luau
@@ -1886,6 +1983,8 @@
 					---@class EggRecord
 					---@field uid string server-generated unique id
 					---@field eggId string egg definition id (see Config/Eggs.luau)
+					---@field placedPad number|nil base pad index when placed, nil = in pouch
+					---@field hatchAt number|nil os.time() when a placed egg is ready, nil = not placed
 					
 					---@class PetRecord
 					---@field uid string server-generated unique id
@@ -1954,7 +2053,7 @@
 					local Types = {}
 					
 					function Types.NewEggRecord(uid, eggId)
-					return { uid = uid, eggId = eggId }
+					return { uid = uid, eggId = eggId, placedPad = nil, hatchAt = nil }
 					end
 					
 					function Types.NewPetRecord(uid, petId, mutation)
@@ -1970,11 +2069,11 @@
 					</ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="Folder" referent="RBX29">
+			<Item class="Folder" referent="RBX31">
 				<Properties>
 					<string name="Name">Utilities</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX25">
+				<Item class="ModuleScript" referent="RBX26">
 					<Properties>
 						<string name="Name">Format</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Utilities/Format.luau
@@ -2060,7 +2159,802 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX26">
+				<Item class="ModuleScript" referent="RBX27">
+					<Properties>
+						<string name="Name">ModelFactory</string>
+						<ProtectedString name="Source">-- EggHeist | Shared/Utilities/ModelFactory.luau
+						-- CENTRAL ASSET PIPELINE: builds every egg + creature model in the game.
+						-- Server uses it for placed eggs, followers and base displays; the client
+						-- uses it for ViewportFrame icons (shop/inventory/collection/hatch).
+						-- Fully procedural: zero uploaded assets required.
+						--
+						-- Sim-safe: rotations use CFrame.fromEulerAnglesXYZ (stubbed), no UDim2
+						-- math, no Lerp, property sets only.
+						
+						local Workspace = game:GetService("Workspace")
+						
+						local ModelFactory = {}
+						
+						local EGG_FALLBACK_COLORS = {
+						Basic = Color3.fromRGB(240, 230, 200), Stone = Color3.fromRGB(130, 130, 130),
+						Golden = Color3.fromRGB(255, 200, 60), Crystal = Color3.fromRGB(150, 220, 255),
+						Lava = Color3.fromRGB(255, 100, 40), Toxic = Color3.fromRGB(120, 255, 60),
+						Shadow = Color3.fromRGB(70, 50, 120), Galaxy = Color3.fromRGB(150, 80, 255),
+						Ancient = Color3.fromRGB(200, 170, 120), Void = Color3.fromRGB(25, 15, 45),
+						Frost = Color3.fromRGB(200, 235, 255), Storm = Color3.fromRGB(90, 110, 200),
+						Ember = Color3.fromRGB(255, 150, 80), Phantom = Color3.fromRGB(160, 140, 200),
+						}
+						
+						-- Brick color name (Pets.BodyColor) -&gt; Color3. Never errors.
+						function ModelFactory.ColorFromBrickName(name)
+						local ok, color = pcall(function()
+						return BrickColor.new(tostring(name or "")).Color
+						end)
+						if ok and color then
+						return color
+						end
+						return Color3.fromRGB(200, 200, 200)
+						end
+						
+						local function newPart(parent, name, size, cframe, color, material, shape)
+						local part = Instance.new("Part")
+						part.Name = name
+						part.Size = size
+						part.CFrame = cframe or CFrame.new(0, 0, 0)
+						part.Color = color or Color3.fromRGB(200, 200, 200)
+						part.Material = material or Enum.Material.SmoothPlastic
+						if shape then
+						part.Shape = shape
+						end
+						part.Anchored = true
+						part.CanCollide = false
+						part.CanQuery = false
+						part.CanTouch = false
+						part.TopSurface = Enum.SurfaceType.Smooth
+						part.BottomSurface = Enum.SurfaceType.Smooth
+						part.Parent = parent
+						return part
+						end
+						
+						local function tilt(pos, rx, ry, rz)
+						return CFrame.new(pos) * CFrame.fromEulerAnglesXYZ(rx or 0, ry or 0, rz or 0)
+						end
+						
+						-- Cute 3D eyes on the face (-Z front). face = {y, z, spread}
+						local function addEyes(model, face, eyeSize)
+						eyeSize = eyeSize or 0.42
+						local white = Color3.fromRGB(255, 255, 255)
+						local pupil = Color3.fromRGB(25, 25, 30)
+						for _, side in ipairs({ -1, 1 }) do
+						local x = side * (face.spread or 0.55)
+						newPart(model, side &lt; 0 and "EyeL" or "EyeR",
+						Vector3.new(eyeSize, eyeSize, 0.3),
+						CFrame.new(Vector3.new(x, face.y, face.z)), white, nil, Enum.PartType.Ball)
+						newPart(model, side &lt; 0 and "PupilL" or "PupilR",
+						Vector3.new(eyeSize * 0.5, eyeSize * 0.5, 0.2),
+						CFrame.new(Vector3.new(x, face.y, face.z - 0.18)), pupil, nil, Enum.PartType.Ball)
+						end
+						end
+						
+						-- Small helpers shared by builders
+						local function addFeet(model, color, y, spread, size)
+						size = size or 0.5
+						for _, side in ipairs({ -1, 1 }) do
+						newPart(model, side &lt; 0 and "FootL" or "FootR",
+						Vector3.new(size, size * 0.7, size * 1.3),
+						CFrame.new(Vector3.new(side * spread, y, 0.2)),
+						color, nil, Enum.PartType.Ball)
+						end
+						end
+						
+						local function addSparkles(part, color)
+						local ok, sparkles = pcall(function()
+						local s = Instance.new("Sparkles")
+						s.SparkleColor = color
+						s.Parent = part
+						return s
+						end)
+						if ok then
+						return sparkles
+						end
+						return nil
+						end
+						
+						--------------------------------------------------------------------------------
+						-- Creature archetype builders. C = { body, accent, dark }. All roughly
+						-- 2-3 studs tall at scale 1, facing -Z.
+						--------------------------------------------------------------------------------
+						
+						local builders = {}
+						
+						function builders.chick(model, C)
+						local body = newPart(model, "Body", Vector3.new(1.8, 2.2, 1.8),
+						CFrame.new(0, 1.4, 0), C.body, nil, Enum.PartType.Ball)
+						newPart(model, "Beak", Vector3.new(0.5, 0.5, 0.5),
+						CFrame.new(Vector3.new(0, 1.35, -1.05)), Color3.fromRGB(255, 160, 40), nil, Enum.PartType.Ball)
+						newPart(model, "WingL", Vector3.new(0.4, 1.1, 0.9),
+						tilt(Vector3.new(-1.0, 1.3, 0), 0, 0, 0.35), C.accent, nil, Enum.PartType.Ball)
+						newPart(model, "WingR", Vector3.new(0.4, 1.1, 0.9),
+						tilt(Vector3.new(1.0, 1.3, 0), 0, 0, -0.35), C.accent, nil, Enum.PartType.Ball)
+						newPart(model, "Tuft", Vector3.new(0.5, 0.6, 0.5),
+						CFrame.new(Vector3.new(0, 2.7, 0)), C.accent, nil, Enum.PartType.Ball)
+						addFeet(model, Color3.fromRGB(255, 160, 40), 0.2, 0.5, 0.5)
+						addEyes(model, { y = 1.7, z = -0.95, spread = 0.45 }, 0.4)
+						return body
+						end
+						
+						function builders.bunny(model, C)
+						local body = builders.chick(model, C)
+						newPart(model, "EarL", Vector3.new(0.45, 1.5, 0.45),
+						tilt(Vector3.new(-0.45, 3.4, 0), 0, 0, 0.18), C.body, nil, Enum.PartType.Cylinder)
+						newPart(model, "EarR", Vector3.new(0.45, 1.5, 0.45),
+						tilt(Vector3.new(0.45, 3.4, 0), 0, 0, -0.18), C.body, nil, Enum.PartType.Cylinder)
+						newPart(model, "EarTipL", Vector3.new(0.28, 0.7, 0.28),
+						tilt(Vector3.new(-0.58, 3.9, 0), 0, 0, 0.18), C.accent, nil, Enum.PartType.Cylinder)
+						newPart(model, "EarTipR", Vector3.new(0.28, 0.7, 0.28),
+						tilt(Vector3.new(0.58, 3.9, 0), 0, 0, -0.18), C.accent, nil, Enum.PartType.Cylinder)
+						return body
+						end
+						
+						function builders.blob(model, C, params)
+						local body = newPart(model, "Body", Vector3.new(2.2, 1.9, 2.2),
+						CFrame.new(0, 1.1, 0), C.body, nil, Enum.PartType.Ball)
+						newPart(model, "Belly", Vector3.new(1.4, 1.2, 0.6),
+						CFrame.new(Vector3.new(0, 0.9, -0.95)), C.accent, nil, Enum.PartType.Ball)
+						addFeet(model, C.dark, 0.15, 0.7, 0.55)
+						addEyes(model, { y = 1.5, z = -1.05, spread = 0.5 }, 0.44)
+						if params and params.Stem then
+						newPart(model, "Stem", Vector3.new(0.3, 0.9, 0.3),
+						CFrame.new(Vector3.new(0, 2.4, 0)), Color3.fromRGB(60, 150, 70))
+						newPart(model, "Leaf", Vector3.new(0.9, 0.25, 0.5),
+						tilt(Vector3.new(0.45, 2.7, 0), 0, 0, -0.5), Color3.fromRGB(80, 200, 90))
+						end
+						return body
+						end
+						
+						function builders.rock(model, C)
+						local body = newPart(model, "Body", Vector3.new(2.2, 1.9, 2.0),
+						CFrame.new(0, 1.1, 0), C.body, Enum.Material.Slate)
+						newPart(model, "BumpT", Vector3.new(1.0, 0.8, 1.0),
+						CFrame.new(Vector3.new(-0.5, 2.2, 0.2)), C.dark, Enum.Material.Slate)
+						newPart(model, "BumpS", Vector3.new(0.7, 0.7, 0.7),
+						CFrame.new(Vector3.new(1.2, 1.4, 0.3)), C.dark, Enum.Material.Slate, Enum.PartType.Ball)
+						newPart(model, "Moss", Vector3.new(1.2, 0.4, 1.2),
+						CFrame.new(Vector3.new(0.4, 2.1, -0.3)), C.accent, Enum.Material.Grass)
+						addFeet(model, C.dark, 0.15, 0.7, 0.55)
+						addEyes(model, { y = 1.35, z = -1.05, spread = 0.5 }, 0.42)
+						return body
+						end
+						
+						function builders.shroom(model, C)
+						newPart(model, "Stem", Vector3.new(1.2, 1.4, 1.2),
+						CFrame.new(0, 0.9, 0), Color3.fromRGB(240, 230, 215), nil, Enum.PartType.Cylinder)
+						local body = newPart(model, "Body", Vector3.new(2.6, 1.4, 2.6),
+						CFrame.new(0, 2.2, 0), C.body, nil, Enum.PartType.Ball)
+						newPart(model, "Spot1", Vector3.new(0.6, 0.4, 0.6),
+						CFrame.new(Vector3.new(-0.7, 2.8, -0.5)), Color3.fromRGB(255, 255, 255), nil, Enum.PartType.Ball)
+						newPart(model, "Spot2", Vector3.new(0.45, 0.35, 0.45),
+						CFrame.new(Vector3.new(0.6, 2.9, 0.4)), Color3.fromRGB(255, 255, 255), nil, Enum.PartType.Ball)
+						addEyes(model, { y = 1.1, z = -0.65, spread = 0.35 }, 0.34)
+						return body
+						end
+						
+						function builders.bot(model, C)
+						local body = newPart(model, "Body", Vector3.new(1.9, 1.9, 1.6),
+						CFrame.new(0, 1.4, 0), C.body, Enum.Material.Metal)
+						newPart(model, "Core", Vector3.new(0.8, 0.8, 0.3),
+						CFrame.new(Vector3.new(0, 1.2, -0.85)), C.accent, Enum.Material.Neon, Enum.PartType.Ball)
+						newPart(model, "Antenna", Vector3.new(0.2, 0.9, 0.2),
+						CFrame.new(Vector3.new(0, 2.8, 0)), C.dark, Enum.Material.Metal)
+						newPart(model, "AntennaTip", Vector3.new(0.4, 0.4, 0.4),
+						CFrame.new(Vector3.new(0, 3.3, 0)), C.accent, Enum.Material.Neon, Enum.PartType.Ball)
+						newPart(model, "ArmL", Vector3.new(0.45, 1.3, 0.45),
+						CFrame.new(Vector3.new(-1.2, 1.3, 0)), C.dark, Enum.Material.Metal)
+						newPart(model, "ArmR", Vector3.new(0.45, 1.3, 0.45),
+						CFrame.new(Vector3.new(1.2, 1.3, 0)), C.dark, Enum.Material.Metal)
+						newPart(model, "WheelL", Vector3.new(0.6, 0.6, 0.4),
+						CFrame.new(Vector3.new(-0.6, 0.3, 0)), C.dark, nil, Enum.PartType.Cylinder)
+						newPart(model, "WheelR", Vector3.new(0.6, 0.6, 0.4),
+						CFrame.new(Vector3.new(0.6, 0.3, 0)), C.dark, nil, Enum.PartType.Cylinder)
+						addEyes(model, { y = 1.9, z = -0.85, spread = 0.45 }, 0.36)
+						return body
+						end
+						
+						local function drakeHead(model, C, basePos, name)
+						local head = newPart(model, name, Vector3.new(1.1, 1.0, 1.1),
+						CFrame.new(basePos), C.body, nil, Enum.PartType.Ball)
+						newPart(model, name .. "Snout", Vector3.new(0.7, 0.55, 0.6),
+						CFrame.new(basePos + Vector3.new(0, -0.15, -0.7)), C.accent, nil, Enum.PartType.Ball)
+						newPart(model, name .. "HornL", Vector3.new(0.3, 0.8, 0.3),
+						tilt(basePos + Vector3.new(-0.4, 0.75, 0.2), 0, 0, 0.4), C.accent)
+						newPart(model, name .. "HornR", Vector3.new(0.3, 0.8, 0.3),
+						tilt(basePos + Vector3.new(0.4, 0.75, 0.2), 0, 0, -0.4), C.accent)
+						-- eyes sit on the head: white + pupils positioned absolutely
+						local white = Color3.fromRGB(255, 255, 255)
+						local pupil = Color3.fromRGB(25, 25, 30)
+						for _, side in ipairs({ -1, 1 }) do
+						local x = basePos.X + side * 0.28
+						newPart(model, name .. (side &lt; 0 and "EyeL" or "EyeR"),
+						Vector3.new(0.3, 0.3, 0.2), CFrame.new(Vector3.new(x, basePos.Y + 0.15, basePos.Z - 0.55)),
+						white, nil, Enum.PartType.Ball)
+						newPart(model, name .. (side &lt; 0 and "PupilL" or "PupilR"),
+						Vector3.new(0.15, 0.15, 0.15), CFrame.new(Vector3.new(x, basePos.Y + 0.15, basePos.Z - 0.68)),
+						pupil, nil, Enum.PartType.Ball)
+						end
+						return head
+						end
+						
+						function builders.drake(model, C, params)
+						local body = newPart(model, "Body", Vector3.new(1.9, 1.7, 2.2),
+						CFrame.new(0, 1.2, 0), C.body, nil, Enum.PartType.Ball)
+						newPart(model, "Belly", Vector3.new(1.3, 1.2, 0.6),
+						CFrame.new(Vector3.new(0, 1.0, -1.0)), C.accent, nil, Enum.PartType.Ball)
+						newPart(model, "WingL", Vector3.new(0.25, 1.6, 1.4),
+						tilt(Vector3.new(-1.3, 1.9, 0.3), 0, 0.25, 0.5), C.accent)
+						newPart(model, "WingR", Vector3.new(0.25, 1.6, 1.4),
+						tilt(Vector3.new(1.3, 1.9, 0.3), 0, -0.25, -0.5), C.accent)
+						newPart(model, "Tail", Vector3.new(0.6, 0.6, 1.6),
+						tilt(Vector3.new(0, 0.9, 1.6), 0.5, 0, 0), C.body, nil, Enum.PartType.Ball)
+						newPart(model, "Spike1", Vector3.new(0.35, 0.7, 0.35),
+						CFrame.new(Vector3.new(0, 2.2, -0.3)), C.accent)
+						newPart(model, "Spike2", Vector3.new(0.35, 0.7, 0.35),
+						CFrame.new(Vector3.new(0, 2.0, 0.5)), C.accent)
+						local heads = (params and params.Heads) or 1
+						if heads &lt;= 1 then
+						drakeHead(model, C, Vector3.new(0, 2.7, -0.4), "Head")
+						else
+						newPart(model, "Neck", Vector3.new(1.4, 1.0, 0.8),
+						CFrame.new(Vector3.new(0, 2.3, -0.3)), C.body, nil, Enum.PartType.Ball)
+						drakeHead(model, C, Vector3.new(-0.9, 3.0, -0.4), "HeadL")
+						drakeHead(model, C, Vector3.new(0, 3.2, -0.5), "HeadM")
+						drakeHead(model, C, Vector3.new(0.9, 3.0, -0.4), "HeadR")
+						end
+						addFeet(model, C.dark, 0.2, 0.65, 0.55)
+						return body
+						end
+						
+						function builders.bird(model, C)
+						local body = newPart(model, "Body", Vector3.new(1.5, 1.9, 1.7),
+						CFrame.new(0, 1.4, 0), C.body, nil, Enum.PartType.Ball)
+						newPart(model, "Head", Vector3.new(1.1, 1.0, 1.1),
+						CFrame.new(Vector3.new(0, 2.7, -0.2)), C.body, nil, Enum.PartType.Ball)
+						newPart(model, "Beak", Vector3.new(0.45, 0.45, 0.6),
+						CFrame.new(Vector3.new(0, 2.6, -0.95)), Color3.fromRGB(255, 170, 50), nil, Enum.PartType.Ball)
+						newPart(model, "WingL", Vector3.new(0.3, 1.3, 1.0),
+						tilt(Vector3.new(-0.95, 1.5, 0.1), 0, 0, 0.4), C.accent, nil, Enum.PartType.Ball)
+						newPart(model, "WingR", Vector3.new(0.3, 1.3, 1.0),
+						tilt(Vector3.new(0.95, 1.5, 0.1), 0, 0, -0.4), C.accent, nil, Enum.PartType.Ball)
+						newPart(model, "Tail", Vector3.new(0.9, 0.25, 1.0),
+						tilt(Vector3.new(0, 1.2, 1.2), -0.5, 0, 0), C.accent)
+						newPart(model, "Crest", Vector3.new(0.3, 0.7, 0.3),
+						CFrame.new(Vector3.new(0, 3.4, -0.2)), C.accent)
+						-- head-mounted eyes
+						local white = Color3.fromRGB(255, 255, 255)
+						local pupil = Color3.fromRGB(25, 25, 30)
+						for _, side in ipairs({ -1, 1 }) do
+						local x = side * 0.3
+						newPart(model, side &lt; 0 and "EyeL" or "EyeR",
+						Vector3.new(0.3, 0.3, 0.2), CFrame.new(Vector3.new(x, 2.9, -0.72)),
+						white, nil, Enum.PartType.Ball)
+						newPart(model, side &lt; 0 and "PupilL" or "PupilR",
+						Vector3.new(0.15, 0.15, 0.15), CFrame.new(Vector3.new(x, 2.9, -0.85)),
+						pupil, nil, Enum.PartType.Ball)
+						end
+						addFeet(model, Color3.fromRGB(255, 170, 50), 0.2, 0.45, 0.45)
+						return body
+						end
+						
+						function builders.fish(model, C)
+						local body = newPart(model, "Body", Vector3.new(1.4, 1.4, 2.2),
+						CFrame.new(0, 1.4, 0), C.body, nil, Enum.PartType.Ball)
+						newPart(model, "Tail", Vector3.new(0.25, 1.2, 0.9),
+						tilt(Vector3.new(0, 1.4, 1.4), 0, 0, 0), C.accent)
+						newPart(model, "FinTop", Vector3.new(0.25, 0.8, 0.7),
+						CFrame.new(Vector3.new(0, 2.3, 0.2)), C.accent)
+						newPart(model, "FinL", Vector3.new(0.7, 0.25, 0.5),
+						tilt(Vector3.new(-0.85, 1.1, -0.2), 0, 0, 0.5), C.accent)
+						newPart(model, "FinR", Vector3.new(0.7, 0.25, 0.5),
+						tilt(Vector3.new(0.85, 1.1, -0.2), 0, 0, -0.5), C.accent)
+						-- fish float: little bubble ring under them
+						newPart(model, "Bubble", Vector3.new(0.5, 0.5, 0.5),
+						CFrame.new(Vector3.new(0.5, 0.4, 0)), Color3.fromRGB(180, 230, 255),
+						Enum.Material.Glass, Enum.PartType.Ball)
+						addEyes(model, { y = 1.6, z = -1.05, spread = 0.4 }, 0.36)
+						return body
+						end
+						
+						function builders.whale(model, C)
+						local body = newPart(model, "Body", Vector3.new(2.6, 2.2, 3.4),
+						CFrame.new(0, 1.7, 0), C.body, nil, Enum.PartType.Ball)
+						newPart(model, "Belly", Vector3.new(1.8, 1.4, 2.2),
+						CFrame.new(Vector3.new(0, 1.2, -0.3)), C.accent, nil, Enum.PartType.Ball)
+						newPart(model, "Tail", Vector3.new(1.4, 0.3, 1.0),
+						tilt(Vector3.new(0, 2.2, 2.2), 0.4, 0, 0), C.accent)
+						newPart(model, "FinL", Vector3.new(1.0, 0.3, 0.6),
+						tilt(Vector3.new(-1.6, 1.2, -0.4), 0, 0, 0.5), C.accent)
+						newPart(model, "FinR", Vector3.new(1.0, 0.3, 0.6),
+						tilt(Vector3.new(1.6, 1.2, -0.4), 0, 0, -0.5), C.accent)
+						newPart(model, "Spout", Vector3.new(0.4, 0.8, 0.4),
+						CFrame.new(Vector3.new(0, 3.0, -0.6)), Color3.fromRGB(180, 230, 255), Enum.Material.Glass)
+						addEyes(model, { y = 2.0, z = -1.6, spread = 0.75 }, 0.44)
+						return body
+						end
+						
+						function builders.golem(model, C)
+						local body = newPart(model, "Body", Vector3.new(2.4, 2.4, 1.8),
+						CFrame.new(0, 1.7, 0), C.body, Enum.Material.Slate)
+						newPart(model, "Head", Vector3.new(1.4, 1.1, 1.3),
+						CFrame.new(Vector3.new(0, 3.4, -0.1)), C.body, Enum.Material.Slate)
+						newPart(model, "Core", Vector3.new(0.9, 0.9, 0.4),
+						CFrame.new(Vector3.new(0, 1.9, -0.95)), C.accent, Enum.Material.Neon, Enum.PartType.Ball)
+						newPart(model, "Brow", Vector3.new(1.5, 0.35, 0.3),
+						CFrame.new(Vector3.new(0, 3.7, -0.75)), C.dark, Enum.Material.Slate)
+						newPart(model, "ArmL", Vector3.new(0.7, 2.0, 0.7),
+						CFrame.new(Vector3.new(-1.6, 1.6, 0)), C.dark, Enum.Material.Slate)
+						newPart(model, "ArmR", Vector3.new(0.7, 2.0, 0.7),
+						CFrame.new(Vector3.new(1.6, 1.6, 0)), C.dark, Enum.Material.Slate)
+						newPart(model, "LegL", Vector3.new(0.8, 1.0, 0.8),
+						CFrame.new(Vector3.new(-0.6, 0.5, 0)), C.dark, Enum.Material.Slate)
+						newPart(model, "LegR", Vector3.new(0.8, 1.0, 0.8),
+						CFrame.new(Vector3.new(0.6, 0.5, 0)), C.dark, Enum.Material.Slate)
+						-- glowing golem eyes on the head
+						for _, side in ipairs({ -1, 1 }) do
+						newPart(model, side &lt; 0 and "EyeL" or "EyeR",
+						Vector3.new(0.32, 0.32, 0.2), CFrame.new(Vector3.new(side * 0.35, 3.4, -0.78)),
+						C.accent, Enum.Material.Neon, Enum.PartType.Ball)
+						end
+						return body
+						end
+						
+						function builders.ghost(model, C)
+						local body = newPart(model, "Body", Vector3.new(1.9, 2.3, 1.9),
+						CFrame.new(0, 1.6, 0), C.body, Enum.Material.Glass, Enum.PartType.Ball)
+						body.Transparency = 0.25
+						newPart(model, "Tail", Vector3.new(1.2, 1.0, 1.2),
+						CFrame.new(Vector3.new(0, 0.4, 0)), C.body, Enum.Material.Glass, Enum.PartType.Ball).Transparency = 0.45
+						newPart(model, "Halo", Vector3.new(1.4, 0.25, 1.4),
+						CFrame.new(Vector3.new(0, 3.1, 0)), C.accent, Enum.Material.Neon, Enum.PartType.Ball)
+						addEyes(model, { y = 1.9, z = -0.95, spread = 0.45 }, 0.42)
+						return body
+						end
+						
+						function builders.serpent(model, C)
+						local body = newPart(model, "Body", Vector3.new(1.6, 1.6, 1.6),
+						CFrame.new(0, 2.6, -0.6), C.body, nil, Enum.PartType.Ball)
+						newPart(model, "Seg1", Vector3.new(1.4, 1.4, 1.4),
+						CFrame.new(Vector3.new(0, 1.7, 0.1)), C.body, nil, Enum.PartType.Ball)
+						newPart(model, "Seg2", Vector3.new(1.5, 1.2, 1.5),
+						CFrame.new(Vector3.new(0, 0.9, 0.5)), C.accent, nil, Enum.PartType.Ball)
+						newPart(model, "Coil", Vector3.new(2.2, 0.8, 2.2),
+						CFrame.new(Vector3.new(0, 0.4, 0.5)), C.dark, nil, Enum.PartType.Ball)
+						newPart(model, "Tongue", Vector3.new(0.25, 0.15, 0.7),
+						CFrame.new(Vector3.new(0, 2.3, -1.6)), Color3.fromRGB(255, 80, 120))
+						newPart(model, "FinL", Vector3.new(0.25, 0.9, 0.7),
+						tilt(Vector3.new(-0.9, 2.8, -0.5), 0, 0, 0.5), C.accent)
+						newPart(model, "FinR", Vector3.new(0.25, 0.9, 0.7),
+						tilt(Vector3.new(0.9, 2.8, -0.5), 0, 0, -0.5), C.accent)
+						-- head-mounted eyes
+						local white = Color3.fromRGB(255, 255, 255)
+						local pupil = Color3.fromRGB(25, 25, 30)
+						for _, side in ipairs({ -1, 1 }) do
+						local x = side * 0.4
+						newPart(model, side &lt; 0 and "EyeL" or "EyeR",
+						Vector3.new(0.34, 0.34, 0.2), CFrame.new(Vector3.new(x, 2.9, -1.3)),
+						white, nil, Enum.PartType.Ball)
+						newPart(model, side &lt; 0 and "PupilL" or "PupilR",
+						Vector3.new(0.17, 0.17, 0.15), CFrame.new(Vector3.new(x, 2.9, -1.42)),
+						pupil, nil, Enum.PartType.Ball)
+						end
+						return body
+						end
+						
+						function builders.moth(model, C)
+						local body = newPart(model, "Body", Vector3.new(1.1, 1.5, 1.1),
+						CFrame.new(0, 1.5, 0), C.body, nil, Enum.PartType.Ball)
+						newPart(model, "WingL", Vector3.new(1.6, 2.0, 0.25),
+						tilt(Vector3.new(-1.2, 1.7, 0.1), 0, 0.2, 0.35), C.accent)
+						newPart(model, "WingR", Vector3.new(1.6, 2.0, 0.25),
+						tilt(Vector3.new(1.2, 1.7, 0.1), 0, -0.2, -0.35), C.accent)
+						newPart(model, "SpotL", Vector3.new(0.5, 0.5, 0.28),
+						tilt(Vector3.new(-1.35, 1.9, 0.1), 0, 0.2, 0.35), C.body, nil, Enum.PartType.Ball)
+						newPart(model, "SpotR", Vector3.new(0.5, 0.5, 0.28),
+						tilt(Vector3.new(1.35, 1.9, 0.1), 0, -0.2, -0.35), C.body, nil, Enum.PartType.Ball)
+						newPart(model, "AntennaL", Vector3.new(0.15, 0.8, 0.15),
+						tilt(Vector3.new(-0.3, 2.6, 0), 0, 0, 0.4), C.dark)
+						newPart(model, "AntennaR", Vector3.new(0.15, 0.8, 0.15),
+						tilt(Vector3.new(0.3, 2.6, 0), 0, 0, -0.4), C.dark)
+						addEyes(model, { y = 1.8, z = -0.55, spread = 0.3 }, 0.32)
+						return body
+						end
+						
+						function builders.pup(model, C, params)
+						local body = newPart(model, "Body", Vector3.new(1.5, 1.3, 2.2),
+						CFrame.new(0, 1.0, 0.2), C.body, nil, Enum.PartType.Ball)
+						newPart(model, "Head", Vector3.new(1.4, 1.3, 1.3),
+						CFrame.new(Vector3.new(0, 1.9, -0.8)), C.body, nil, Enum.PartType.Ball)
+						newPart(model, "Snout", Vector3.new(0.7, 0.55, 0.5),
+						CFrame.new(Vector3.new(0, 1.7, -1.6)), C.accent, nil, Enum.PartType.Ball)
+						newPart(model, "Nose", Vector3.new(0.3, 0.3, 0.25),
+						CFrame.new(Vector3.new(0, 1.85, -1.9)), Color3.fromRGB(30, 30, 35), nil, Enum.PartType.Ball)
+						local earStyle = params and params.Ears or "floppy"
+						if earStyle == "crown" then
+						newPart(model, "Crown", Vector3.new(0.9, 0.5, 0.9),
+						CFrame.new(Vector3.new(0, 2.8, -0.8)), Color3.fromRGB(255, 200, 60), Enum.Material.Neon)
+						else
+						local tiltAmt = (earStyle == "pointy") and 0 or 0.5
+						local earH = (earStyle == "pointy") and 1.1 or 0.9
+						newPart(model, "EarL", Vector3.new(0.45, earH, 0.4),
+						tilt(Vector3.new(-0.55, 2.7, -0.7), 0, 0, tiltAmt), C.dark, nil, Enum.PartType.Ball)
+						newPart(model, "EarR", Vector3.new(0.45, earH, 0.4),
+						tilt(Vector3.new(0.55, 2.7, -0.7), 0, 0, -tiltAmt), C.dark, nil, Enum.PartType.Ball)
+						end
+						newPart(model, "Tail", Vector3.new(0.35, 0.9, 0.35),
+						tilt(Vector3.new(0, 1.4, 1.4), 0.6, 0, 0), C.body, nil, Enum.PartType.Ball)
+						for i, leg in ipairs({ "LegFL", "LegFR", "LegBL", "LegBR" }) do
+						local sx = (i % 2 == 1) and -0.55 or 0.55
+						local sz = (i &lt;= 2) and -0.5 or 1.0
+						newPart(model, leg, Vector3.new(0.45, 0.8, 0.45),
+						CFrame.new(Vector3.new(sx, 0.4, sz)), C.dark, nil, Enum.PartType.Ball)
+						end
+						-- head-mounted eyes
+						local white = Color3.fromRGB(255, 255, 255)
+						local pupil = Color3.fromRGB(25, 25, 30)
+						for _, side in ipairs({ -1, 1 }) do
+						local x = side * 0.38
+						newPart(model, side &lt; 0 and "EyeL" or "EyeR",
+						Vector3.new(0.32, 0.32, 0.2), CFrame.new(Vector3.new(x, 2.15, -1.4)),
+						white, nil, Enum.PartType.Ball)
+						newPart(model, side &lt; 0 and "PupilL" or "PupilR",
+						Vector3.new(0.16, 0.16, 0.15), CFrame.new(Vector3.new(x, 2.15, -1.52)),
+						pupil, nil, Enum.PartType.Ball)
+						end
+						return body
+						end
+						
+						function builders.kraken(model, C)
+						local body = builders.blob(model, C)
+						for i = 1, 6 do
+						local angle = (i / 6) * math.pi * 2
+						local x, z = math.cos(angle) * 1.4, math.sin(angle) * 1.4
+						newPart(model, "Tent" .. i, Vector3.new(0.5, 0.9, 0.5),
+						tilt(Vector3.new(x, 0.45, z), z * 0.3, 0, -x * 0.3), C.accent, nil, Enum.PartType.Ball)
+						end
+						return body
+						end
+						
+						ModelFactory.Builders = builders
+						
+						--------------------------------------------------------------------------------
+						-- Public API
+						--------------------------------------------------------------------------------
+						
+						function ModelFactory.GetPets()
+						local ReplicatedStorage = game:GetService("ReplicatedStorage")
+						local Shared = ReplicatedStorage:FindFirstChild("EggHeistShared")
+						local folder = Shared and Shared:FindFirstChild("Config")
+						local mod = folder and folder:FindFirstChild("Pets")
+						if mod then
+						local ok, pets = pcall(require, mod)
+						if ok then
+						return pets
+						end
+						end
+						return nil
+						end
+						
+						function ModelFactory.GetCreatureDef(petId)
+						local ReplicatedStorage = game:GetService("ReplicatedStorage")
+						local Shared = ReplicatedStorage:FindFirstChild("EggHeistShared")
+						local folder = Shared and Shared:FindFirstChild("Config")
+						local mod = folder and folder:FindFirstChild("CreatureModels")
+						if mod then
+						local ok, models = pcall(require, mod)
+						if ok and models then
+						return models.Get(petId)
+						end
+						end
+						return nil
+						end
+						
+						local function accentFor(petId, params)
+						if params and params.Acc then
+						return Color3.fromRGB(params.Acc[1], params.Acc[2], params.Acc[3])
+						end
+						-- default accent: lighter version of body color
+						local pets = ModelFactory.GetPets()
+						local def = pets and pets.ById[petId] or nil
+						local body = ModelFactory.ColorFromBrickName(def and def.BodyColor or nil)
+						return Color3.new(
+						math.min(1, body.R + 0.25),
+						math.min(1, body.G + 0.25),
+						math.min(1, body.B + 0.25))
+						end
+						
+						--- Builds a creature model for a pet id (+ optional mutation). Never errors:
+						--- unknown pets become a gray blob.
+						function ModelFactory.BuildCreature(petId, mutation, scale)
+						local model = Instance.new("Model")
+						model.Name = "Creature_" .. tostring(petId)
+						local params = ModelFactory.GetCreatureDef(petId) or { A = "blob" }
+						local pets = ModelFactory.GetPets()
+						local def = pets and pets.ById[petId] or nil
+						local bodyColor = ModelFactory.ColorFromBrickName(def and def.BodyColor or nil)
+						local accent = accentFor(petId, params)
+						local dark = Color3.new(bodyColor.R * 0.6, bodyColor.G * 0.6, bodyColor.B * 0.6)
+						local C = { body = bodyColor, accent = accent, dark = dark }
+						local builder = builders[params.A] or builders.blob
+						local ok, primary = pcall(builder, model, C, params)
+						if not ok or not primary then
+						pcall(builders.blob, model, C, params)
+						primary = model:FindFirstChild("Body")
+						end
+						if primary and primary:IsA("BasePart") then
+						model.PrimaryPart = primary
+						end
+						local s = (tonumber(scale) or 1) * (tonumber(params.S) or 1)
+						if s ~= 1 then
+						ModelFactory.ScaleModel(model, s)
+						end
+						if mutation then
+						ModelFactory.ApplyMutation(model, mutation)
+						end
+						return model
+						end
+						
+						--- Recolors + effects a built model for a mutation id. Safe no-op when unknown.
+						function ModelFactory.ApplyMutation(model, mutationId)
+						if not model or not mutationId then
+						return
+						end
+						local ReplicatedStorage = game:GetService("ReplicatedStorage")
+						local Shared = ReplicatedStorage:FindFirstChild("EggHeistShared")
+						local folder = Shared and Shared:FindFirstChild("Config")
+						local mod = folder and folder:FindFirstChild("Mutations")
+						local mut = nil
+						if mod then
+						local ok, mutations = pcall(require, mod)
+						if ok and mutations then
+						mut = mutations.ById[mutationId]
+						end
+						end
+						if not mut then
+						return
+						end
+						local body = model:FindFirstChild("Body")
+						if body and body:IsA("BasePart") then
+						if mutationId == "Shadow" or mutationId == "Void" then
+						body.Color = mut.Color
+						body.Material = Enum.Material.Neon
+						elseif mutationId == "Crystal" or mutationId == "Celestial" then
+						body.Material = Enum.Material.Glass
+						elseif mutationId == "Neon" or mutationId == "Galaxy" then
+						body.Color = mut.Color
+						body.Material = Enum.Material.Neon
+						elseif mutationId == "Toxic" then
+						body.Color = mut.Color
+						elseif mutationId == "Golden" or mutationId == "Ancient" then
+						body.Color = mut.Color
+						end
+						if mutationId == "Golden" or mutationId == "Galaxy" or mutationId == "Void"
+						or mutationId == "Ancient" or mutationId == "Neon" or mutationId == "Celestial" then
+						addSparkles(body, mut.Color)
+						end
+						if mutationId == "Void" or mutationId == "Shadow" then
+						pcall(function()
+						local smoke = Instance.new("Smoke")
+						smoke.Color = mut.Color
+						smoke.Parent = body
+						end)
+						end
+						if mutationId == "Neon" or mutationId == "Void" or mutationId == "Celestial" then
+						pcall(function()
+						local light = Instance.new("PointLight")
+						light.Color = mut.Color
+						light.Range = 12
+						light.Brightness = 1.5
+						light.Shadows = false
+						light.Parent = body
+						end)
+						end
+						end
+						end
+						
+						--- Turns a model into a black silhouette (undiscovered collection icons).
+						function ModelFactory.Silhouette(model)
+						if not model then
+						return
+						end
+						for _, descendant in ipairs(model:GetDescendants()) do
+						if descendant:IsA("BasePart") then
+						descendant.Color = Color3.fromRGB(15, 15, 22)
+						descendant.Material = Enum.Material.SmoothPlastic
+						elseif descendant:IsA("Light") or descendant:IsA("ParticleEmitter")
+						or descendant.ClassName == "Sparkles" or descendant.ClassName == "Smoke" then
+						pcall(function() descendant:Destroy() end)
+						end
+						end
+						end
+						
+						--- Uniform scale around the model origin (keeps multi-part offsets glued).
+						function ModelFactory.ScaleModel(model, s)
+						if not model or not s or s == 1 then
+						return
+						end
+						local primary = model.PrimaryPart or model:FindFirstChild("Body")
+						local pivot = (primary and primary:IsA("BasePart")) and primary.Position or Vector3.new(0, 0, 0)
+						for _, descendant in ipairs(model:GetDescendants()) do
+						if descendant:IsA("BasePart") then
+						local offset = descendant.Position - pivot
+						descendant.Size = descendant.Size * s
+						local ok = pcall(function()
+						local rot = descendant.CFrame - descendant.Position
+						descendant.CFrame = CFrame.new(pivot + offset * s) * rot
+						end)
+						if not ok then
+						descendant.CFrame = CFrame.new(pivot + offset * s)
+						end
+						elseif descendant:IsA("SpecialMesh") then
+						local meshScale = descendant.Scale
+						if meshScale then
+						descendant.Scale = meshScale * s
+						end
+						end
+						end
+						end
+						
+						--- Moves the whole model so its PrimaryPart sits at the target CFrame.
+						function ModelFactory.Pose(model, cframe)
+						local primary = model and (model.PrimaryPart or model:FindFirstChild("Body"))
+						if not primary or not primary:IsA("BasePart") then
+						return
+						end
+						local delta = cframe.Position - primary.Position
+						for _, descendant in ipairs(model:GetDescendants()) do
+						if descendant:IsA("BasePart") then
+						descendant.CFrame = descendant.CFrame + delta
+						end
+						end
+						end
+						
+						--------------------------------------------------------------------------------
+						-- Eggs (world assets when present, procedural fallback otherwise)
+						--------------------------------------------------------------------------------
+						
+						function ModelFactory.GetEggAssetModel(assetName)
+						local root = Workspace:FindFirstChild("EggHeist")
+						local assets = root and root:FindFirstChild("EggAssets")
+						local template = assets and assets:FindFirstChild(assetName or "")
+						if template then
+						local ok, clone = pcall(function() return template:Clone() end)
+						if ok and clone then
+						return clone
+						end
+						end
+						return nil
+						end
+						
+						function ModelFactory.BuildEgg(eggId, scale)
+						local ReplicatedStorage = game:GetService("ReplicatedStorage")
+						local Shared = ReplicatedStorage:FindFirstChild("EggHeistShared")
+						local folder = Shared and Shared:FindFirstChild("Config")
+						local eggMod = folder and folder:FindFirstChild("Eggs")
+						local def = nil
+						if eggMod then
+						local ok, eggs = pcall(require, eggMod)
+						if ok and eggs then
+						def = eggs.ById[eggId]
+						end
+						end
+						local model = nil
+						if def and def.AssetModel then
+						model = ModelFactory.GetEggAssetModel(def.AssetModel)
+						end
+						if not model then
+						-- procedural egg fallback
+						model = Instance.new("Model")
+						model.Name = tostring(eggId or "Egg")
+						local body = Instance.new("Part")
+						body.Name = "Body"
+						body.Size = Vector3.new(2.4, 3.2, 2.4)
+						body.Color = EGG_FALLBACK_COLORS[eggId] or Color3.fromRGB(240, 230, 200)
+						body.Material = Enum.Material.SmoothPlastic
+						body.Anchored = true
+						body.CanCollide = false
+						body.CanQuery = false
+						body.TopSurface = Enum.SurfaceType.Smooth
+						body.BottomSurface = Enum.SurfaceType.Smooth
+						body.Parent = model
+						local mesh = Instance.new("SpecialMesh")
+						mesh.MeshType = Enum.MeshType.Egg
+						mesh.Scale = Vector3.new(2.4, 3.2, 2.4)
+						mesh.Parent = body
+						end
+						model.Name = "Egg_" .. tostring(eggId)
+						local body = model:FindFirstChild("Body")
+						if body and body:IsA("BasePart") then
+						body.Anchored = true
+						body.CanCollide = false
+						body.CanQuery = false
+						model.PrimaryPart = body
+						end
+						if scale and scale ~= 1 then
+						ModelFactory.ScaleModel(model, scale)
+						end
+						return model
+						end
+						
+						-- Finds a plot-local XZ spot near `preferred` that does not overlap any
+						-- existing plot part (template buildings, pedestals, totems...). Returns a
+						-- plot-local Vector3 (Y = 0). Pure math + part bounds: sim-safe.
+						local NUDGE_SPIRAL = {
+						{ 0, 0 }, { 4, 0 }, { -4, 0 }, { 0, 4 }, { 0, -4 },
+						{ 4, 4 }, { 4, -4 }, { -4, 4 }, { -4, -4 },
+						{ 8, 0 }, { -8, 0 }, { 0, 8 }, { 0, -8 },
+						{ 8, 8 }, { 8, -8 }, { -8, 8 }, { -8, -8 },
+						{ 12, 0 }, { -12, 0 }, { 0, 12 }, { 0, -12 },
+						}
+						
+						function ModelFactory.FindClearSpot(plot, preferred, clearance, halfExtent)
+						clearance = clearance or 3
+						halfExtent = halfExtent or 15
+						local foundation = plot and plot:FindFirstChild("Foundation")
+						if not foundation or not foundation:IsA("BasePart") then
+						return preferred
+						end
+						local center = foundation.Position
+						local blockers = {}
+						for _, descendant in ipairs(plot:GetDescendants()) do
+						if descendant:IsA("BasePart") and descendant ~= foundation then
+						local own = false
+						local node = descendant.Parent
+						while node and node ~= plot do
+						if node.Name == "ServerFurniture" then
+						own = true
+						break
+						end
+						node = node.Parent
+						end
+						if not own then
+						blockers[#blockers + 1] = descendant
+						end
+						end
+						end
+						local function overlaps(x, z)
+						for _, part in ipairs(blockers) do
+						local size = part.Size
+						local radius = math.max(size.X, size.Z) / 2 + clearance
+						if math.abs(x - part.Position.X) &lt; radius
+						and math.abs(z - part.Position.Z) &lt; radius then
+						return true
+						end
+						end
+						return false
+						end
+						for _, nudge in ipairs(NUDGE_SPIRAL) do
+						local lx = preferred.X + nudge[1]
+						local lz = preferred.Z + nudge[2]
+						if lx &gt; halfExtent then lx = halfExtent end
+						if lx &lt; -halfExtent then lx = -halfExtent end
+						if lz &gt; halfExtent then lz = halfExtent end
+						if lz &lt; -halfExtent then lz = -halfExtent end
+						if not overlaps(center.X + lx, center.Z + lz) then
+						return Vector3.new(lx, 0, lz)
+						end
+						end
+						local fx = preferred.X
+						local fz = preferred.Z
+						if fx &gt; halfExtent then fx = halfExtent end
+						if fx &lt; -halfExtent then fx = -halfExtent end
+						if fz &gt; halfExtent then fz = halfExtent end
+						if fz &lt; -halfExtent then fz = -halfExtent end
+						return Vector3.new(fx, 0, fz)
+						end
+						
+						return ModelFactory
+						</ProtectedString>
+					</Properties>
+				</Item>
+				<Item class="ModuleScript" referent="RBX28">
 					<Properties>
 						<string name="Name">Signal</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Utilities/Signal.luau
@@ -2111,7 +3005,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX27">
+				<Item class="ModuleScript" referent="RBX29">
 					<Properties>
 						<string name="Name">TableUtil</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Utilities/TableUtil.luau
@@ -2221,7 +3115,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX28">
+				<Item class="ModuleScript" referent="RBX30">
 					<Properties>
 						<string name="Name">Validate</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Utilities/Validate.luau
@@ -2290,19 +3184,19 @@
 			</Item>
 		</Item>
 	</Item>
-	<Item class="ServerScriptService" referent="RBX76">
+	<Item class="ServerScriptService" referent="RBX78">
 		<Properties>
 			<string name="Name">ServerScriptService</string>
 		</Properties>
-		<Item class="Folder" referent="RBX75">
+		<Item class="Folder" referent="RBX77">
 			<Properties>
 				<string name="Name">EggHeistServer</string>
 			</Properties>
-			<Item class="Folder" referent="RBX33">
+			<Item class="Folder" referent="RBX35">
 				<Properties>
 					<string name="Name">Admin</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX32">
+				<Item class="ModuleScript" referent="RBX34">
 					<Properties>
 						<string name="Name">AdminService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/Admin/AdminService.luau
@@ -2432,11 +3326,11 @@
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="Folder" referent="RBX35">
+			<Item class="Folder" referent="RBX37">
 				<Properties>
 					<string name="Name">Bases</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX34">
+				<Item class="ModuleScript" referent="RBX36">
 					<Properties>
 						<string name="Name">BaseService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/Bases/BaseService.luau
@@ -2669,6 +3563,12 @@
 						if registry.Security then
 						registry.Security.RebuildPlotSecurity(index)
 						end
+						if registry.Egg then
+						registry.Egg.OnPlotAssigned(player, index)
+						end
+						if registry.Pet then
+						registry.Pet.OnPlotAssigned(player, index)
+						end
 						ensureClaimPrompt(index) -- owned now: removes the claim prompt
 						registry.World.SetPlotLabel(index, player.DisplayName .. "'s Base")
 						-- one-time starter vault so the first CollectVault feels rewarding
@@ -2693,6 +3593,17 @@
 						userPlot[player.UserId] = nil
 						if plotOwner[index] == player.UserId then
 						plotOwner[index] = nil
+						end
+						if registry.Egg then
+						registry.Egg.OnPlotReleased(player, index)
+						end
+						if registry.Pet then
+						registry.Pet.OnPlotReleased(player, index)
+						end
+						local plot = registry.World.GetPlotModel(index)
+						local furniture = plot and plot:FindFirstChild("ServerFurniture")
+						if furniture then
+						pcall(function() furniture:Destroy() end)
 						end
 						if registry.Security then
 						registry.Security.ClearPlotSecurity(index)
@@ -3101,6 +4012,9 @@
 						local preferred = profile.base.plot
 						if preferred and preferred &gt; 0 and not plotOwner[preferred] then
 						BaseService.AssignPlot(player, preferred)
+						elseif not userPlot[player.UserId] then
+						-- auto-assign: every player gets THIS IS MY BASE within seconds
+						BaseService.AssignPlot(player, nil)
 						end
 						BaseService.RestoreDecorations(player)
 						end)
@@ -3112,11 +4026,11 @@
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="Folder" referent="RBX37">
+			<Item class="Folder" referent="RBX39">
 				<Properties>
 					<string name="Name">Data</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX36">
+				<Item class="ModuleScript" referent="RBX38">
 					<Properties>
 						<string name="Name">DataService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/Data/DataService.luau
@@ -3612,11 +4526,11 @@
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="Folder" referent="RBX39">
+			<Item class="Folder" referent="RBX41">
 				<Properties>
 					<string name="Name">Economy</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX38">
+				<Item class="ModuleScript" referent="RBX40">
 					<Properties>
 						<string name="Name">EconomyService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/Economy/EconomyService.luau
@@ -3904,16 +4818,21 @@
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="Folder" referent="RBX41">
+			<Item class="Folder" referent="RBX43">
 				<Properties>
 					<string name="Name">Eggs</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX40">
+				<Item class="ModuleScript" referent="RBX42">
 					<Properties>
 						<string name="Name">EggService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/Eggs/EggService.luau
-						-- Egg purchasing + hatching. ALL rolls happen here on the server.
+						-- Egg purchasing, BASE PLACEMENT, timed hatching. ALL rolls happen here.
+						--
+						-- The playable loop: BuyEgg -&gt; PlaceEgg on a base pad (physical egg with
+						-- a live timer) -&gt; READY -&gt; HATCH! prompt (or backpack button) -&gt; doHatch
+						-- -&gt; creature. Server validates owners, pads, positions and timers.
 						
+						local Players = game:GetService("Players")
 						local ReplicatedStorage = game:GetService("ReplicatedStorage")
 						
 						local Shared = ReplicatedStorage:WaitForChild("EggHeistShared")
@@ -3925,6 +4844,7 @@
 						local Economy = require(ConfigFolder:WaitForChild("Economy"))
 						local Settings = require(ConfigFolder:WaitForChild("Settings"))
 						local Validate = require(Shared:WaitForChild("Utilities"):WaitForChild("Validate"))
+						local ModelFactory = require(Shared:WaitForChild("Utilities"):WaitForChild("ModelFactory"))
 						local Types = require(Shared:WaitForChild("Types"))
 						
 						local EggService = {}
@@ -3933,6 +4853,17 @@
 						local registry = nil
 						local rng = Random.new()
 						
+						EggService.MaxPads = 6
+						
+						-- Foundation-relative pad offsets (two rows of three, front half of plot)
+						local PAD_OFFSETS = {
+						Vector3.new(-10, 0, 8), Vector3.new(0, 0, 8), Vector3.new(10, 0, 8),
+						Vector3.new(-10, 0, 13), Vector3.new(0, 0, 13), Vector3.new(10, 0, 13),
+						}
+						
+						local pendingReady = {} -- [userId] = { [eggUid] = hatchAt }
+						local padLabels = {} -- [plotIndex] = { [padIndex] = TextLabel }
+						
 						function EggService.Init(_, reg)
 						registry = reg
 						end
@@ -3940,6 +4871,10 @@
 						local function profileOf(player)
 						return registry.Data.GetProfile(player)
 						end
+						
+						--------------------------------------------------------------------------------
+						-- Rolls (unchanged math)
+						--------------------------------------------------------------------------------
 						
 						-- Weighted rarity roll with luck applied to Rare+ weights
 						local function rollRarity(weights, luckMult)
@@ -4044,7 +4979,515 @@
 						return pet, isNew
 						end
 						
-						local function doHatch(player, eggUid)
+						--------------------------------------------------------------------------------
+						-- Plot pads + placed-egg visuals
+						--------------------------------------------------------------------------------
+						
+						local function furnitureFolder(plotIndex)
+						local plot = registry.World.GetPlotModel(plotIndex)
+						if not plot then
+						return nil
+						end
+						local furniture = plot:FindFirstChild("ServerFurniture")
+						if not furniture then
+						furniture = Instance.new("Folder")
+						furniture.Name = "ServerFurniture"
+						furniture.Parent = plot
+						end
+						return furniture
+						end
+						
+						local function padBasePosition(plotIndex, padIndex)
+						local plot = registry.World.GetPlotModel(plotIndex)
+						local foundation = plot and plot:FindFirstChild("Foundation")
+						if not foundation or not foundation:IsA("BasePart") then
+						return nil
+						end
+						local preferred = PAD_OFFSETS[padIndex]
+						if not preferred then
+						return nil
+						end
+						local offset = ModelFactory.FindClearSpot(plot, preferred, 3, 15)
+						return foundation.Position
+						+ Vector3.new(0, foundation.Size.Y / 2, 0)
+						+ offset
+						end
+						
+						--- World position of a pad (heist range checks). Nil when plot/pad missing.
+						function EggService.GetPadPosition(plotIndex, padIndex)
+						return padBasePosition(plotIndex, padIndex)
+						end
+						
+						--- Finds the egg record a player has placed on a pad (snatch lookups).
+						function EggService.FindPlacedEgg(player, padIndex)
+						local profile = profileOf(player)
+						if not profile then
+						return nil
+						end
+						for _, egg in ipairs(profile.eggs) do
+						if egg.placedPad == padIndex then
+						return egg
+						end
+						end
+						return nil
+						end
+						
+						function EggService.IsReady(egg)
+						return egg ~= nil and egg.placedPad ~= nil
+						and egg.hatchAt ~= nil and os.time() &gt;= egg.hatchAt
+						end
+						
+						local function setPadLabel(plotIndex, padIndex, text, color)
+						local plotLabels = padLabels[plotIndex]
+						local label = plotLabels and plotLabels[padIndex] or nil
+						if label and label.Parent then
+						label.Text = text
+						if color then
+						label.TextColor3 = color
+						end
+						end
+						end
+						
+						local function formatTimer(secondsLeft)
+						secondsLeft = math.max(0, math.floor(secondsLeft))
+						local mins = math.floor(secondsLeft / 60)
+						local secs = secondsLeft % 60
+						if mins &gt; 0 then
+						return string.format("%d:%02d", mins, secs)
+						end
+						return string.format("%ds", secs)
+						end
+						
+						--- Builds the 6 physical pads for a plot. Idempotent.
+						function EggService.BuildPads(plotIndex)
+						local furniture = furnitureFolder(plotIndex)
+						if not furniture then
+						return
+						end
+						local pads = furniture:FindFirstChild("EggPads")
+						if not pads then
+						pads = Instance.new("Folder")
+						pads.Name = "EggPads"
+						pads.Parent = furniture
+						end
+						padLabels[plotIndex] = padLabels[plotIndex] or {}
+						for i = 1, EggService.MaxPads do
+						if not pads:FindFirstChild("Pad" .. i) then
+						local base = padBasePosition(plotIndex, i)
+						if base then
+						local pad = Instance.new("Part")
+						pad.Name = "Pad" .. i
+						pad.Shape = Enum.PartType.Cylinder
+						pad.Size = Vector3.new(1.2, 5, 5)
+						pad.CFrame = CFrame.new(base + Vector3.new(0, 0.6, 0))
+						* CFrame.fromEulerAnglesXYZ(0, 0, math.pi / 2)
+						pad.Color = Color3.fromRGB(70, 74, 95)
+						pad.Material = Enum.Material.SmoothPlastic
+						pad.Anchored = true
+						pad.CanCollide = true
+						pad.TopSurface = Enum.SurfaceType.Smooth
+						pad.BottomSurface = Enum.SurfaceType.Smooth
+						pad.Parent = pads
+						local ring = Instance.new("Part")
+						ring.Name = "Ring"
+						ring.Shape = Enum.PartType.Cylinder
+						ring.Size = Vector3.new(0.4, 5.8, 5.8)
+						ring.CFrame = CFrame.new(base + Vector3.new(0, 0.35, 0))
+						* CFrame.fromEulerAnglesXYZ(0, 0, math.pi / 2)
+						ring.Color = Color3.fromRGB(255, 200, 80)
+						ring.Material = Enum.Material.Neon
+						ring.Transparency = 0.4
+						ring.Anchored = true
+						ring.CanCollide = false
+						ring.CanQuery = false
+						ring.Parent = pad
+						local billboard = Instance.new("BillboardGui")
+						billboard.Name = "PadLabel"
+						billboard.Size = UDim2.new(0, 140, 0, 44)
+						billboard.StudsOffset = Vector3.new(0, 4.5, 0)
+						billboard.AlwaysOnTop = false
+						billboard.MaxDistance = 60
+						billboard.Parent = pad
+						local text = Instance.new("TextLabel")
+						text.Size = UDim2.fromScale(1, 1)
+						text.BackgroundTransparency = 1
+						text.Text = "EMPTY PAD"
+						text.TextColor3 = Color3.fromRGB(160, 165, 190)
+						text.Font = Enum.Font.GothamBold
+						text.TextScaled = true
+						text.TextStrokeTransparency = 0.5
+						text.Parent = billboard
+						padLabels[plotIndex][i] = text
+						end
+						end
+						end
+						end
+						
+						local function clearPlacedVisual(plotIndex, padIndex)
+						local plot = registry.World.GetPlotModel(plotIndex)
+						local furniture = plot and plot:FindFirstChild("ServerFurniture")
+						local placed = furniture and furniture:FindFirstChild("PlacedEggs")
+						local visual = placed and placed:FindFirstChild("Pad" .. padIndex)
+						if visual then
+						pcall(function() visual:Destroy() end)
+						end
+						setPadLabel(plotIndex, padIndex, "EMPTY PAD", Color3.fromRGB(160, 165, 190))
+						end
+						
+						--- Destroys every placed-egg visual on a plot (release/prestige/wipe).
+						function EggService.ClearPlotEggVisuals(plotIndex)
+						local plot = registry.World.GetPlotModel(plotIndex)
+						local furniture = plot and plot:FindFirstChild("ServerFurniture")
+						local placed = furniture and furniture:FindFirstChild("PlacedEggs")
+						if placed then
+						pcall(function() placed:Destroy() end)
+						end
+						padLabels[plotIndex] = nil
+						end
+						
+						local function shakeEgg(eggModel, seconds)
+						task.spawn(function()
+						local primary = eggModel.PrimaryPart or eggModel:FindFirstChild("Body")
+						if not primary or not primary:IsA("BasePart") then
+						return
+						end
+						local startPos = primary.Position
+						local stopAt = os.clock() + (seconds or 1.2)
+						while os.clock() &lt; stopAt and eggModel.Parent do
+						task.wait(0.08)
+						if not eggModel.Parent then
+						return
+						end
+						local jitter = Vector3.new((math.random() - 0.5) * 0.6, 0, (math.random() - 0.5) * 0.6)
+						pcall(function()
+						ModelFactory.Pose(eggModel, CFrame.new(startPos + jitter))
+						end)
+						end
+						if eggModel.Parent then
+						pcall(function()
+						ModelFactory.Pose(eggModel, CFrame.new(startPos))
+						end)
+						end
+						end)
+						end
+						
+						local function buildPlacedVisual(player, plotIndex, egg)
+						local furniture = furnitureFolder(plotIndex)
+						if not furniture then
+						return nil
+						end
+						local placed = furniture:FindFirstChild("PlacedEggs")
+						if not placed then
+						placed = Instance.new("Folder")
+						placed.Name = "PlacedEggs"
+						placed.Parent = furniture
+						end
+						clearPlacedVisual(plotIndex, egg.placedPad)
+						local base = padBasePosition(plotIndex, egg.placedPad)
+						if not base then
+						return nil
+						end
+						local holder = Instance.new("Model")
+						holder.Name = "Pad" .. egg.placedPad
+						local eggModel = ModelFactory.BuildEgg(egg.eggId, 0.55)
+						eggModel.Parent = holder
+						ModelFactory.Pose(eggModel, CFrame.new(base + Vector3.new(0, 2.2, 0)))
+						local body = eggModel:FindFirstChild("Body")
+						if body and body:IsA("BasePart") then
+						-- HATCH! (owner, enabled when ready)
+						local hatchPrompt = Instance.new("ProximityPrompt")
+						hatchPrompt.Name = "EggHatchPrompt"
+						hatchPrompt.ActionText = "HATCH!"
+						hatchPrompt.ObjectText = (Eggs.ById[egg.eggId] and Eggs.ById[egg.eggId].DisplayName) or egg.eggId
+						hatchPrompt.KeyboardKeyCode = Enum.KeyCode.E
+						hatchPrompt.HoldDuration = 0.3
+						hatchPrompt.MaxActivationDistance = 14
+						hatchPrompt.RequiresLineOfSight = false
+						hatchPrompt.Enabled = EggService.IsReady(egg)
+						hatchPrompt.Parent = body
+						hatchPrompt.Triggered:Connect(function(triggerPlayer)
+						EggService.HatchEgg(triggerPlayer, egg.uid)
+						end)
+						-- Pick up (owner)
+						local pickupPrompt = Instance.new("ProximityPrompt")
+						pickupPrompt.Name = "EggPickupPrompt"
+						pickupPrompt.ActionText = "Pick Up"
+						pickupPrompt.ObjectText = "Egg"
+						pickupPrompt.KeyboardKeyCode = Enum.KeyCode.F
+						pickupPrompt.HoldDuration = 0.3
+						pickupPrompt.MaxActivationDistance = 14
+						pickupPrompt.RequiresLineOfSight = false
+						pickupPrompt.Parent = body
+						pickupPrompt.Triggered:Connect(function(triggerPlayer)
+						EggService.PickupEgg(triggerPlayer, egg.uid)
+						end)
+						-- Steal (non-owners; server validates)
+						local stealPrompt = Instance.new("ProximityPrompt")
+						stealPrompt.Name = "EggStealPrompt"
+						stealPrompt.ActionText = "Steal Egg"
+						stealPrompt.ObjectText = "Heist target"
+						stealPrompt.KeyboardKeyCode = Enum.KeyCode.E
+						stealPrompt.HoldDuration = 1.5
+						stealPrompt.MaxActivationDistance = 14
+						stealPrompt.RequiresLineOfSight = false
+						stealPrompt.Parent = body
+						local padIndex = egg.placedPad
+						stealPrompt.Triggered:Connect(function(triggerPlayer)
+						if registry.Heist and registry.Heist.TryGrabEgg then
+						registry.Heist.TryGrabEgg(triggerPlayer, plotIndex, padIndex)
+						end
+						end)
+						end
+						holder.Parent = placed
+						-- reset the pad timer label immediately
+						local def = Eggs.ById[egg.eggId]
+						if EggService.IsReady(egg) then
+						setPadLabel(plotIndex, egg.placedPad, "READY!", Color3.fromRGB(120, 255, 160))
+						else
+						local left = (egg.hatchAt or os.time()) - os.time()
+						setPadLabel(plotIndex, egg.placedPad,
+						(def and def.DisplayName or "Egg") .. " " .. formatTimer(left),
+						Color3.fromRGB(255, 215, 100))
+						end
+						return holder
+						end
+						
+						local function refreshPlacedVisual(player, egg)
+						local profile = profileOf(player)
+						local plotIndex = profile and profile.base.plot or 0
+						if plotIndex &lt;= 0 or not egg.placedPad then
+						return
+						end
+						buildPlacedVisual(player, plotIndex, egg)
+						end
+						
+						--------------------------------------------------------------------------------
+						-- Placement API (all server-validated)
+						--------------------------------------------------------------------------------
+						
+						local function trackPending(player, egg)
+						pendingReady[player.UserId] = pendingReady[player.UserId] or {}
+						if egg.placedPad and egg.hatchAt and os.time() &lt; egg.hatchAt then
+						pendingReady[player.UserId][egg.uid] = egg.hatchAt
+						else
+						pendingReady[player.UserId][egg.uid] = nil
+						end
+						end
+						
+						local function nearOwnPlot(player, plotIndex, maxDist)
+						local plot = registry.World.GetPlotModel(plotIndex)
+						local foundation = plot and plot:FindFirstChild("Foundation")
+						local character = player.Character
+						local hrp = character and character:FindFirstChild("HumanoidRootPart")
+						if not foundation or not foundation:IsA("BasePart") or not hrp then
+						return false
+						end
+						return (hrp.Position - foundation.Position).Magnitude &lt;= (maxDist or 40)
+						end
+						
+						--- Places an egg from the pouch onto the first free pad of the player's base.
+						function EggService.PlaceEgg(player, eggUid)
+						eggUid = Validate.Uid(eggUid)
+						if not eggUid then
+						return false
+						end
+						local profile = profileOf(player)
+						if not profile then
+						return false
+						end
+						local egg = findEgg(profile, eggUid)
+						if not egg then
+						return false
+						end
+						if egg.placedPad then
+						return true -- already placed
+						end
+						local plotIndex = registry.Base.GetPlotOf(player)
+						if plotIndex &lt;= 0 then
+						registry.Notify.Send(player, "warning", "No base",
+						"Claim a base plot first!", 4)
+						return false
+						end
+						if not nearOwnPlot(player, plotIndex, 45) then
+						registry.Notify.Send(player, "warning", "Too far",
+						"Visit your base to place eggs.", 4)
+						return false
+						end
+						-- first free pad
+						local used = {}
+						for _, other in ipairs(profile.eggs) do
+						if other.placedPad then
+						used[other.placedPad] = true
+						end
+						end
+						local pad = nil
+						for i = 1, EggService.MaxPads do
+						if not used[i] then
+						pad = i
+						break
+						end
+						end
+						if not pad then
+						registry.Notify.Send(player, "warning", "Pads full",
+						"Hatch or pick up eggs to free a pad.", 4)
+						return false
+						end
+						egg.placedPad = pad
+						egg.hatchAt = os.time() + Eggs.GetHatchTime(egg.eggId)
+						registry.Data.MarkDirty(player)
+						EggService.BuildPads(plotIndex)
+						buildPlacedVisual(player, plotIndex, egg)
+						trackPending(player, egg)
+						local def = Eggs.ById[egg.eggId]
+						registry.Notify.Send(player, "success", "Egg placed!",
+						(def and def.DisplayName or "Egg") .. " is hatching on pad " .. tostring(pad) .. ".", 4)
+						registry.Net.Fire(player, "Fx", "PlaceEgg")
+						if registry.TutorialHook then
+						registry.TutorialHook(player, "PlaceEgg")
+						end
+						return true
+						end
+						
+						--- Returns a placed egg to the pouch (timer resets on next placement).
+						function EggService.PickupEgg(player, eggUid)
+						eggUid = Validate.Uid(eggUid)
+						if not eggUid then
+						return false
+						end
+						local profile = profileOf(player)
+						if not profile then
+						return false
+						end
+						local egg = findEgg(profile, eggUid)
+						if not egg or not egg.placedPad then
+						return false
+						end
+						local plotIndex = profile.base.plot or 0
+						local wasPad = egg.placedPad
+						egg.placedPad = nil
+						egg.hatchAt = nil
+						registry.Data.MarkDirty(player)
+						if plotIndex &gt; 0 and wasPad then
+						clearPlacedVisual(plotIndex, wasPad)
+						end
+						trackPending(player, egg)
+						registry.Notify.Send(player, "info", "Picked up", "Egg returned to your pouch.", 3)
+						return true
+						end
+						
+						--- Removes every placed egg back to the pouch (plot release / wipe).
+						function EggService.UnplaceAllEggs(player)
+						local profile = profileOf(player)
+						if not profile then
+						return
+						end
+						local plotIndex = profile.base.plot or 0
+						for _, egg in ipairs(profile.eggs) do
+						if egg.placedPad then
+						if plotIndex &gt; 0 then
+						clearPlacedVisual(plotIndex, egg.placedPad)
+						end
+						egg.placedPad = nil
+						egg.hatchAt = nil
+						end
+						end
+						pendingReady[player.UserId] = nil
+						registry.Data.MarkDirty(player)
+						end
+						
+						--- Rebuilds visuals + timers after (re)claiming a plot.
+						function EggService.RestorePlacedEggs(player)
+						local profile = profileOf(player)
+						if not profile then
+						return
+						end
+						local plotIndex = profile.base.plot or 0
+						if plotIndex &lt;= 0 then
+						return
+						end
+						EggService.BuildPads(plotIndex)
+						for _, egg in ipairs(profile.eggs) do
+						if egg.placedPad then
+						buildPlacedVisual(player, plotIndex, egg)
+						trackPending(player, egg)
+						end
+						end
+						end
+						
+						--- Plot lifecycle hooks called by BaseService.
+						function EggService.OnPlotAssigned(player, plotIndex)
+						EggService.BuildPads(plotIndex)
+						EggService.RestorePlacedEggs(player)
+						end
+						
+						function EggService.OnPlotReleased(player, _plotIndex)
+						EggService.UnplaceAllEggs(player)
+						end
+						
+						--- Server-only test backdoor: force every placed egg ready (sim uses this).
+						function EggService.TestForceReady(player)
+						local profile = profileOf(player)
+						if not profile then
+						return 0
+						end
+						local count = 0
+						for _, egg in ipairs(profile.eggs) do
+						if egg.placedPad and egg.hatchAt and egg.hatchAt &gt; os.time() then
+						egg.hatchAt = os.time()
+						count = count + 1
+						trackPending(player, egg)
+						refreshPlacedVisual(player, egg)
+						end
+						end
+						if count &gt; 0 then
+						registry.Data.MarkDirty(player)
+						end
+						return count
+						end
+						
+						-- Snatch support: lift a placed egg OFF the victim (visual + record removed,
+						-- record returned with placement fields intact for restore-on-fail).
+						function EggService.TakePlacedEgg(owner, eggUid)
+						local profile = profileOf(owner)
+						if not profile then
+						return nil
+						end
+						for index, egg in ipairs(profile.eggs) do
+						if egg.uid == eggUid and egg.placedPad then
+						local padIndex = egg.placedPad
+						table.remove(profile.eggs, index)
+						local plotIndex = profile.base.plot or 0
+						if plotIndex &gt; 0 then
+						clearPlacedVisual(plotIndex, padIndex)
+						end
+						if pendingReady[owner.UserId] then
+						pendingReady[owner.UserId][egg.uid] = nil
+						end
+						registry.Data.MarkDirty(owner)
+						return egg
+						end
+						end
+						return nil
+						end
+						
+						-- Snatch fail path: put a taken egg back on the victim's pad.
+						function EggService.RestoreTakenEgg(owner, egg)
+						local profile = profileOf(owner)
+						if not profile or not egg then
+						return false
+						end
+						profile.eggs[#profile.eggs + 1] = egg
+						registry.Data.MarkDirty(owner)
+						refreshPlacedVisual(owner, egg)
+						trackPending(owner, egg)
+						return true
+						end
+						
+						--------------------------------------------------------------------------------
+						-- Hatching (placed + ready only, except force paths)
+						--------------------------------------------------------------------------------
+						
+						local function doHatch(player, eggUid, forceReady)
 						local profile = profileOf(player)
 						if not profile then
 						return nil
@@ -4066,7 +5509,21 @@
 						warn("[EggHeist] Dropped unknown egg id: " .. tostring(egg.eggId))
 						return nil
 						end
+						if egg.placedPad and not forceReady and not EggService.IsReady(egg) then
+						local left = (egg.hatchAt or os.time()) - os.time()
+						registry.Notify.Send(player, "info", "Not ready yet",
+						"Hatches in " .. formatTimer(left) .. ".", 3)
+						return nil
+						end
+						local wasPad = egg.placedPad
+						local plotIndex = profile.base.plot or 0
 						table.remove(profile.eggs, index)
+						if pendingReady[player.UserId] then
+						pendingReady[player.UserId][eggUid] = nil
+						end
+						if wasPad and plotIndex &gt; 0 then
+						clearPlacedVisual(plotIndex, wasPad)
+						end
 						local roll = EggService.RollHatch(player, egg.eggId)
 						if not roll then
 						return nil
@@ -4113,6 +5570,16 @@
 						registry.Net.FireAll("Feed", { icon = "HATCH", text = player.DisplayName .. " hatched " .. petName })
 						end
 						
+						registry.Data.MarkDirty(player)
+						local sourceDef = Eggs.ById[egg.eggId]
+						
+						-- auto-equip when a slot is free so income starts immediately
+						if registry.Pet and #profile.equipped &lt; registry.Pet.MaxSlots(player) then
+						registry.Pet.Equip(player, pet.uid)
+						registry.Notify.Send(player, "info", "Auto-equipped",
+						petName .. " is now earning for you!", 4)
+						end
+						
 						-- client juice: rarity-scaled hatch celebration for the hatcher
 						registry.Net.Fire(player, "Fx", "HatchFx", tier, roll.rarity, petName, isNew)
 						if tier &gt;= 6 then
@@ -4123,14 +5590,35 @@
 						player.DisplayName .. " hatched " .. petName .. "!")
 						end
 						
-						registry.Data.MarkDirty(player)
-						local sourceDef = Eggs.ById[egg.eggId]
 						return {
 						pet = pet,
 						isNew = isNew,
 						rarity = roll.rarity,
+						eggId = egg.eggId,
 						eggName = (sourceDef and sourceDef.DisplayName) or egg.eggId,
 						}
+						end
+						
+						--- HATCH! entry: prompt + backpack button + HatchEgg remote all land here.
+						function EggService.HatchEgg(player, eggUid)
+						eggUid = Validate.Uid(eggUid)
+						if not eggUid then
+						return nil
+						end
+						local profile = profileOf(player)
+						if not profile then
+						return nil
+						end
+						local egg = findEgg(profile, eggUid)
+						if not egg then
+						return nil
+						end
+						if not egg.placedPad then
+						registry.Notify.Send(player, "info", "Place it first",
+						"Place this egg on a pad in your base to hatch it!", 4)
+						return nil
+						end
+						return doHatch(player, eggUid, false)
 						end
 						
 						function EggService.BuyEgg(player, eggId, count)
@@ -4174,14 +5662,17 @@
 						registry.TutorialHook(player, "BuyEgg")
 						end
 						
-						-- Auto-hatch: gamepass OR permanent gems unlock
+						-- Auto-hatch: gamepass OR permanent gems unlock. Auto-places each egg
+						-- on a free pad and hatches instantly; leftovers stay in the pouch.
 						if profile.settings.autoHatch
 						and (profile.gamepasses.AutoHatch or profile.autoHatchUnlock) then
 						local results = {}
 						for _, egg in ipairs(bought) do
-						local result = doHatch(player, egg.uid)
+						if EggService.PlaceEgg(player, egg.uid) then
+						local result = doHatch(player, egg.uid, true)
 						if result then
 						results[#results + 1] = result
+						end
 						end
 						end
 						if #results &gt; 0 then
@@ -4234,7 +5725,104 @@
 						return true
 						end
 						
+						--------------------------------------------------------------------------------
+						-- Ready loop: timers -&gt; READY! (shake + prompt + toast)
+						--------------------------------------------------------------------------------
+						
+						local function markReady(player, egg)
+						local profile = profileOf(player)
+						if not profile then
+						return
+						end
+						local plotIndex = profile.base.plot or 0
+						if plotIndex &gt; 0 and egg.placedPad then
+						refreshPlacedVisual(player, egg)
+						local plot = registry.World.GetPlotModel(plotIndex)
+						local furniture = plot and plot:FindFirstChild("ServerFurniture")
+						local placed = furniture and furniture:FindFirstChild("PlacedEggs")
+						local holder = placed and placed:FindFirstChild("Pad" .. egg.placedPad)
+						if holder then
+						for _, child in ipairs(holder:GetChildren()) do
+						if child:IsA("Model") then
+						shakeEgg(child, 1.5)
+						end
+						end
+						end
+						end
+						local def = Eggs.ById[egg.eggId]
+						registry.Notify.Send(player, "success", "Egg ready!",
+						(def and def.DisplayName or "Egg") .. " is ready to HATCH!", 5)
+						registry.Net.Fire(player, "Fx", "EggReady")
+						end
+						
+						local function readyLoop()
+						while true do
+						task.wait(2)
+						local now = os.time()
+						for _, player in ipairs(Players:GetPlayers()) do
+						local profile = profileOf(player)
+						if profile then
+						local plotIndex = profile.base.plot or 0
+						for _, egg in ipairs(profile.eggs) do
+						if egg.placedPad and egg.hatchAt then
+						if now &gt;= egg.hatchAt then
+						local tracked = pendingReady[player.UserId]
+						if tracked and tracked[egg.uid] then
+						tracked[egg.uid] = nil
+						markReady(player, egg)
+						end
+						elseif plotIndex &gt; 0 then
+						-- live countdown on the pad label
+						local def = Eggs.ById[egg.eggId]
+						setPadLabel(plotIndex, egg.placedPad,
+						(def and def.DisplayName or "Egg") .. " "
+						.. formatTimer(egg.hatchAt - now),
+						Color3.fromRGB(255, 215, 100))
+						end
+						end
+						end
+						end
+						end
+						end
+						end
+						
+						--------------------------------------------------------------------------------
+						-- Physical egg market: shop prompts on every stall pedestal (all worlds)
+						--------------------------------------------------------------------------------
+						
+						--- Attaches "Shop" prompts to every market stall pedestal. Works in the
+						--- rbxm world (Common_Pedestal...) and the fallback world (&lt;Egg&gt;_Pedestal).
+						--- The CLIENT opens the shop UI (NpcController): zero exploit surface.
+						function EggService.BuildMarketStalls()
+						if not registry.World or not registry.World.GetRoot then
+						return
+						end
+						local root = registry.World.GetRoot()
+						local map = root and root:FindFirstChild("Map")
+						local market = map and map:FindFirstChild("EggMarket")
+						if not market then
+						return
+						end
+						for _, child in ipairs(market:GetChildren()) do
+						if child:IsA("BasePart") and child.Name:match("_Pedestal$") then
+						if not child:FindFirstChild("MarketPrompt") then
+						local stall = child.Name:gsub("_Pedestal$", "")
+						local prompt = Instance.new("ProximityPrompt")
+						prompt.Name = "MarketPrompt"
+						prompt:SetAttribute("MarketStall", stall)
+						prompt.ActionText = "Shop"
+						prompt.ObjectText = stall .. " Eggs"
+						prompt.HoldDuration = 0
+						prompt.MaxActivationDistance = 10
+						prompt.RequiresLineOfSight = false
+						prompt.Parent = child
+						end
+						end
+						end
+						end
+						
 						function EggService.Start()
+						EggService.BuildMarketStalls()
 						registry.Net.OnRequest("BuyEgg", function(player, eggId, count)
 						EggService.BuyEgg(player, eggId, count)
 						end)
@@ -4243,12 +5831,16 @@
 						EggService.BuyAutoHatch(player)
 						end)
 						
+						registry.Net.OnRequest("PlaceEgg", function(player, eggUid)
+						EggService.PlaceEgg(player, eggUid)
+						end)
+						
+						registry.Net.OnRequest("PickupEgg", function(player, eggUid)
+						EggService.PickupEgg(player, eggUid)
+						end)
+						
 						registry.Net.OnRequest("HatchEgg", function(player, eggUid)
-						eggUid = Validate.Uid(eggUid)
-						if not eggUid then
-						return
-						end
-						local result = doHatch(player, eggUid)
+						local result = EggService.HatchEgg(player, eggUid)
 						if result then
 						registry.Net.Fire(player, "HatchResult", {
 						results = { result },
@@ -4264,16 +5856,18 @@
 						end
 						local results = {}
 						local hatched = 0
-						-- copy uids first (doHatch mutates the list)
+						-- copy uids first (doHatch mutates the list); ready placed eggs only
 						local uids = {}
 						for _, egg in ipairs(profile.eggs) do
+						if egg.placedPad and EggService.IsReady(egg) then
 						uids[#uids + 1] = egg.uid
 						if #uids &gt;= 25 then
 						break
 						end
 						end
+						end
 						for _, uid in ipairs(uids) do
-						local result = doHatch(player, uid)
+						local result = doHatch(player, uid, false)
 						if result then
 						results[#results + 1] = result
 						hatched = hatched + 1
@@ -4283,8 +5877,13 @@
 						end
 						if hatched &gt; 0 then
 						registry.Net.Fire(player, "HatchResult", { results = results, auto = false, bulk = true })
+						else
+						registry.Notify.Send(player, "info", "Nothing ready",
+						"Place eggs on pads and wait for them to hatch!", 4)
 						end
 						end)
+						
+						task.spawn(readyLoop)
 						end
 						
 						return EggService
@@ -4292,11 +5891,11 @@
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="Folder" referent="RBX43">
+			<Item class="Folder" referent="RBX45">
 				<Properties>
 					<string name="Name">Events</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX42">
+				<Item class="ModuleScript" referent="RBX44">
 					<Properties>
 						<string name="Name">EventService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/Events/EventService.luau
@@ -4632,11 +6231,11 @@
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="Folder" referent="RBX46">
+			<Item class="Folder" referent="RBX48">
 				<Properties>
 					<string name="Name">Heists</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX44">
+				<Item class="ModuleScript" referent="RBX46">
 					<Properties>
 						<string name="Name">GadgetService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/Heists/GadgetService.luau
@@ -4922,7 +6521,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX45">
+				<Item class="ModuleScript" referent="RBX47">
 					<Properties>
 						<string name="Name">HeistService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/Heists/HeistService.luau
@@ -4937,6 +6536,8 @@
 						local Economy = require(ConfigFolder:WaitForChild("Economy"))
 						local Settings = require(ConfigFolder:WaitForChild("Settings"))
 						local Validate = require(Shared:WaitForChild("Utilities"):WaitForChild("Validate"))
+						local ModelFactory = require(Shared:WaitForChild("Utilities"):WaitForChild("ModelFactory"))
+						local Eggs = require(ConfigFolder:WaitForChild("Eggs"))
 						
 						local HeistService = {}
 						HeistService.Name = "HeistService"
@@ -5072,12 +6673,73 @@
 						return nil
 						end
 						
+						-- Carried-egg visual: the actual stolen egg floats above the thief's head.
+						local function attachEggVisual(player, eggId)
+						local character = player.Character
+						if not character then
+						return nil
+						end
+						local head = character:FindFirstChild("Head")
+						if not head then
+						return nil
+						end
+						local ok, model = pcall(ModelFactory.BuildEgg, eggId, 0.5)
+						if not ok or not model then
+						return nil
+						end
+						model.Name = "EggCarryVisual"
+						for _, descendant in ipairs(model:GetDescendants()) do
+						if descendant:IsA("ProximityPrompt") or descendant:IsA("BillboardGui")
+						or descendant:IsA("SurfaceGui") or descendant:IsA("ParticleEmitter")
+						or descendant:IsA("PointLight") then
+						descendant:Destroy()
+						elseif descendant:IsA("BasePart") then
+						descendant.Anchored = false
+						descendant.CanCollide = false
+						descendant.CanQuery = false
+						descendant.CanTouch = false
+						descendant.Massless = true
+						end
+						end
+						local body = model.PrimaryPart
+						if not body then
+						pcall(function() model:Destroy() end)
+						return nil
+						end
+						body.CFrame = head.CFrame + Vector3.new(0, 2.4, 0)
+						local weld = Instance.new("WeldConstraint")
+						weld.Part0 = head
+						weld.Part1 = body
+						weld.Parent = body
+						model.Parent = character
+						local tag = Instance.new("BillboardGui")
+						tag.Name = "LootTag"
+						tag.Size = UDim2.new(0, 140, 0, 30)
+						tag.StudsOffset = Vector3.new(0, 4.2, 0)
+						tag.AlwaysOnTop = true
+						tag.Parent = body
+						local text = Instance.new("TextLabel")
+						text.Size = UDim2.fromScale(1, 1)
+						text.BackgroundTransparency = 1
+						text.Text = "STOLEN EGG!"
+						text.TextColor3 = Color3.fromRGB(255, 170, 60)
+						text.Font = Enum.Font.GothamBold
+						text.TextSize = 16
+						text.TextStrokeTransparency = 0.3
+						text.Parent = tag
+						return model
+						end
+						
 						local function clearLootVisual(player)
 						local character = player.Character
 						if character then
 						local loot = character:FindFirstChild("CarriedLoot")
 						if loot then
 						loot:Destroy()
+						end
+						local eggLoot = character:FindFirstChild("EggCarryVisual")
+						if eggLoot then
+						eggLoot:Destroy()
 						end
 						end
 						local state = carrying[player.UserId]
@@ -5106,6 +6768,15 @@
 						carrying[thief.UserId] = nil
 						setCarrySlow(thief, false)
 						clearLootVisual(thief)
+						local isEgg = state.stolenEgg ~= nil
+						if isEgg then
+						local eggVictim = Players:GetPlayerByUserId(state.stolenEgg.victimUserId)
+						if eggVictim then
+						registry.Egg.RestoreTakenEgg(eggVictim, state.stolenEgg.egg)
+						registry.Notify.Send(eggVictim, "success", "Egg recovered!",
+						"The thief " .. tostring(reason or "failed") .. ". Your egg is back.", 5)
+						end
+						end
 						local victim = Players:GetPlayerByUserId(state.victimUserId)
 						if victim then
 						local victimProfile = profileOf(victim)
@@ -5114,8 +6785,10 @@
 						victimProfile.base.vault = math.min(capacity,
 						(victimProfile.base.vault or 0) + state.amount)
 						registry.Data.MarkDirty(victim)
+						if not isEgg then
 						registry.Notify.Send(victim, "success", "Loot recovered!",
 						"The thief " .. tostring(reason or "failed") .. ". Your vault was refunded.", 5)
+						end
 						end
 						end
 						local thiefProfile = profileOf(thief)
@@ -5285,6 +6958,136 @@
 						end)
 						end
 						
+						--------------------------------------------------------------------------------
+						-- Egg snatch: physical egg theft from enemy pads -&gt; carry -&gt; extract.
+						-- Called by the egg's Steal ProximityPrompt (EggService). Instant grab,
+						-- then the normal slowed-carry extraction run.
+						--------------------------------------------------------------------------------
+						
+						function HeistService.TryGrabEgg(thief, plotIndex, padIndex)
+						if not Settings.Features.Heists then
+						return
+						end
+						plotIndex = math.floor(tonumber(plotIndex) or 0)
+						padIndex = math.floor(tonumber(padIndex) or 0)
+						if plotIndex &lt; 1 or plotIndex &gt; Settings.MaxBasePlots then
+						return
+						end
+						if padIndex &lt; 1 or padIndex &gt; 6 then
+						return
+						end
+						if carrying[thief.UserId] or channeling[thief.UserId] then
+						registry.Notify.Send(thief, "warning", "Hands full",
+						"Finish your current heist first!", 3)
+						return
+						end
+						local victim = registry.Base.GetOwnerOfPlot(plotIndex)
+						if not victim or victim == thief then
+						return
+						end
+						local now = os.clock()
+						if (grabCooldownUntil[thief.UserId] or 0) &gt; now then
+						registry.Notify.Send(thief, "warning", "Cooldown",
+						"You're still cooling down from the last grab!", 3)
+						return
+						end
+						if (victimCooldownUntil[victim.UserId] or 0) &gt; now then
+						registry.Notify.Send(thief, "warning", "Too soon",
+						"That base was just hit!", 3)
+						return
+						end
+						-- range: thief must stand near the victim's base
+						local character = thief.Character
+						local hrp = character and character:FindFirstChild("HumanoidRootPart")
+						local plot = registry.World.GetPlotModel(plotIndex)
+						local foundation = plot and plot:FindFirstChild("Foundation")
+						if not hrp or not foundation or not foundation:IsA("BasePart") then
+						return
+						end
+						if (hrp.Position - foundation.Position).Magnitude &gt; (Settings.Heist.GrabRange or 45) then
+						return
+						end
+						if registry.Security.IsLockedDown(victim) then
+						registry.Notify.Send(thief, "warning", "Lockdown!", "This base is sealed!", 3)
+						return
+						end
+						local victimProfile = profileOf(victim)
+						local thiefProfile = profileOf(thief)
+						if not victimProfile or not thiefProfile then
+						return
+						end
+						-- decoy wastes the run on a fake egg
+						if registry.Security.RollDecoy(victim) then
+						grabCooldownUntil[thief.UserId] = now + Settings.Heist.GrabCooldown
+						registry.Notify.Send(thief, "warning", "It's a decoy!",
+						"You grabbed a worthless fake egg!", 5)
+						registry.Notify.Send(victim, "success", "Decoy worked!",
+						thief.DisplayName .. " stole a fake egg!", 5)
+						return
+						end
+						-- alarm tips off the victim
+						local security = victimProfile.base.security or {}
+						if (security.Alarm or 0) &gt; 0 then
+						registry.Notify.Send(victim, "error", "Intruder!",
+						thief.DisplayName .. " is at your egg pads!", 5)
+						registry.Net.Fire(victim, "Fx", "HeistAlarm", thief.DisplayName)
+						end
+						-- server-authoritative: find the egg ON THIS PAD (never trust a client uid)
+						local targetUid = nil
+						for _, egg in ipairs(victimProfile.eggs or {}) do
+						if egg.placedPad == padIndex then
+						targetUid = egg.uid
+						break
+						end
+						end
+						if not targetUid then
+						registry.Notify.Send(thief, "warning", "Gone", "That egg is no longer there!", 3)
+						return
+						end
+						local taken = registry.Egg.TakePlacedEgg(victim, targetUid)
+						if not taken then
+						registry.Notify.Send(thief, "warning", "Gone", "That egg is no longer there!", 3)
+						return
+						end
+						grabCooldownUntil[thief.UserId] = now + Settings.Heist.GrabCooldown
+						victimCooldownUntil[victim.UserId] = now + Settings.Heist.StealCooldownPerVictim
+						carrying[thief.UserId] = {
+						amount = 0,
+						victimUserId = victim.UserId,
+						plotIndex = plotIndex,
+						expiresAt = now + Settings.Heist.MaxCarryTime,
+						model = attachEggVisual(thief, taken.eggId),
+						stolenEgg = { egg = taken, victimUserId = victim.UserId },
+						}
+						setCarrySlow(thief, true)
+						local eggDef = Eggs.ById[taken.eggId]
+						local eggName = (eggDef and eggDef.DisplayName) or "an egg"
+						registry.Notify.Send(thief, "success", "Egg snatched!",
+						"Carry " .. eggName .. " to EXTRACTION!", 6)
+						registry.Notify.Send(victim, "error", "Egg stolen!",
+						thief.DisplayName .. " snatched " .. eggName .. "! Stop them!", 6)
+						registry.Net.Fire(victim, "Fx", "HeistAlarm", thief.DisplayName)
+						registry.Net.Fire(thief, "Fx", "GrabFx")
+						registry.Net.Fire(thief, "HeistUpdate", {
+						carrying = true,
+						amount = 0,
+						eggName = eggName,
+						timeLeft = Settings.Heist.MaxCarryTime,
+						})
+						-- death drops the egg
+						local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+						if humanoid then
+						local carryState = carrying[thief.UserId]
+						if carryState then
+						carryState.deathConn = humanoid.Died:Connect(function()
+						if carrying[thief.UserId] then
+						returnLootToVictim(thief, "died")
+						end
+						end)
+						end
+						end
+						end
+						
 						function HeistService.CompleteGrab(thief, victim, plotIndex, target, scenarioId)
 						local victimProfile = profileOf(victim)
 						local thiefProfile = profileOf(thief)
@@ -5418,6 +7221,14 @@
 						setCarrySlow(thief, false)
 						clearLootVisual(thief)
 						registry.Economy.AddCash(thief, state.amount, "heist")
+						if state.stolenEgg then
+						local eggId = state.stolenEgg.egg and state.stolenEgg.egg.eggId
+						if eggId then
+						registry.Egg.GiftEgg(thief, eggId, "heist")
+						registry.Notify.Send(thief, "secret", "Egg stolen!",
+						"You got away with a stolen egg! Place it in your base.", 6)
+						end
+						end
 						registry.Economy.AddXp(thief, Economy.XpPerHeistSuccess)
 						local thiefProfile = profileOf(thief)
 						if thiefProfile then
@@ -5457,9 +7268,16 @@
 						end
 						end
 						local feedVictim = Players:GetPlayerByUserId(state.victimUserId)
-						registry.Net.FireAll("Feed", { icon = "HEIST",
-						text = thief.DisplayName .. " robbed " .. (feedVictim and feedVictim.DisplayName or "a vault")
-						.. " for $" .. tostring(state.amount) })
+						local feedText = thief.DisplayName .. " robbed "
+						.. (feedVictim and feedVictim.DisplayName or "a vault")
+						.. " for $" .. tostring(state.amount)
+						if state.stolenEgg then
+						local eggDef = Eggs.ById[state.stolenEgg.egg and state.stolenEgg.egg.eggId or ""]
+						local eggName = (eggDef and eggDef.DisplayName) or "an egg"
+						feedText = thief.DisplayName .. " stole " .. eggName .. " from "
+						.. (feedVictim and feedVictim.DisplayName or "a base") .. "!"
+						end
+						registry.Net.FireAll("Feed", { icon = "HEIST", text = feedText })
 						if state.amount &gt;= 25000 then
 						registry.Notify.Broadcast("rare", "Big heist!",
 						thief.DisplayName .. " extracted a massive haul!", 6)
@@ -5534,6 +7352,14 @@
 						extracting[player.UserId] = nil
 						setCarrySlow(player, false)
 						clearLootVisual(player)
+						if state.stolenEgg then
+						local eggVictim = Players:GetPlayerByUserId(state.stolenEgg.victimUserId)
+						if eggVictim then
+						registry.Egg.RestoreTakenEgg(eggVictim, state.stolenEgg.egg)
+						registry.Notify.Send(eggVictim, "info", "Egg recovered",
+						"The thief abandoned your stolen egg.", 4)
+						end
+						end
 						local victim = Players:GetPlayerByUserId(state.victimUserId)
 						if victim then
 						local victimProfile = profileOf(victim)
@@ -5624,6 +7450,13 @@
 						end
 						end
 						
+						--- Test backdoor (sim coverage only): clears all heist cooldowns.
+						function HeistService.TestResetCooldowns()
+						grabCooldownUntil = {}
+						victimCooldownUntil = {}
+						scoutCooldownUntil = {}
+						end
+						
 						function HeistService.HandlePlayerLeaving(player)
 						channeling[player.UserId] = nil
 						extracting[player.UserId] = nil
@@ -5672,7 +7505,7 @@
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="Script" referent="RBX47">
+			<Item class="Script" referent="RBX49">
 				<Properties>
 					<string name="Name">Main</string>
 					<bool name="Disabled">false</bool>
@@ -5817,11 +7650,11 @@
 					</ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="Folder" referent="RBX49">
+			<Item class="Folder" referent="RBX51">
 				<Properties>
 					<string name="Name">Monetization</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX48">
+				<Item class="ModuleScript" referent="RBX50">
 					<Properties>
 						<string name="Name">ShopService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/Monetization/ShopService.luau
@@ -5982,11 +7815,11 @@
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="Folder" referent="RBX52">
+			<Item class="Folder" referent="RBX54">
 				<Properties>
 					<string name="Name">Net</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX50">
+				<Item class="ModuleScript" referent="RBX52">
 					<Properties>
 						<string name="Name">NetService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/Net/NetService.luau
@@ -6123,7 +7956,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX51">
+				<Item class="ModuleScript" referent="RBX53">
 					<Properties>
 						<string name="Name">NotifyService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/Net/NotifyService.luau
@@ -6161,11 +7994,11 @@
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="Folder" referent="RBX54">
+			<Item class="Folder" referent="RBX56">
 				<Properties>
 					<string name="Name">Pets</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX53">
+				<Item class="ModuleScript" referent="RBX55">
 					<Properties>
 						<string name="Name">PetService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/Pets/PetService.luau
@@ -6183,6 +8016,8 @@
 						local Economy = require(ConfigFolder:WaitForChild("Economy"))
 						local Settings = require(ConfigFolder:WaitForChild("Settings"))
 						local Validate = require(Shared:WaitForChild("Utilities"):WaitForChild("Validate"))
+						local ModelFactory = require(Shared:WaitForChild("Utilities"):WaitForChild("ModelFactory"))
+						local Rarities = require(ConfigFolder:WaitForChild("Rarities"))
 						
 						local PetService = {}
 						PetService.Name = "PetService"
@@ -6368,6 +8203,7 @@
 						registry.TutorialHook(player, "EquipPet")
 						end
 						PetService.RebuildFollowers(player)
+						PetService.RebuildDisplays(player)
 						return true
 						end
 						
@@ -6381,6 +8217,7 @@
 						table.remove(profile.equipped, i)
 						registry.Data.MarkDirty(player)
 						PetService.RebuildFollowers(player)
+						PetService.RebuildDisplays(player)
 						return true
 						end
 						end
@@ -6417,6 +8254,7 @@
 						registry.Data.MarkDirty(player)
 						end
 						PetService.RebuildFollowers(player)
+						PetService.RebuildDisplays(player)
 						return true
 						end
 						
@@ -6440,95 +8278,46 @@
 						-- Followers (3D pets trailing the player)
 						--------------------------------------------------------------------------------
 						
-						local FACE_TEXT = {
-						Common = "(•‿•)",
-						Rare = "(◕‿◕)",
-						Epic = "(✧‿✧)",
-						Legendary = "(★‿★)",
-						Mythic = "(◉‿◉)",
-						Secret = "(♦‿♦)",
-						}
+						-- Captures each child part's CFrame relative to the primary so tilted
+						-- parts (wings/ears/tails) keep local rotation while following.
+						local function captureGlue(model, primary)
+						local parts = {}
+						if not primary then
+						return parts
+						end
+						for _, part in ipairs(model:GetDescendants()) do
+						if part:IsA("BasePart") and part ~= primary then
+						local rel = nil
+						pcall(function()
+						rel = primary.CFrame:ToObjectSpace(part.CFrame)
+						end)
+						if not rel then
+						rel = CFrame.new(part.Position - primary.Position)
+						end
+						parts[#parts + 1] = { part = part, rel = rel }
+						end
+						end
+						return parts
+						end
 						
-						local function applyMutationVisuals(model, mutationId)
-						local body = model:FindFirstChild("Body")
-						if not body or not body:IsA("BasePart") then
-						return
+						local function applyGlue(primary, parts)
+						for _, child in ipairs(parts or {}) do
+						if child.part and child.part.Parent then
+						local ok = pcall(function()
+						child.part.CFrame = primary.CFrame:ToWorldSpace(child.rel)
+						end)
+						if not ok then
+						child.part.CFrame = CFrame.new(primary.Position + child.rel.Position)
+						* (primary.CFrame - primary.Position)
 						end
-						local mut = Mutations.ById[mutationId]
-						if not mut then
-						return
 						end
-						body.Color = mut.Color
-						if mutationId == "Neon" or mutationId == "Galaxy" or mutationId == "Void" then
-						body.Material = Enum.Material.Neon
-						elseif mutationId == "Crystal" then
-						body.Material = Enum.Material.Glass
-						elseif mutationId == "Golden" then
-						body.Material = Enum.Material.SmoothPlastic
-						end
-						-- sparkle for flashy mutations
-						if mutationId == "Golden" or mutationId == "Galaxy" or mutationId == "Void"
-						or mutationId == "Ancient" or mutationId == "Neon" then
-						local sparkles = Instance.new("Sparkles")
-						sparkles.SparkleColor = mut.Color
-						sparkles.Parent = body
 						end
 						end
 						
 						local function buildFollowerModel(pet)
-						local def = Pets.ById[pet.id]
-						local assetName = def and def.AssetModel or "BasicEgg"
-						local model = registry.World.CloneEggAsset(assetName)
+						local model = ModelFactory.BuildCreature(pet.id, pet.mut, 0.55)
 						model.Name = "Pet_" .. pet.uid
-						-- normalize: anchor everything, no collisions, scale to pal size
-						for _, descendant in ipairs(model:GetDescendants()) do
-						if descendant:IsA("BasePart") then
-						descendant.Anchored = true
-						descendant.CanCollide = false
-						descendant.CanQuery = false
-						descendant.CanTouch = false
-						end
-						end
-						local body = model:FindFirstChild("Body")
-						if body and body:IsA("BasePart") then
-						model.PrimaryPart = body
-						-- shrink to pal size (assets are display-sized); keep child-part
-						-- offsets proportional so multi-part eggs (bumps, facets) stay glued
-						local targetSize = Vector3.new(1.4, 1.8, 1.4)
-						local scale = targetSize.X / math.max(0.1, body.Size.X)
-						local bodyPos = body.Position
-						for _, descendant in ipairs(model:GetDescendants()) do
-						if descendant:IsA("SpecialMesh") then
-						descendant.Scale = descendant.Scale * scale
-						elseif descendant:IsA("BasePart") and descendant ~= body then
-						descendant.Size = descendant.Size * scale
-						local offset = descendant.Position - bodyPos
-						local _, _, _, r00, r01, r02, r10, r11, r12, r20, r21, r22 =
-						descendant.CFrame:GetComponents()
-						local newPos = bodyPos + offset * scale
-						descendant.CFrame = CFrame.new(newPos.X, newPos.Y, newPos.Z,
-						r00, r01, r02, r10, r11, r12, r20, r21, r22)
-						end
-						end
-						body.Size = targetSize
-						-- cute face
-						local face = Instance.new("SurfaceGui")
-						face.Name = "Face"
-						face.Face = Enum.NormalId.Front
-						face.CanvasSize = Vector2.new(128, 128)
-						face.Parent = body
-						local label = Instance.new("TextLabel")
-						label.Size = UDim2.fromScale(1, 1)
-						label.BackgroundTransparency = 1
-						label.Text = FACE_TEXT[def and def.Rarity or "Common"] or "(•‿•)"
-						label.TextColor3 = Color3.fromRGB(30, 30, 30)
-						label.Font = Enum.Font.GothamBold
-						label.TextScaled = true
-						label.Parent = face
-						end
-						applyMutationVisuals(model, pet.mut)
-						-- nametag
-						local adornee = model.PrimaryPart or model:FindFirstChildWhichIsA("BasePart")
+						local adornee = model.PrimaryPart or model:FindFirstChild("Body")
 						if adornee then
 						local tag = Instance.new("BillboardGui")
 						tag.Name = "Nametag"
@@ -6540,6 +8329,7 @@
 						local text = Instance.new("TextLabel")
 						text.Size = UDim2.fromScale(1, 1)
 						text.BackgroundTransparency = 1
+						local def = Pets.ById[pet.id]
 						local displayName = def and def.DisplayName or "Pal"
 						if pet.mut then
 						displayName = pet.mut .. " " .. displayName
@@ -6589,19 +8379,7 @@
 						local ok, model = pcall(buildFollowerModel, pet)
 						if ok and model then
 						model.Parent = petFolder
-						-- capture child-part offsets so multi-part eggs stay glued
-						local parts = {}
-						local primary = model.PrimaryPart
-						if primary then
-						for _, part in ipairs(model:GetDescendants()) do
-						if part:IsA("BasePart") and part ~= primary then
-						parts[#parts + 1] = {
-						part = part,
-						offset = part.Position - primary.Position,
-						}
-						end
-						end
-						end
+						local parts = captureGlue(model, model.PrimaryPart)
 						followers[userId][#followers[userId] + 1] = {
 						uid = uid,
 						model = model,
@@ -6677,19 +8455,227 @@
 						if not entry.hidden then
 						local alpha = math.min(1, dt * Settings.Pets.FollowLerp)
 						primary.CFrame = primary.CFrame:Lerp(target, alpha)
-						-- keep child parts glued via captured offsets
-						for _, child in ipairs(entry.parts or {}) do
-						if child.part and child.part.Parent then
-						child.part.CFrame = CFrame.new(primary.Position + child.offset)
+						applyGlue(primary, entry.parts)
+						end
+						end
+						end
+						end
+						end
+						end
+						end
+						
+						--------------------------------------------------------------------------------
+						-- Base displays (equipped creatures exhibited on plot stands)
+						--------------------------------------------------------------------------------
+						
+						local STAND_OFFSETS = {
+						Vector3.new(-12, 0, -12), Vector3.new(-4, 0, -12),
+						Vector3.new(4, 0, -12), Vector3.new(12, 0, -12),
+						}
+						local MAX_DISPLAYS = 4
+						
+						local displays = {} -- [plotIndex] = { {model=, parts=, basePos=, phase=}, ... }
+						local standRefs = {} -- [plotIndex] = { [i] = { top = Vector3, label = TextLabel } }
+						
+						local function displayFurniture(plotIndex)
+						local plot = registry.World.GetPlotModel(plotIndex)
+						if not plot then
+						return nil
+						end
+						local furniture = plot:FindFirstChild("ServerFurniture")
+						if not furniture then
+						furniture = Instance.new("Folder")
+						furniture.Name = "ServerFurniture"
+						furniture.Parent = plot
+						end
+						return furniture
+						end
+						
+						--- Builds the 4 display stands for a plot. Idempotent.
+						function PetService.BuildStands(plotIndex)
+						local furniture = displayFurniture(plotIndex)
+						if not furniture then
+						return
+						end
+						local plot = registry.World.GetPlotModel(plotIndex)
+						local foundation = plot and plot:FindFirstChild("Foundation")
+						if not foundation or not foundation:IsA("BasePart") then
+						return
+						end
+						local stands = furniture:FindFirstChild("DisplayStands")
+						if not stands then
+						stands = Instance.new("Folder")
+						stands.Name = "DisplayStands"
+						stands.Parent = furniture
+						end
+						standRefs[plotIndex] = standRefs[plotIndex] or {}
+						for i = 1, MAX_DISPLAYS do
+						if not stands:FindFirstChild("Stand" .. i) then
+						local spot = ModelFactory.FindClearSpot(plot, STAND_OFFSETS[i], 3.5, 15)
+						local base = foundation.Position
+						+ Vector3.new(0, foundation.Size.Y / 2, 0)
+						+ spot
+						local stand = Instance.new("Part")
+						stand.Name = "Stand" .. i
+						stand.Shape = Enum.PartType.Cylinder
+						stand.Size = Vector3.new(2.4, 4, 4)
+						stand.CFrame = CFrame.new(base + Vector3.new(0, 1.2, 0))
+						* CFrame.fromEulerAnglesXYZ(0, 0, math.pi / 2)
+						stand.Color = Color3.fromRGB(60, 63, 85)
+						stand.Material = Enum.Material.SmoothPlastic
+						stand.Anchored = true
+						stand.CanCollide = true
+						stand.TopSurface = Enum.SurfaceType.Smooth
+						stand.BottomSurface = Enum.SurfaceType.Smooth
+						stand.Parent = stands
+						local top = Instance.new("Part")
+						top.Name = "Top"
+						top.Shape = Enum.PartType.Cylinder
+						top.Size = Vector3.new(0.4, 4.6, 4.6)
+						top.CFrame = CFrame.new(base + Vector3.new(0, 2.6, 0))
+						* CFrame.fromEulerAnglesXYZ(0, 0, math.pi / 2)
+						top.Color = Color3.fromRGB(120, 160, 255)
+						top.Material = Enum.Material.Neon
+						top.Transparency = 0.35
+						top.Anchored = true
+						top.CanCollide = false
+						top.CanQuery = false
+						top.Parent = stand
+						local billboard = Instance.new("BillboardGui")
+						billboard.Name = "StandLabel"
+						billboard.Size = UDim2.new(0, 150, 0, 50)
+						billboard.StudsOffset = Vector3.new(0, 6, 0)
+						billboard.AlwaysOnTop = false
+						billboard.MaxDistance = 70
+						billboard.Parent = stand
+						local text = Instance.new("TextLabel")
+						text.Size = UDim2.fromScale(1, 1)
+						text.BackgroundTransparency = 1
+						text.Text = "Display"
+						text.TextColor3 = Color3.fromRGB(160, 165, 190)
+						text.Font = Enum.Font.GothamBold
+						text.TextScaled = true
+						text.TextStrokeTransparency = 0.5
+						text.Parent = billboard
+						standRefs[plotIndex][i] = { top = base + Vector3.new(0, 2.8, 0), label = text }
+						end
+						end
+						end
+						
+						--- Destroys displayed creature models on a plot (stands stay).
+						function PetService.ClearDisplays(plotIndex)
+						local list = displays[plotIndex]
+						if list then
+						for _, entry in ipairs(list) do
+						if entry.model then
+						pcall(function() entry.model:Destroy() end)
+						end
+						end
+						displays[plotIndex] = nil
+						end
+						local refs = standRefs[plotIndex]
+						if refs then
+						for i = 1, MAX_DISPLAYS do
+						local ref = refs[i]
+						if ref and ref.label and ref.label.Parent then
+						ref.label.Text = "Display"
+						ref.label.TextColor3 = Color3.fromRGB(160, 165, 190)
+						end
+						end
+						end
+						end
+						
+						local function formatIncome(value)
+						if value &gt;= 1000000 then
+						return string.format("%.1fM", value / 1000000)
+						elseif value &gt;= 1000 then
+						return string.format("%.1fK", value / 1000)
+						end
+						return string.format("%.0f", value)
+						end
+						
+						--- Exhibits the first equipped pets on the plot stands.
+						function PetService.RebuildDisplays(player)
+						local profile = profileOf(player)
+						if not profile then
+						return
+						end
+						local plotIndex = profile.base.plot or 0
+						if plotIndex &lt;= 0 then
+						return
+						end
+						PetService.BuildStands(plotIndex)
+						PetService.ClearDisplays(plotIndex)
+						local furniture = displayFurniture(plotIndex)
+						if not furniture then
+						return
+						end
+						local shown = furniture:FindFirstChild("DisplayedPets")
+						if not shown then
+						shown = Instance.new("Folder")
+						shown.Name = "DisplayedPets"
+						shown.Parent = furniture
+						end
+						displays[plotIndex] = {}
+						for slot, uid in ipairs(profile.equipped or {}) do
+						if slot &gt; MAX_DISPLAYS then
+						break
+						end
+						local pet = PetService.FindPet(profile, uid)
+						local ref = standRefs[plotIndex] and standRefs[plotIndex][slot] or nil
+						if pet and ref then
+						local ok, model = pcall(ModelFactory.BuildCreature, pet.id, pet.mut, 0.8)
+						if ok and model then
+						model.Name = "Display_" .. pet.uid
+						model.Parent = shown
+						ModelFactory.Pose(model, CFrame.new(ref.top + Vector3.new(0, 1.1, 0)))
+						local primary = model.PrimaryPart
+						displays[plotIndex][#displays[plotIndex] + 1] = {
+						model = model,
+						parts = captureGlue(model, primary),
+						basePos = (primary and primary.Position) or ref.top,
+						phase = math.random() * math.pi * 2,
+						}
+						local def = Pets.ById[pet.id]
+						local title = (def and def.DisplayName) or pet.id
+						if pet.mut then
+						title = pet.mut .. " " .. title
+						end
+						if ref.label and ref.label.Parent then
+						ref.label.Text = title .. "  +$" .. formatIncome(PetService.PetIncomePerSecond(pet)) .. "/s"
+						ref.label.TextColor3 = Rarities.GetColor((def and def.Rarity) or "Common")
+						end
+						end
+						end
+						end
+						end
+						
+						-- Idle bob for every displayed creature (same heartbeat as followers).
+						function updateDisplays()
+						local time = os.clock()
+						for _, list in pairs(displays) do
+						for _, entry in ipairs(list) do
+						local model = entry.model
+						local primary = model and model.PrimaryPart
+						if primary and model.Parent then
+						local dy = math.sin(time * 1.5 + entry.phase) * 0.25
+						primary.CFrame = CFrame.new(entry.basePos + Vector3.new(0, dy, 0))
 						* (primary.CFrame - primary.Position)
+						applyGlue(primary, entry.parts)
 						end
 						end
 						end
 						end
+						
+						--- Plot lifecycle hooks called by BaseService.
+						function PetService.OnPlotAssigned(player, _plotIndex)
+						PetService.RebuildDisplays(player)
 						end
-						end
-						end
-						end
+						
+						function PetService.OnPlotReleased(_player, plotIndex)
+						PetService.ClearDisplays(plotIndex)
+						standRefs[plotIndex] = nil
+						displays[plotIndex] = nil
 						end
 						
 						function PetService.Start()
@@ -6729,6 +8715,7 @@
 						task.delay(0.5, function()
 						if player.Parent then
 						PetService.RebuildFollowers(player)
+						PetService.RebuildDisplays(player)
 						end
 						end)
 						end)
@@ -6739,17 +8726,22 @@
 						task.delay(0.5, function()
 						if player.Parent then
 						PetService.RebuildFollowers(player)
+						PetService.RebuildDisplays(player)
 						end
 						end)
 						end)
 						task.delay(2, function()
 						if player.Parent then
 						PetService.RebuildFollowers(player)
+						PetService.RebuildDisplays(player)
 						end
 						end)
 						end
 						
-						RunService.Heartbeat:Connect(updateFollowers)
+						RunService.Heartbeat:Connect(function(dt)
+						updateFollowers(dt)
+						updateDisplays()
+						end)
 						end
 						
 						return PetService
@@ -6757,11 +8749,11 @@
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="Folder" referent="RBX57">
+			<Item class="Folder" referent="RBX59">
 				<Properties>
 					<string name="Name">Progression</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX55">
+				<Item class="ModuleScript" referent="RBX57">
 					<Properties>
 						<string name="Name">AchievementService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/Progression/AchievementService.luau
@@ -6896,7 +8888,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX56">
+				<Item class="ModuleScript" referent="RBX58">
 					<Properties>
 						<string name="Name">ProgressionService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/Progression/ProgressionService.luau
@@ -6994,6 +8986,7 @@
 						p.cash = Economy.StartingCash
 						p.xp = 0
 						p.level = 1
+						registry.Egg.UnplaceAllEggs(player)
 						p.eggs = {}
 						p.base.upgrades = registry.Data.GetDefaultUpgrades()
 						p.base.security = registry.Data.GetDefaultSecurity()
@@ -7036,11 +9029,11 @@
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="Folder" referent="RBX59">
+			<Item class="Folder" referent="RBX61">
 				<Properties>
 					<string name="Name">Quests</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX58">
+				<Item class="ModuleScript" referent="RBX60">
 					<Properties>
 						<string name="Name">QuestService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/Quests/QuestService.luau
@@ -7311,11 +9304,11 @@
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="Folder" referent="RBX62">
+			<Item class="Folder" referent="RBX64">
 				<Properties>
 					<string name="Name">Rewards</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX60">
+				<Item class="ModuleScript" referent="RBX62">
 					<Properties>
 						<string name="Name">CollectionService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/Rewards/CollectionService.luau
@@ -7390,7 +9383,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX61">
+				<Item class="ModuleScript" referent="RBX63">
 					<Properties>
 						<string name="Name">RewardService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/Rewards/RewardService.luau
@@ -7469,11 +9462,11 @@
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="Folder" referent="RBX64">
+			<Item class="Folder" referent="RBX66">
 				<Properties>
 					<string name="Name">Security</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX63">
+				<Item class="ModuleScript" referent="RBX65">
 					<Properties>
 						<string name="Name">SecurityService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/Security/SecurityService.luau
@@ -8055,11 +10048,11 @@
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="Folder" referent="RBX67">
+			<Item class="Folder" referent="RBX69">
 				<Properties>
 					<string name="Name">Social</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX65">
+				<Item class="ModuleScript" referent="RBX67">
 					<Properties>
 						<string name="Name">LeaderboardService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/Social/LeaderboardService.luau
@@ -8332,7 +10325,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX66">
+				<Item class="ModuleScript" referent="RBX68">
 					<Properties>
 						<string name="Name">TradeService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/Social/TradeService.luau
@@ -8642,6 +10635,11 @@
 						if not egg then
 						return
 						end
+						if egg.placedPad then
+						registry.Notify.Send(player, "warning", "Egg is placed",
+						"Pick it up from your base before trading it.", 3)
+						return
+						end
 						for _, existing in ipairs(offer.eggs) do
 						if existing == uid then
 						return
@@ -8746,10 +10744,14 @@
 						if #receiverProfile.pets + #offer.pets &gt; petCap(receiverProfile) then
 						return false, receiver.DisplayName .. "'s pet storage is full"
 						end
-						-- eggs: owned, receiver has room
+						-- eggs: owned, unplaced, receiver has room
 						for _, uid in ipairs(offer.eggs) do
-						if not registry.Egg.FindEgg(giverProfile, uid) then
+						local egg = registry.Egg.FindEgg(giverProfile, uid)
+						if not egg then
 						return false, "Egg no longer available"
+						end
+						if egg.placedPad then
+						return false, "Offered egg is placed in a base"
 						end
 						end
 						if #receiverProfile.eggs + #offer.eggs &gt; 200 then
@@ -8976,11 +10978,11 @@
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="Folder" referent="RBX69">
+			<Item class="Folder" referent="RBX71">
 				<Properties>
 					<string name="Name">Utilities</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX68">
+				<Item class="ModuleScript" referent="RBX70">
 					<Properties>
 						<string name="Name">RateLimiter</string>
 						<ProtectedString name="Source">-- EggHeist | Server/Util/RateLimiter.luau
@@ -9028,11 +11030,11 @@
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="Folder" referent="RBX74">
+			<Item class="Folder" referent="RBX76">
 				<Properties>
 					<string name="Name">World</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX70">
+				<Item class="ModuleScript" referent="RBX72">
 					<Properties>
 						<string name="Name">AtmosphereService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/World/AtmosphereService.luau
@@ -9549,7 +11551,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX71">
+				<Item class="ModuleScript" referent="RBX73">
 					<Properties>
 						<string name="Name">NpcService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/World/NpcService.luau
@@ -9693,7 +11695,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX72">
+				<Item class="ModuleScript" referent="RBX74">
 					<Properties>
 						<string name="Name">TravelService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/World/TravelService.luau
@@ -9787,7 +11789,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX73">
+				<Item class="ModuleScript" referent="RBX75">
 					<Properties>
 						<string name="Name">WorldService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/World/WorldService.luau
@@ -10062,24 +12064,24 @@
 						template.Parent = bases
 						mkPart(template, "Foundation", Vector3.new(36, 2, 36), CFrame.new(0, -30, -160), FALLBACK_COLORS.Plot)
 						-- Vault house, built on claim: 3 walls + roof + safe + trigger floor + upgrade pads.
-						-- Template coords map to plot-relative: (dx, 30 + dy, -160 + dz).
-						mkPart(template, "VaultAreaFloor", Vector3.new(10, 2, 10), CFrame.new(8, 31, -165),
+						-- Template coords map to plot world: (plotX + dx, 30 + dy, 70 + dz).
+						mkPart(template, "VaultAreaFloor", Vector3.new(10, 2, 10), CFrame.new(8, -29, -165),
 						Color3.fromRGB(150, 60, 60))
-						mkPart(template, "VaultSafe", Vector3.new(4, 5, 4), CFrame.new(8, 34.5, -165),
+						mkPart(template, "VaultSafe", Vector3.new(4, 5, 4), CFrame.new(8, -25.5, -165),
 						Color3.fromRGB(45, 45, 55))
-						mkPart(template, "VaultTrim", Vector3.new(4.6, 0.6, 4.6), CFrame.new(8, 37.2, -165),
+						mkPart(template, "VaultTrim", Vector3.new(4.6, 0.6, 4.6), CFrame.new(8, -22.8, -165),
 						Color3.fromRGB(255, 200, 80), Enum.Material.Neon)
-						mkPart(template, "HouseBack", Vector3.new(14, 8, 1), CFrame.new(8, 35, -171),
+						mkPart(template, "HouseBack", Vector3.new(14, 8, 1), CFrame.new(8, -25, -171),
 						Color3.fromRGB(190, 160, 130))
-						mkPart(template, "HouseLeft", Vector3.new(1, 8, 9), CFrame.new(1, 35, -167),
+						mkPart(template, "HouseLeft", Vector3.new(1, 8, 9), CFrame.new(1, -25, -167),
 						Color3.fromRGB(190, 160, 130))
-						mkPart(template, "HouseRight", Vector3.new(1, 8, 9), CFrame.new(15, 35, -167),
+						mkPart(template, "HouseRight", Vector3.new(1, 8, 9), CFrame.new(15, -25, -167),
 						Color3.fromRGB(190, 160, 130))
-						mkPart(template, "HouseRoof", Vector3.new(16, 1, 11), CFrame.new(8, 39.5, -167),
+						mkPart(template, "HouseRoof", Vector3.new(16, 1, 11), CFrame.new(8, -20.5, -167),
 						Color3.fromRGB(140, 60, 60))
 						for slot = 1, 3 do
 						mkPart(template, "UpgradeSlot" .. tostring(slot), Vector3.new(4, 0.6, 4),
-						CFrame.new(-15 + slot * 5, 31.3, -154), FALLBACK_COLORS.Accent).CanCollide = false
+						CFrame.new(-15 + slot * 5, -28.7, -154), FALLBACK_COLORS.Accent).CanCollide = false
 						end
 						for i = 1, Settings.MaxBasePlots do
 						local plot = Instance.new("Model")
@@ -10594,7 +12596,72 @@
 						Lighting.OutdoorAmbient = defaultLighting.OutdoorAmbient
 						end
 						
+						--------------------------------------------------------------------------------
+						-- World leaderboard: physical richest-players board at spawn
+						--------------------------------------------------------------------------------
+						
+						local leaderboardLabel = nil
+						
+						local function formatCashShort(value)
+						value = math.floor(tonumber(value) or 0)
+						if value &gt;= 1000000000 then
+						return string.format("%.1fB", value / 1000000000)
+						elseif value &gt;= 1000000 then
+						return string.format("%.1fM", value / 1000000)
+						elseif value &gt;= 1000 then
+						return string.format("%.1fK", value / 1000)
+						end
+						return tostring(value)
+						end
+						
+						function WorldService.RefreshLeaderboard()
+						if leaderboardLabel == nil then
+						local map = root and root:FindFirstChild("Map")
+						local spawn = map and map:FindFirstChild("Spawn")
+						if not spawn then
+						return
+						end
+						local board = spawn:FindFirstChild("Leaderboard")
+						if not board then
+						local base = WorldService.GetSpawnCFrame()
+						mkPart(spawn, "LeaderboardPost", Vector3.new(1, 7, 1),
+						base * CFrame.new(10, 3.5, 8), Color3.fromRGB(70, 70, 80))
+						board = mkSign(spawn, "Leaderboard", base * CFrame.new(10, 9, 8),
+						"RICHEST PLAYERS", Color3.fromRGB(255, 215, 100), Vector3.new(12, 6, 1))
+						end
+						local gui = board and board:FindFirstChildOfClass("SurfaceGui") or nil
+						leaderboardLabel = gui and gui:FindFirstChildOfClass("TextLabel") or nil
+						end
+						if not leaderboardLabel then
+						return
+						end
+						local entries = {}
+						for _, player in ipairs(Players:GetPlayers()) do
+						local profile = registry.Data and registry.Data.GetProfile(player) or nil
+						if profile then
+						entries[#entries + 1] = { name = player.DisplayName, cash = profile.cash or 0 }
+						end
+						end
+						table.sort(entries, function(a, b) return a.cash &gt; b.cash end)
+						local lines = { "RICHEST PLAYERS" }
+						for i = 1, math.min(5, #entries) do
+						lines[#lines + 1] = string.format("%d. %s  $%s", i, entries[i].name,
+						formatCashShort(entries[i].cash))
+						end
+						if #entries == 0 then
+						lines[#lines + 1] = "no tycoons yet"
+						end
+						leaderboardLabel.Text = table.concat(lines, "\n")
+						end
+						
 						function WorldService.Start()
+						WorldService.RefreshLeaderboard()
+						task.spawn(function()
+						while true do
+						task.wait(30)
+						WorldService.RefreshLeaderboard()
+						end
+						end)
 						-- Void failsafe: nobody should ever fall forever
 						task.spawn(function()
 						while true do
@@ -10621,19 +12688,19 @@
 			</Item>
 		</Item>
 	</Item>
-	<Item class="StarterPlayer" referent="RBX121">
+	<Item class="StarterPlayer" referent="RBX124">
 		<Properties>
 			<string name="Name">StarterPlayer</string>
 		</Properties>
-		<Item class="StarterPlayerScripts" referent="RBX120">
+		<Item class="StarterPlayerScripts" referent="RBX123">
 			<Properties>
 				<string name="Name">StarterPlayerScripts</string>
 			</Properties>
-			<Item class="Folder" referent="RBX119">
+			<Item class="Folder" referent="RBX122">
 				<Properties>
 					<string name="Name">EggHeistClient</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX77">
+				<Item class="ModuleScript" referent="RBX79">
 					<Properties>
 						<string name="Name">ClientNet</string>
 						<ProtectedString name="Source">-- EggHeist | Client/ClientNet.luau
@@ -10708,11 +12775,11 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="Folder" referent="RBX91">
+				<Item class="Folder" referent="RBX93">
 					<Properties>
 						<string name="Name">Controllers</string>
 					</Properties>
-					<Item class="ModuleScript" referent="RBX78">
+					<Item class="ModuleScript" referent="RBX80">
 						<Properties>
 							<string name="Name">BaseController</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Controllers/BaseController.luau
@@ -10755,7 +12822,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX79">
+					<Item class="ModuleScript" referent="RBX81">
 						<Properties>
 							<string name="Name">CollectionController</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Controllers/CollectionController.luau
@@ -10779,7 +12846,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX80">
+					<Item class="ModuleScript" referent="RBX82">
 						<Properties>
 							<string name="Name">DataController</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Controllers/DataController.luau
@@ -10841,7 +12908,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX81">
+					<Item class="ModuleScript" referent="RBX83">
 						<Properties>
 							<string name="Name">EggController</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Controllers/EggController.luau
@@ -10867,6 +12934,14 @@
 							ctx.Net.Fire("HatchEgg", eggUid)
 							end
 							
+							function EggController.PlaceEgg(eggUid)
+							ctx.Net.Fire("PlaceEgg", eggUid)
+							end
+							
+							function EggController.PickupEgg(eggUid)
+							ctx.Net.Fire("PickupEgg", eggUid)
+							end
+							
 							function EggController.HatchAll()
 							ctx.Net.Fire("HatchAll")
 							end
@@ -10878,7 +12953,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX82">
+					<Item class="ModuleScript" referent="RBX84">
 						<Properties>
 							<string name="Name">EventController</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Controllers/EventController.luau
@@ -10925,7 +13000,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX83">
+					<Item class="ModuleScript" referent="RBX85">
 						<Properties>
 							<string name="Name">GadgetController</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Controllers/GadgetController.luau
@@ -10953,7 +13028,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX84">
+					<Item class="ModuleScript" referent="RBX86">
 						<Properties>
 							<string name="Name">HeistController</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Controllers/HeistController.luau
@@ -11046,7 +13121,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX85">
+					<Item class="ModuleScript" referent="RBX87">
 						<Properties>
 							<string name="Name">NpcController</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Controllers/NpcController.luau
@@ -11095,13 +13170,28 @@
 							end
 							end
 							
+							local function openShop()
+							local shop = ctx.Screens and ctx.Screens.ShopScreen
+							if shop then
+							if type(shop.ShowTab) == "function" then
+							shop.ShowTab("Eggs")
+							end
+							if type(shop.SetVisible) == "function" then
+							shop.SetVisible(true)
+							elseif type(shop.Toggle) == "function" then
+							shop.Toggle()
+							end
+							end
+							end
+							
 							local function wirePrompt(prompt)
 							if not prompt:IsA("ProximityPrompt") then
 							return
 							end
-							if prompt.Name ~= "NpcPrompt" or wired[prompt] then
+							if wired[prompt] then
 							return
 							end
+							if prompt.Name == "NpcPrompt" then
 							wired[prompt] = true
 							prompt.Triggered:Connect(function()
 							local npcId = prompt:GetAttribute("NpcId")
@@ -11109,6 +13199,10 @@
 							talkTo(npcId)
 							end
 							end)
+							elseif prompt.Name == "MarketPrompt" then
+							wired[prompt] = true
+							prompt.Triggered:Connect(openShop)
+							end
 							end
 							
 							function NpcController.Start()
@@ -11149,7 +13243,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX86">
+					<Item class="ModuleScript" referent="RBX88">
 						<Properties>
 							<string name="Name">PetController</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Controllers/PetController.luau
@@ -11188,7 +13282,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX87">
+					<Item class="ModuleScript" referent="RBX89">
 						<Properties>
 							<string name="Name">QuestController</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Controllers/QuestController.luau
@@ -11219,7 +13313,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX88">
+					<Item class="ModuleScript" referent="RBX90">
 						<Properties>
 							<string name="Name">ShopController</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Controllers/ShopController.luau
@@ -11242,7 +13336,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX89">
+					<Item class="ModuleScript" referent="RBX91">
 						<Properties>
 							<string name="Name">TradeController</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Controllers/TradeController.luau
@@ -11311,7 +13405,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX90">
+					<Item class="ModuleScript" referent="RBX92">
 						<Properties>
 							<string name="Name">TutorialController</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Controllers/TutorialController.luau
@@ -11343,11 +13437,11 @@
 						</Properties>
 					</Item>
 				</Item>
-				<Item class="Folder" referent="RBX94">
+				<Item class="Folder" referent="RBX96">
 					<Properties>
 						<string name="Name">Effects</string>
 					</Properties>
-					<Item class="ModuleScript" referent="RBX92">
+					<Item class="ModuleScript" referent="RBX94">
 						<Properties>
 							<string name="Name">Effects</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Effects/Effects.luau
@@ -11712,7 +13806,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX93">
+					<Item class="ModuleScript" referent="RBX95">
 						<Properties>
 							<string name="Name">SoundManager</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Effects/SoundManager.luau
@@ -11800,11 +13894,11 @@
 						</Properties>
 					</Item>
 				</Item>
-				<Item class="Folder" referent="RBX96">
+				<Item class="Folder" referent="RBX98">
 					<Properties>
 						<string name="Name">Input</string>
 					</Properties>
-					<Item class="ModuleScript" referent="RBX95">
+					<Item class="ModuleScript" referent="RBX97">
 						<Properties>
 							<string name="Name">InputController</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Input/InputController.luau
@@ -11907,7 +14001,7 @@
 						</Properties>
 					</Item>
 				</Item>
-				<Item class="LocalScript" referent="RBX97">
+				<Item class="LocalScript" referent="RBX99">
 					<Properties>
 						<string name="Name">Main</string>
 						<bool name="Disabled">false</bool>
@@ -12164,11 +14258,11 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="Folder" referent="RBX118">
+				<Item class="Folder" referent="RBX121">
 					<Properties>
 						<string name="Name">Screens</string>
 					</Properties>
-					<Item class="ModuleScript" referent="RBX98">
+					<Item class="ModuleScript" referent="RBX100">
 						<Properties>
 							<string name="Name">AnnounceScreen</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Screens/AnnounceScreen.luau
@@ -12272,7 +14366,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX99">
+					<Item class="ModuleScript" referent="RBX101">
 						<Properties>
 							<string name="Name">BaseScreen</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Screens/BaseScreen.luau
@@ -12518,7 +14612,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX100">
+					<Item class="ModuleScript" referent="RBX102">
 						<Properties>
 							<string name="Name">CollectionScreen</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Screens/CollectionScreen.luau
@@ -12809,7 +14903,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX101">
+					<Item class="ModuleScript" referent="RBX103">
 						<Properties>
 							<string name="Name">DailyScreen</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Screens/DailyScreen.luau
@@ -12946,7 +15040,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX102">
+					<Item class="ModuleScript" referent="RBX104">
 						<Properties>
 							<string name="Name">EventBannerScreen</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Screens/EventBannerScreen.luau
@@ -13008,7 +15102,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX103">
+					<Item class="ModuleScript" referent="RBX105">
 						<Properties>
 							<string name="Name">FeedScreen</string>
 							<ProtectedString name="Source">-- FeedScreen: server event ticker (heists, rare hatches, prestige, events).
@@ -13099,7 +15193,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX104">
+					<Item class="ModuleScript" referent="RBX106">
 						<Properties>
 							<string name="Name">HatchScreen</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Screens/HatchScreen.luau
@@ -13114,6 +15208,7 @@
 							local Rarities = require(ConfigFolder:WaitForChild("Rarities"))
 							local Mutations = require(ConfigFolder:WaitForChild("Mutations"))
 							local UIFactory = require(script.Parent:WaitForChild("UIFactory"))
+							local IconFactory = require(script.Parent:WaitForChild("IconFactory"))
 							local Effects = require(script.Parent.Parent:WaitForChild("Effects"):WaitForChild("Effects"))
 							local SoundManager = require(script.Parent.Parent:WaitForChild("Effects"):WaitForChild("SoundManager"))
 							
@@ -13122,6 +15217,8 @@
 							local gui = nil
 							local overlay = nil
 							local eggLabel = nil
+							local eggIcon = nil
+							local revealIcon = nil
 							local revealCard = nil
 							local revealTitle = nil
 							local revealSub = nil
@@ -13145,9 +15242,15 @@
 							overlay.Visible = false
 							overlay.Parent = gui
 							
-							eggLabel = UIFactory.Label("EGG", UDim2.new(0, 200, 0, 200), Theme.Accent, 72)
+							eggIcon = IconFactory.EggIcon("Basic", UDim2.new(0, 200, 0, 200))
+							eggIcon.AnchorPoint = Vector2.new(0.5, 0.5)
+							eggIcon.Position = UDim2.new(0.5, 0, 0.40, 0)
+							eggIcon.Visible = false
+							eggIcon.Parent = overlay
+							
+							eggLabel = UIFactory.Label("EGG", UDim2.new(0, 400, 0, 40), Theme.Accent, 24)
 							eggLabel.AnchorPoint = Vector2.new(0.5, 0.5)
-							eggLabel.Position = UDim2.new(0.5, 0, 0.42, 0)
+							eggLabel.Position = UDim2.new(0.5, 0, 0.60, 0)
 							eggLabel.Parent = overlay
 							
 							revealCard = Instance.new("Frame")
@@ -13163,11 +15266,14 @@
 							
 							revealTitle = UIFactory.Label("", UDim2.new(1, 0, 0, 40), Theme.Text, 24)
 							revealTitle.Parent = revealCard
-							revealSub = UIFactory.Label("", UDim2.new(1, 0, 0, 120), Theme.TextDim, 15)
-							revealSub.Position = UDim2.new(0, 0, 0, 50)
+							revealSub = UIFactory.Label("", UDim2.new(1, -164, 0, 140), Theme.TextDim, 14)
+							revealSub.Position = UDim2.new(0, 156, 0, 52)
 							revealSub.TextWrapped = true
 							revealSub.Font = Theme.FontRegular
 							revealSub.Parent = revealCard
+							revealIcon = IconFactory.PetIcon("Chick", nil, UDim2.new(0, 140, 0, 140))
+							revealIcon.Position = UDim2.new(0, 8, 0, 52)
+							revealIcon.Parent = revealCard
 							
 							tapToContinue = UIFactory.Button("TAP TO CONTINUE", function()
 							HatchScreen.Next()
@@ -13202,18 +15308,28 @@
 							overlay.Visible = true
 							revealCard.Visible = false
 							tapToContinue.Visible = false
+							-- fresh 3D egg for this entry (rebuild: icons are per-model viewports)
+							if eggIcon then
+							eggIcon:Destroy()
+							end
+							eggIcon = IconFactory.EggIcon(entry.eggId or "Basic", UDim2.new(0, 200, 0, 200))
+							eggIcon.AnchorPoint = Vector2.new(0.5, 0.5)
+							eggIcon.Position = UDim2.new(0.5, 0, 0.40, 0)
+							eggIcon.Parent = overlay
+							eggIcon.Visible = true
 							eggLabel.Visible = true
 							eggLabel.Text = string.upper(tostring(entry.eggName or "Egg"))
 							eggLabel.TextColor3 = Theme.Accent
-							eggLabel.Rotation = 0
+							eggIcon.Rotation = 0
 							
 							-- shake phase
 							SoundManager.Play("Hatch", 0.6)
 							local shakes = 0
+							local icon = eggIcon
 							task.spawn(function()
-							while playing and eggLabel.Visible and shakes &lt; 10 do
+							while playing and icon.Visible and shakes &lt; 10 do
 							shakes = shakes + 1
-							eggLabel.Rotation = (shakes % 2 == 0) and 12 or -12
+							icon.Rotation = (shakes % 2 == 0) and 12 or -12
 							task.wait(0.12)
 							end
 							if playing then
@@ -13225,7 +15341,16 @@
 							function HatchScreen.Reveal(entry)
 							table.remove(queue, 1)
 							eggLabel.Visible = false
+							if eggIcon then
+							eggIcon.Visible = false
+							end
+							if revealIcon then
+							revealIcon:Destroy()
+							end
 							local pet = entry.pet or {}
+							revealIcon = IconFactory.PetIcon(pet.id or "Chick", pet.mut, UDim2.new(0, 140, 0, 140))
+							revealIcon.Position = UDim2.new(0, 8, 0, 52)
+							revealIcon.Parent = revealCard
 							local def = Pets.ById[pet.id]
 							local rarity = entry.rarity or (def and def.Rarity) or "Common"
 							local rarityColor = Rarities.GetColor(rarity)
@@ -13289,7 +15414,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX105">
+					<Item class="ModuleScript" referent="RBX107">
 						<Properties>
 							<string name="Name">HeistScreen</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Screens/HeistScreen.luau
@@ -13569,7 +15694,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX106">
+					<Item class="ModuleScript" referent="RBX108">
 						<Properties>
 							<string name="Name">HelpScreen</string>
 							<ProtectedString name="Source">-- HelpScreen: "?" button + quick-start guide popup. Zero dependencies besides UIFactory.
@@ -13640,7 +15765,122 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX107">
+					<Item class="ModuleScript" referent="RBX109">
+						<Properties>
+							<string name="Name">IconFactory</string>
+							<ProtectedString name="Source">-- EggHeist | Client/Screens/IconFactory.luau
+							-- ViewportFrame icons for eggs + creatures (zero uploaded assets needed).
+							-- Models come from Shared/ModelFactory; built templates are cached and
+							-- cloned per icon so grids stay cheap. Client-side rendering only.
+							
+							local ReplicatedStorage = game:GetService("ReplicatedStorage")
+							
+							local Shared = ReplicatedStorage:WaitForChild("EggHeistShared")
+							local ModelFactory = require(Shared:WaitForChild("Utilities"):WaitForChild("ModelFactory"))
+							
+							local IconFactory = {}
+							local templateCache = {} -- [key] = unparented template Model
+							
+							-- Strips world-only extras (prompts/guis/fx) from an icon template.
+							local function stripped(model)
+							for _, descendant in ipairs(model:GetDescendants()) do
+							if descendant:IsA("ProximityPrompt") or descendant:IsA("BillboardGui")
+							or descendant:IsA("SurfaceGui") or descendant:IsA("ParticleEmitter")
+							or descendant:IsA("PointLight") or descendant:IsA("SpotLight") then
+							descendant:Destroy()
+							elseif descendant:IsA("BasePart") then
+							descendant.Anchored = true
+							descendant.CanCollide = false
+							descendant.CanQuery = false
+							descendant.CanTouch = false
+							end
+							end
+							return model
+							end
+							
+							local function getModel(key, builder)
+							local cached = templateCache[key]
+							if cached then
+							local okClone, clone = pcall(function()
+							return cached:Clone()
+							end)
+							if okClone and clone then
+							return clone
+							end
+							end
+							local ok, model = pcall(builder)
+							if not ok or not model then
+							return nil
+							end
+							stripped(model)
+							templateCache[key] = model
+							local okClone2, clone2 = pcall(function()
+							return model:Clone()
+							end)
+							if okClone2 and clone2 then
+							return clone2
+							end
+							return nil
+							end
+							
+							local function frameModel(vpf, model)
+							model.Parent = vpf
+							local camera = Instance.new("Camera")
+							camera.FieldOfView = 35
+							camera.Parent = vpf
+							local cf, size = nil, nil
+							pcall(function()
+							cf, size = model:GetBoundingBox()
+							end)
+							if cf and size then
+							local dist = math.max(size.X, size.Y, size.Z) * 2.4 + 0.5
+							local target = cf.Position
+							camera.CFrame = CFrame.new(
+							target + Vector3.new(dist * 0.55, dist * 0.4, dist), target)
+							else
+							camera.CFrame = CFrame.new(3, 2.5, 5)
+							end
+							vpf.CurrentCamera = camera
+							end
+							
+							local function makeFrame(size)
+							local vpf = Instance.new("ViewportFrame")
+							vpf.Size = size or UDim2.new(0, 64, 0, 64)
+							vpf.BackgroundTransparency = 1
+							vpf.BorderSizePixel = 0
+							vpf.Name = "Icon"
+							return vpf
+							end
+							
+							--- 3D egg icon (world asset when present, procedural fallback otherwise).
+							function IconFactory.EggIcon(eggId, size)
+							local vpf = makeFrame(size)
+							local model = getModel("egg:" .. tostring(eggId), function()
+							return ModelFactory.BuildEgg(eggId, 1)
+							end)
+							if model then
+							frameModel(vpf, model)
+							end
+							return vpf
+							end
+							
+							--- 3D creature icon, mutation visuals included.
+							function IconFactory.PetIcon(petId, mut, size)
+							local vpf = makeFrame(size)
+							local model = getModel("pet:" .. tostring(petId) .. ":" .. tostring(mut), function()
+							return ModelFactory.BuildCreature(petId, mut, 1)
+							end)
+							if model then
+							frameModel(vpf, model)
+							end
+							return vpf
+							end
+							
+							return IconFactory
+							</ProtectedString>
+						</Properties>
+					</Item>
+					<Item class="ModuleScript" referent="RBX110">
 						<Properties>
 							<string name="Name">InventoryScreen</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Screens/InventoryScreen.luau
@@ -13658,6 +15898,7 @@
 							local Economy = require(ConfigFolder:WaitForChild("Economy"))
 							local Format = require(Shared:WaitForChild("Utilities"):WaitForChild("Format"))
 							local UIFactory = require(script.Parent:WaitForChild("UIFactory"))
+							local IconFactory = require(script.Parent:WaitForChild("IconFactory"))
 							
 							local InventoryScreen = {}
 							local ctx = nil
@@ -13795,15 +16036,29 @@
 							UDim2.new(1, 0, 0, 22), Theme.Text, 13)
 							name.TextWrapped = true
 							name.Parent = card
-							local emoji = UIFactory.Label("EGG", UDim2.new(1, 0, 0, 40), Theme.Accent, 28)
-							emoji.Position = UDim2.new(0, 0, 0, 28)
-							emoji.Parent = card
-							local hatch = UIFactory.PrimaryButton("HATCH", function()
+							local icon = IconFactory.EggIcon(egg.eggId, UDim2.new(1, 0, 0, 62))
+							icon.Position = UDim2.new(0, 0, 0, 26)
+							icon.Parent = card
+							-- PLACE (backpack) -&gt; WAIT (incubating) -&gt; HATCH (ready)
+							local now = os.time()
+							local label, goHatch, goPlace = "HATCH", true, false
+							if not egg.placedPad then
+							label, goHatch, goPlace = "PLACE", false, true
+							elseif (egg.hatchAt or 0) &gt; now then
+							local left = (egg.hatchAt or now) - now
+							label = string.format("WAIT %d:%02d", math.floor(left / 60), left % 60)
+							goHatch = false
+							end
+							local action = UIFactory.PrimaryButton(label, function()
+							if goPlace then
+							ctx.Controllers.EggController.PlaceEgg(egg.uid)
+							elseif goHatch then
 							ctx.Controllers.EggController.HatchEgg(egg.uid)
+							end
 							end)
-							hatch.Size = UDim2.new(1, 0, 0, 34)
-							hatch.Position = UDim2.new(0, 0, 1, -40)
-							hatch.Parent = card
+							action.Size = UDim2.new(1, 0, 0, 34)
+							action.Position = UDim2.new(0, 0, 1, -40)
+							action.Parent = card
 							return card
 							end
 							
@@ -13819,21 +16074,24 @@
 							UIFactory.Padding(card, 8)
 							
 							local title = (pet.mut and (pet.mut .. " ") or "") .. (def and def.DisplayName or pet.id)
-							local name = UIFactory.Label(title, UDim2.new(1, 0, 0, 30), rarityColor, 12)
+							local name = UIFactory.Label(title, UDim2.new(1, -64, 0, 30), rarityColor, 12)
 							name.TextWrapped = true
 							name.Parent = card
+							local icon = IconFactory.PetIcon(pet.id, pet.mut, UDim2.new(0, 60, 0, 60))
+							icon.Position = UDim2.new(1, -60, 0, 0)
+							icon.Parent = card
 							local bonusText = def and Pets.BonusText(def.Id) or nil
 							local info = UIFactory.Label(
 							(def and def.Rarity or "?") .. " Lv" .. tostring(pet.lvl or 1)
 							.. "\n" .. Format.Money(petIncomeDisplay(pet)) .. "/s",
 							UDim2.new(1, 0, 0, 40), Theme.TextDim, 12)
-							info.Position = UDim2.new(0, 0, 0, 36)
+							info.Position = UDim2.new(0, 0, 0, 58)
 							info.Font = Theme.FontRegular
 							info.Parent = card
 							if bonusText then
 							local bonus = UIFactory.Label(bonusText .. " (equipped)",
 							UDim2.new(1, 0, 0, 18), Theme.Accent, 11)
-							bonus.Position = UDim2.new(0, 0, 0, 78)
+							bonus.Position = UDim2.new(0, 0, 0, 100)
 							bonus.Font = Theme.FontRegular
 							bonus.Parent = card
 							end
@@ -13947,7 +16205,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX108">
+					<Item class="ModuleScript" referent="RBX111">
 						<Properties>
 							<string name="Name">MainScreen</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Screens/MainScreen.luau
@@ -14462,7 +16720,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX109">
+					<Item class="ModuleScript" referent="RBX112">
 						<Properties>
 							<string name="Name">NotificationsScreen</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Screens/NotificationsScreen.luau
@@ -14611,7 +16869,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX110">
+					<Item class="ModuleScript" referent="RBX113">
 						<Properties>
 							<string name="Name">ObjectiveScreen</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Screens/ObjectiveScreen.luau
@@ -14772,7 +17030,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX111">
+					<Item class="ModuleScript" referent="RBX114">
 						<Properties>
 							<string name="Name">QuestsScreen</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Screens/QuestsScreen.luau
@@ -15027,7 +17285,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX112">
+					<Item class="ModuleScript" referent="RBX115">
 						<Properties>
 							<string name="Name">SettingsScreen</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Screens/SettingsScreen.luau
@@ -15211,7 +17469,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX113">
+					<Item class="ModuleScript" referent="RBX116">
 						<Properties>
 							<string name="Name">ShopScreen</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Screens/ShopScreen.luau
@@ -15228,6 +17486,7 @@
 							local Shop = require(ConfigFolder:WaitForChild("Shop"))
 							local Format = require(Shared:WaitForChild("Utilities"):WaitForChild("Format"))
 							local UIFactory = require(script.Parent:WaitForChild("UIFactory"))
+							local IconFactory = require(script.Parent:WaitForChild("IconFactory"))
 							
 							local ShopScreen = {}
 							local ctx = nil
@@ -15353,21 +17612,25 @@
 							local locked = level &lt; (def.RequiredLevel or 1)
 							local afford = cash &gt;= def.Price * eggQty
 							local card = rowCard(108)
-							local name = UIFactory.Label(def.DisplayName, UDim2.new(1, -130, 0, 24), Theme.Text, 15)
+							local icon = IconFactory.EggIcon(def.Id, UDim2.new(0, 88, 0, 88))
+							icon.Position = UDim2.new(0, 4, 0, 10)
+							icon.Parent = card
+							local name = UIFactory.Label(def.DisplayName, UDim2.new(1, -230, 0, 24), Theme.Text, 15)
 							name.TextXAlignment = Enum.TextXAlignment.Left
+							name.Position = UDim2.new(0, 100, 0, 0)
 							name.Parent = card
-							local desc = UIFactory.Label(def.Description or "", UDim2.new(1, -130, 0, 34),
+							local desc = UIFactory.Label(def.Description or "", UDim2.new(1, -230, 0, 34),
 							Theme.TextDim, 12)
 							desc.TextXAlignment = Enum.TextXAlignment.Left
 							desc.TextYAlignment = Enum.TextYAlignment.Top
 							desc.TextWrapped = true
-							desc.Position = UDim2.new(0, 0, 0, 26)
+							desc.Position = UDim2.new(0, 100, 0, 26)
 							desc.Font = Theme.FontRegular
 							desc.Parent = card
-							local odds = UIFactory.Label(oddsLine(def), UDim2.new(1, -130, 0, 18),
+							local odds = UIFactory.Label(oddsLine(def), UDim2.new(1, -230, 0, 18),
 							Theme.Accent, 11)
 							odds.TextXAlignment = Enum.TextXAlignment.Left
-							odds.Position = UDim2.new(0, 0, 0, 62)
+							odds.Position = UDim2.new(0, 100, 0, 62)
 							odds.Font = Theme.FontRegular
 							odds.Parent = card
 							local buy = UIFactory.PrimaryButton(Format.Money(def.Price * eggQty)
@@ -15523,7 +17786,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX114">
+					<Item class="ModuleScript" referent="RBX117">
 						<Properties>
 							<string name="Name">TradeScreen</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Screens/TradeScreen.luau
@@ -15958,7 +18221,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX115">
+					<Item class="ModuleScript" referent="RBX118">
 						<Properties>
 							<string name="Name">TravelScreen</string>
 							<ProtectedString name="Source">-- TravelScreen: fast-travel window (server validates + rate-limits).
@@ -16020,7 +18283,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX116">
+					<Item class="ModuleScript" referent="RBX119">
 						<Properties>
 							<string name="Name">TutorialScreen</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Screens/TutorialScreen.luau
@@ -16114,7 +18377,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX117">
+					<Item class="ModuleScript" referent="RBX120">
 						<Properties>
 							<string name="Name">UIFactory</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Screens/UIFactory.luau
@@ -16471,22 +18734,22 @@
 			</Item>
 		</Item>
 	</Item>
-	<Item class="StarterGui" referent="RBX122">
+	<Item class="StarterGui" referent="RBX125">
 		<Properties>
 			<string name="Name">StarterGui</string>
 		</Properties>
 	</Item>
-	<Item class="ServerStorage" referent="RBX123">
+	<Item class="ServerStorage" referent="RBX126">
 		<Properties>
 			<string name="Name">ServerStorage</string>
 		</Properties>
 	</Item>
-	<Item class="SoundService" referent="RBX124">
+	<Item class="SoundService" referent="RBX127">
 		<Properties>
 			<string name="Name">SoundService</string>
 		</Properties>
 	</Item>
-	<Item class="Teams" referent="RBX125">
+	<Item class="Teams" referent="RBX128">
 		<Properties>
 			<string name="Name">Teams</string>
 		</Properties>

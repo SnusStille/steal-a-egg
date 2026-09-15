@@ -10,6 +10,7 @@ local Pets = require(ConfigFolder:WaitForChild("Pets"))
 local Rarities = require(ConfigFolder:WaitForChild("Rarities"))
 local Mutations = require(ConfigFolder:WaitForChild("Mutations"))
 local UIFactory = require(script.Parent:WaitForChild("UIFactory"))
+local IconFactory = require(script.Parent:WaitForChild("IconFactory"))
 local Effects = require(script.Parent.Parent:WaitForChild("Effects"):WaitForChild("Effects"))
 local SoundManager = require(script.Parent.Parent:WaitForChild("Effects"):WaitForChild("SoundManager"))
 
@@ -18,6 +19,8 @@ local ctx = nil
 local gui = nil
 local overlay = nil
 local eggLabel = nil
+local eggIcon = nil
+local revealIcon = nil
 local revealCard = nil
 local revealTitle = nil
 local revealSub = nil
@@ -41,9 +44,15 @@ function HatchScreen.Init(context)
 	overlay.Visible = false
 	overlay.Parent = gui
 
-	eggLabel = UIFactory.Label("EGG", UDim2.new(0, 200, 0, 200), Theme.Accent, 72)
+	eggIcon = IconFactory.EggIcon("Basic", UDim2.new(0, 200, 0, 200))
+	eggIcon.AnchorPoint = Vector2.new(0.5, 0.5)
+	eggIcon.Position = UDim2.new(0.5, 0, 0.40, 0)
+	eggIcon.Visible = false
+	eggIcon.Parent = overlay
+
+	eggLabel = UIFactory.Label("EGG", UDim2.new(0, 400, 0, 40), Theme.Accent, 24)
 	eggLabel.AnchorPoint = Vector2.new(0.5, 0.5)
-	eggLabel.Position = UDim2.new(0.5, 0, 0.42, 0)
+	eggLabel.Position = UDim2.new(0.5, 0, 0.60, 0)
 	eggLabel.Parent = overlay
 
 	revealCard = Instance.new("Frame")
@@ -59,11 +68,14 @@ function HatchScreen.Init(context)
 
 	revealTitle = UIFactory.Label("", UDim2.new(1, 0, 0, 40), Theme.Text, 24)
 	revealTitle.Parent = revealCard
-	revealSub = UIFactory.Label("", UDim2.new(1, 0, 0, 120), Theme.TextDim, 15)
-	revealSub.Position = UDim2.new(0, 0, 0, 50)
+	revealSub = UIFactory.Label("", UDim2.new(1, -164, 0, 140), Theme.TextDim, 14)
+	revealSub.Position = UDim2.new(0, 156, 0, 52)
 	revealSub.TextWrapped = true
 	revealSub.Font = Theme.FontRegular
 	revealSub.Parent = revealCard
+	revealIcon = IconFactory.PetIcon("Chick", nil, UDim2.new(0, 140, 0, 140))
+	revealIcon.Position = UDim2.new(0, 8, 0, 52)
+	revealIcon.Parent = revealCard
 
 	tapToContinue = UIFactory.Button("TAP TO CONTINUE", function()
 		HatchScreen.Next()
@@ -98,18 +110,28 @@ function HatchScreen.PlayNext()
 	overlay.Visible = true
 	revealCard.Visible = false
 	tapToContinue.Visible = false
+	-- fresh 3D egg for this entry (rebuild: icons are per-model viewports)
+	if eggIcon then
+		eggIcon:Destroy()
+	end
+	eggIcon = IconFactory.EggIcon(entry.eggId or "Basic", UDim2.new(0, 200, 0, 200))
+	eggIcon.AnchorPoint = Vector2.new(0.5, 0.5)
+	eggIcon.Position = UDim2.new(0.5, 0, 0.40, 0)
+	eggIcon.Parent = overlay
+	eggIcon.Visible = true
 	eggLabel.Visible = true
 	eggLabel.Text = string.upper(tostring(entry.eggName or "Egg"))
 	eggLabel.TextColor3 = Theme.Accent
-	eggLabel.Rotation = 0
+	eggIcon.Rotation = 0
 
 	-- shake phase
 	SoundManager.Play("Hatch", 0.6)
 	local shakes = 0
+	local icon = eggIcon
 	task.spawn(function()
-		while playing and eggLabel.Visible and shakes < 10 do
+		while playing and icon.Visible and shakes < 10 do
 			shakes = shakes + 1
-			eggLabel.Rotation = (shakes % 2 == 0) and 12 or -12
+			icon.Rotation = (shakes % 2 == 0) and 12 or -12
 			task.wait(0.12)
 		end
 		if playing then
@@ -121,7 +143,16 @@ end
 function HatchScreen.Reveal(entry)
 	table.remove(queue, 1)
 	eggLabel.Visible = false
+	if eggIcon then
+		eggIcon.Visible = false
+	end
+	if revealIcon then
+		revealIcon:Destroy()
+	end
 	local pet = entry.pet or {}
+	revealIcon = IconFactory.PetIcon(pet.id or "Chick", pet.mut, UDim2.new(0, 140, 0, 140))
+	revealIcon.Position = UDim2.new(0, 8, 0, 52)
+	revealIcon.Parent = revealCard
 	local def = Pets.ById[pet.id]
 	local rarity = entry.rarity or (def and def.Rarity) or "Common"
 	local rarityColor = Rarities.GetColor(rarity)

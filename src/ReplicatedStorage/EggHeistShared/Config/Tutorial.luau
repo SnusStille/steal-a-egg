@@ -27,11 +27,18 @@ Tutorial.Steps = {
 		Highlight = "Market",
 	},
 	{
+		Id = "place_egg",
+		Title = "Place your egg",
+		Text = "Walk to a glowing pad in YOUR base and place the egg. It must incubate before it can hatch!",
+		Action = "PlaceEgg",
+		Highlight = "Bases",
+	},
+	{
 		Id = "hatch_egg",
 		Title = "Hatch it!",
-		Text = "Open your backpack and hatch the egg. Good luck!",
+		Text = "Wait for the timer to hit READY, then hold E on your egg to hatch it. Good luck!",
 		Action = "HatchEgg",
-		Highlight = "Backpack",
+		Highlight = "Bases",
 	},
 	{
 		Id = "equip_pet",

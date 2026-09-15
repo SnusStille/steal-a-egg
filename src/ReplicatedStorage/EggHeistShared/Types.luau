@@ -11,6 +11,8 @@
 ---@class EggRecord
 ---@field uid string server-generated unique id
 ---@field eggId string egg definition id (see Config/Eggs.luau)
+---@field placedPad number|nil base pad index when placed, nil = in pouch
+---@field hatchAt number|nil os.time() when a placed egg is ready, nil = not placed
 
 ---@class PetRecord
 ---@field uid string server-generated unique id
@@ -79,7 +81,7 @@
 local Types = {}
 
 function Types.NewEggRecord(uid, eggId)
-	return { uid = uid, eggId = eggId }
+	return { uid = uid, eggId = eggId, placedPad = nil, hatchAt = nil }
 end
 
 function Types.NewPetRecord(uid, petId, mutation)
