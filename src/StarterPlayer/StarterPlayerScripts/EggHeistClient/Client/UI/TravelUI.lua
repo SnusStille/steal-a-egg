@@ -21,6 +21,7 @@ function TravelUI.Init(ctx)
 	local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
 	local gui = UIFactory.ScreenGui("EggHeistTravel", 12)
 	gui.ResetOnSpawn = false
+	gui.Parent = playerGui
 
 	window = UIFactory.Window(gui, "FAST TRAVEL", UDim2.new(0, 360, 0, 380))
 	local note = UIFactory.Label("10s cooldown. No travel with stolen loot!",

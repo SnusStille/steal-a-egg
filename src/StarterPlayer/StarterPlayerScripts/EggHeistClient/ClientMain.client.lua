@@ -53,6 +53,49 @@ local function bootStatus(text)
 	end)
 end
 
+-- RUNTIME ERROR CATCHER: any uncaught client error (even long after boot)
+-- is shown on screen + printed, so it can never hide in Output again.
+pcall(function()
+	local playersSvc = game:GetService("Players")
+	local player = playersSvc and playersSvc.LocalPlayer
+	local playerGui = player and player:WaitForChild("PlayerGui", 30)
+	if not playerGui then
+		return
+	end
+	game:GetService("ScriptContext").Error:Connect(function(message, stackTrace, callingScript)
+		pcall(function()
+			local scriptName = callingScript and callingScript:GetFullName() or "?"
+			local short = string.sub(tostring(message), 1, 220)
+			print("[EggHeist] RUNTIME ERROR in " .. scriptName .. ": " .. tostring(message))
+			local old = playerGui:FindFirstChild("EggHeistRuntimeError")
+				if old then
+					old:Destroy()
+				end
+				local gui = Instance.new("ScreenGui")
+				gui.Name = "EggHeistRuntimeError"
+				gui.DisplayOrder = 999
+				gui.ResetOnSpawn = false
+				gui.IgnoreGuiInset = true
+				gui.Parent = playerGui
+				local label = Instance.new("TextLabel")
+				label.AnchorPoint = Vector2.new(0.5, 1)
+				label.Position = UDim2.new(0.5, 0, 1, -76)
+				label.Size = UDim2.new(0, 520, 0, 64)
+				label.BackgroundColor3 = Color3.fromRGB(120, 25, 25)
+				label.BackgroundTransparency = 0.15
+				label.TextColor3 = Color3.fromRGB(255, 255, 255)
+				label.Font = Enum.Font.GothamBold
+				label.TextSize = 12
+				label.TextWrapped = true
+				label.Text = "EGG HEIST RUNTIME ERROR\n" .. scriptName .. "\n" .. short
+				label.Parent = gui
+				local corner = Instance.new("UICorner")
+				corner.CornerRadius = UDim.new(0, 8)
+				corner.Parent = label
+			end)
+	end)
+end)
+
 local function bootFatal(context, err)
 	local message = tostring(context) .. ": " .. tostring(err)
 	warn("[EggHeist] CLIENT FATAL - " .. message)

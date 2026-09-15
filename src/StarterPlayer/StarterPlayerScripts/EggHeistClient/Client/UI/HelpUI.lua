@@ -1,4 +1,5 @@
 -- HelpUI: "?" button + quick-start guide popup. Zero dependencies besides UIFactory.
+local Players = game:GetService("Players")
 local UIFactory = require(script.Parent:WaitForChild("UIFactory"))
 
 local HelpUI = {}
@@ -16,6 +17,7 @@ local HELP_TOPICS = {
 
 function HelpUI.Init()
 	local gui = UIFactory.ScreenGui("EggHeistHelp", 30)
+	gui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
 
 	local helpButton = UIFactory.Button("?", function()
 		if HelpUI.window then

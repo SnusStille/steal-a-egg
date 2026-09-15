@@ -11670,6 +11670,7 @@
 								local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
 								local gui = UIFactory.ScreenGui("EggHeistFeed", 5)
 								gui.ResetOnSpawn = false
+								gui.Parent = playerGui
 								
 								local list = Instance.new("Frame")
 								list.Name = "FeedList"
@@ -12207,6 +12208,7 @@
 							<Properties>
 								<string name="Name">HelpUI</string>
 								<ProtectedString name="Source">-- HelpUI: "?" button + quick-start guide popup. Zero dependencies besides UIFactory.
+								local Players = game:GetService("Players")
 								local UIFactory = require(script.Parent:WaitForChild("UIFactory"))
 								
 								local HelpUI = {}
@@ -12224,6 +12226,7 @@
 								
 								function HelpUI.Init()
 								local gui = UIFactory.ScreenGui("EggHeistHelp", 30)
+								gui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
 								
 								local helpButton = UIFactory.Button("?", function()
 								if HelpUI.window then
@@ -14523,6 +14526,7 @@
 								local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
 								local gui = UIFactory.ScreenGui("EggHeistTravel", 12)
 								gui.ResetOnSpawn = false
+								gui.Parent = playerGui
 								
 								window = UIFactory.Window(gui, "FAST TRAVEL", UDim2.new(0, 360, 0, 380))
 								local note = UIFactory.Label("10s cooldown. No travel with stolen loot!",
@@ -15046,6 +15050,49 @@
 						end
 						end)
 						end
+						
+						-- RUNTIME ERROR CATCHER: any uncaught client error (even long after boot)
+						-- is shown on screen + printed, so it can never hide in Output again.
+						pcall(function()
+						local playersSvc = game:GetService("Players")
+						local player = playersSvc and playersSvc.LocalPlayer
+						local playerGui = player and player:WaitForChild("PlayerGui", 30)
+						if not playerGui then
+						return
+						end
+						game:GetService("ScriptContext").Error:Connect(function(message, stackTrace, callingScript)
+						pcall(function()
+						local scriptName = callingScript and callingScript:GetFullName() or "?"
+						local short = string.sub(tostring(message), 1, 220)
+						print("[EggHeist] RUNTIME ERROR in " .. scriptName .. ": " .. tostring(message))
+						local old = playerGui:FindFirstChild("EggHeistRuntimeError")
+						if old then
+						old:Destroy()
+						end
+						local gui = Instance.new("ScreenGui")
+						gui.Name = "EggHeistRuntimeError"
+						gui.DisplayOrder = 999
+						gui.ResetOnSpawn = false
+						gui.IgnoreGuiInset = true
+						gui.Parent = playerGui
+						local label = Instance.new("TextLabel")
+						label.AnchorPoint = Vector2.new(0.5, 1)
+						label.Position = UDim2.new(0.5, 0, 1, -76)
+						label.Size = UDim2.new(0, 520, 0, 64)
+						label.BackgroundColor3 = Color3.fromRGB(120, 25, 25)
+						label.BackgroundTransparency = 0.15
+						label.TextColor3 = Color3.fromRGB(255, 255, 255)
+						label.Font = Enum.Font.GothamBold
+						label.TextSize = 12
+						label.TextWrapped = true
+						label.Text = "EGG HEIST RUNTIME ERROR\n" .. scriptName .. "\n" .. short
+						label.Parent = gui
+						local corner = Instance.new("UICorner")
+						corner.CornerRadius = UDim.new(0, 8)
+						corner.Parent = label
+						end)
+						end)
+						end)
 						
 						local function bootFatal(context, err)
 						local message = tostring(context) .. ": " .. tostring(err)

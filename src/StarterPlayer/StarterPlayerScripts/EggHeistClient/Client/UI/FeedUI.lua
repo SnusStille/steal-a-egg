@@ -22,6 +22,7 @@ function FeedUI.Init(ctx)
 	local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
 	local gui = UIFactory.ScreenGui("EggHeistFeed", 5)
 	gui.ResetOnSpawn = false
+	gui.Parent = playerGui
 
 	local list = Instance.new("Frame")
 	list.Name = "FeedList"

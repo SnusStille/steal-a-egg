@@ -1,5 +1,16 @@
 # Changelog
 
+## v6.0.1 — Hotfix: invisible UIs + runtime error catcher (2026-09-15)
+
+- FIXED: HelpUI, FeedUI and TravelUI never set `gui.Parent`, so all
+  three were invisible (UIFactory.ScreenGui does not parent by itself).
+  All 19 UIs verified parented now.
+- NEW: client runtime-error catcher. Any uncaught client error is shown
+  in a red on-screen label (script name + message) and printed, so
+  silent Output-only failures are impossible going forward.
+- ClientNet waits now have 30s timeouts + loud asserts (no silent hang
+  on broken installs). FeedUI uses an integer LayoutOrder counter.
+
 ## v6.0.0 — Mega (2026-09-15)
 
 Biggest content + systems drop yet. 23 services, 19 UIs, 38 client->server
