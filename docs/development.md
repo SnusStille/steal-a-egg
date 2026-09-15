@@ -30,6 +30,11 @@ python3 tools/build_place.py && python3 tools/validate_syntax.py \
 - **Waits:** boot-critical `WaitForChild` gets a timeout + assert.
   `check_waits.py` proves every static target exists — an infinite yield
   is treated as a build failure.
+- **Runtime placement:** world content → `GetRuntimeFolder(name)`; plot
+  content → the plot's `ServerFurniture` folder. Never parent
+  server-built instances beside static geometry.
+- **Health first:** if you add a service, remote, config, or world
+  dependency, extend `HealthService` so boot proves it exists.
 - **Config over code:** new content = new config entries, not new
   branches. If you `if eggId == "X"` outside config, you're doing it wrong.
 
@@ -58,11 +63,19 @@ config entry; the owning service already iterates the table. Gadget
 breach/loot hooks live in `GadgetService`; keep new effects to
 multipliers consumed at breach/grab time.
 
+**New mutation** — `Config/Mutations`: one row (`Id, Chance, IncomeMult,
+SellMult, Color, Particle, MinEggTier`). Hatch rolls, fusion, and the
+parade pick it up automatically.
+
+**New NPC / map hotspot** — NPC: one `Config/Npcs` row. Hotspot: one
+builder in `ActivitiesService` parenting into the `Activities` runtime
+folder + a `TestParts` entry so the sim covers it.
+
 ## Testing
 
 | Tool | What it proves |
 |---|---|
-| `validate_syntax.py` | all 84 `.luau` files parse |
+| `validate_syntax.py` | all 93 `.luau` files parse |
 | `check_refs.py` | every require chain, registry/ctx ref, method call, endpoint, and config key resolves |
 | `check_waits.py` | every static `WaitForChild` target exists in the built place |
 | `sim_boot.py` | boots the REAL game headless: server + client, 2-player join/claim, 15-endpoint economy loop, full trade, heist grab→abandon + grab→death-drop (refunds verified), 2 event lifecycles |

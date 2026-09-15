@@ -5316,23 +5316,32 @@
 						-- NOTE: prestige/rebirth lives in Progression/ProgressionService.luau.
 						-- EconomyService only owns currencies, XP and multipliers.
 						
+						-- One income payout for one player. The loop calls this every tick; the
+						-- sim calls it directly to prove equipped pets generate income.
+						function EconomyService.PayIncomeTick(player)
+						local p = profileOf(player)
+						if not p or not registry.Pet then
+						return 0
+						end
+						local perSecond = registry.Pet.ComputeEquippedIncome(player)
+						if perSecond &lt;= 0 then
+						return 0
+						end
+						local amount = perSecond * Economy.IncomeTick
+						* EconomyService.GetIncomeMultiplier(player)
+						EconomyService.AddCash(player, amount, "income")
+						-- trickle pet XP to equipped pets
+						registry.Pet.GrantEquippedXp(player, Economy.IncomeTick)
+						return amount
+						end
+						
 						function EconomyService.Start()
 						-- Passive income loop: pays all players for equipped pets
 						task.spawn(function()
 						while true do
 						task.wait(Economy.IncomeTick)
 						for _, player in ipairs(Players:GetPlayers()) do
-						local p = profileOf(player)
-						if p and registry.Pet then
-						local perSecond = registry.Pet.ComputeEquippedIncome(player)
-						if perSecond &gt; 0 then
-						local amount = perSecond * Economy.IncomeTick
-						* EconomyService.GetIncomeMultiplier(player)
-						EconomyService.AddCash(player, amount, "income")
-						-- trickle pet XP to equipped pets
-						registry.Pet.GrantEquippedXp(player, Economy.IncomeTick)
-						end
-						end
+						EconomyService.PayIncomeTick(player)
 						end
 						end
 						end)

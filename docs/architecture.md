@@ -10,37 +10,47 @@ server, a **shared data + remote registry** in ReplicatedStorage, and
 ```text
 ServerScriptService/EggHeistServer/
 ├── Main                          (Script — bootstrap)
-├── Admin/AdminService            Data/DataService            Net/NetService
+├── Admin/* (2: Admin, Health)    Data/DataService            Net/NetService
 ├── Bases/BaseService             Economy/EconomyService      Net/NotifyService
 ├── Eggs/EggService               Events/EventService         Pets/PetService
 ├── Heists/GadgetService          Heists/HeistService         Progression/* (2)
 ├── Quests/QuestService           Rewards/* (2)               Security/SecurityService
-├── Social/* (2)                  Utilities/RateLimiter       World/* (3)
+├── Social/* (2)                  Utilities/RateLimiter       World/* (5)
 ReplicatedStorage/EggHeistShared/
-├── Remotes  Types  Config/ (17)  Utilities/ (4)
+├── Remotes  Types  Config/ (19)  Utilities/ (5)
 StarterPlayerScripts/EggHeistClient/
 ├── Main (LocalScript — bootstrap)  ClientNet
-├── Controllers/ (14)  Screens/ (18 + UIFactory)  Effects/ (2)  Input/
-Workspace (runtime)               ReplicatedStorage (runtime)
-├── EggHeist (world/fallback)     └── EggHeistRemotes (38 C2S / 12 S2C / 2 Fn)
-└── EggHeistServerOK (BoolValue READY marker)
+├── Controllers/ (13)  Screens/ (19 + UIFactory/IconFactory)
+├── Effects/ (2)  Input/ (keybinds)
+Workspace (runtime)                         ReplicatedStorage (runtime)
+└── EggHeist (static world, untouched)       └── EggHeistRemotes (48 C2S / 12 S2C / 2 Fn)
+    ├── Bases/PlotNN (static template)
+    │   └── ServerFurniture (ALL server-built plot content)
+    └── Runtime (ALL server-built world content)
+        ├── Live (pet followers)   Activities (hotspots)
+        ├── Decor (atmosphere)     Gameplay (meteors, extraction)
+        ├── Npcs  Spawns           Diagnostics (ServerOK, HealthOK)
 ```
 
 ## Server boot (`Main.server.luau`, 3 phases)
 
-1. **Load** — `require` every service in `LOAD_ORDER` (Net first, Admin last)
-   into `registry`. Key = module name minus `Service` (`DataService→Data`).
+1. **Load** — `require` every service in `LOAD_ORDER` (Net first,
+   Health last) into `registry`. Key = module name minus `Service`
+   (`DataService→Data`).
 2. **Init** — `service.Init(service, registry)`; wiring only, no loops.
 3. **Start** — `service.Start()`; loops, listeners, remote handlers.
+4. **Health** — `HealthService.Start()` runs last and validates the
+   booted game (services, remotes, configs, world, assets, data API).
 
 Every phase is `pcall`'d per service and counted. Output ends with:
 
 ```text
-Boot summary: 23 loaded (0 failed), 23 init ok (0 failed), 23 start ok (0 failed)
+Boot summary: 26 loaded (0 failed), 26 init ok (0 failed), 26 start ok (0 failed)
+[Health] ALL 6 CHECKS PASSED
 ```
 
-then the `EggHeistServerOK` marker is set (false if any load failed or the
-remotes folder is missing).
+then the `Runtime/Diagnostics/ServerOK` marker is set (false if any load
+failed or the remotes folder is missing).
 
 ## Client boot (`Main.client.luau`)
 
@@ -61,7 +71,7 @@ and never decide outcomes (see below).
 
 | Prefix | Direction | Count | Rules |
 |---|---|---|---|
-| `C2S_` | client → server | 38 | validated + rate-limited, handler errors caught + warned |
+| `C2S_` | client → server | 48 | validated + rate-limited, handler errors caught + warned |
 | `S2C_` | server → client | 12 | pushes: DataSync, Notify, HatchResult, HeistUpdate, EventUpdate, QuestUpdate, Leaderboard, Fx, ServerTime, TradeUpdate, ScoutResult, Feed |
 | `Fn_` | invoke | 2 | `GetData`, `GetLeaderboard` (used sparingly) |
 
@@ -95,10 +105,39 @@ runtime. Anything missing degrades gracefully; if the whole model is absent
 a procedural fallback is built (spawn, market, vault, event stage, 8 plots,
 NPCs, egg assets) and Output prints the part count as proof.
 
+**Static vs runtime — the two hard rules:**
+
+1. Nothing the server creates ever sits beside static geometry. World-level
+   content goes under `EggHeist/Runtime/*`, allocated through
+   `WorldService.GetRuntimeFolder(name)` (callers never touch Workspace).
+2. Nothing the server builds on a plot ever sits beside the template parts.
+   Plot content goes in the plot's `ServerFurniture` folder, which plot
+   release destroys — so cleanup is automatic, not manual.
+
+## Health check (`Admin/HealthService.luau`)
+
+Runs once at boot, after every service started. Six checks, each a pure
+synchronous probe — never yields, never mutates state:
+
+1. **services loaded** — every expected registry key present
+2. **remotes registered** — every `C2S_/S2C_/Fn_` endpoint exists
+   with the right class
+3. **configs valid** — every config list non-empty + cross-links
+   (pet rarities, egg weights) resolve
+4. **world + plots** — `Runtime/*` folders, every plot has a
+   Foundation, spawn + extraction exist
+5. **creature + egg assets** — every pet id builds a model
+6. **data API** — `DataService` surface + `Types` record builders work
+
+Results print as `PASS/FAIL` lines, mirror to
+`Runtime/Diagnostics/HealthOK`, and the sim fails the build on any FAIL.
+Add new probes with `check("label", fn)` in `Start()`.
+
 ## Headless simulator (`tools/sim_boot.py` + `sim_stub.luau`)
 
 Boots the REAL built place with stubbed engine APIs: server boot, client
-boot, 2-player join/claim, 15-endpoint economy loop, full trade flow, heist
-grab→abandon and grab→death-drop (refund verified), two event lifecycles.
-Current status: `WARNS:0 ERRORS:0`. This is how the MAX branch is
+boot, health gate, 2-player join/claim, 15-endpoint economy loop, full
+trade flow, heist grab→abandon and grab→death-drop (refund verified), two
+event lifecycles, map activities (well/pads/crystal/bottle/vault/parade/
+fusion/slap). Current status: `WARNS:0 ERRORS:0`. This is how the game is
 regression-tested without Studio.

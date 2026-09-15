@@ -929,6 +929,12 @@ function _SIM.economyLoop()
 	_SIM.check(prof.settings.musicVolume == 100, "economy", "musicVolume not clamped")
 	out[#out + 1] = _SIM.fireServer("UpdateSetting", "sfx", "yes")
 	_SIM.check(prof.settings.sfx == true, "economy", "bool setting accepted a string")
+	-- foundation proof: equipped pets generate income
+	local ES = require(_SIM.serverModule("EconomyService"))
+	local cashBefore = prof.cash
+	local paid = ES.PayIncomeTick(_SIM.localPlayer)
+	_SIM.check(paid > 0, "economy", "no income paid for equipped pets")
+	_SIM.check(prof.cash > cashBefore, "economy", "income did not raise cash")
 	_SIM.runDelayed()
 	return table.concat(out, " | ")
 end

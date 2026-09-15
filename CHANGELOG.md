@@ -1,5 +1,32 @@
 # Changelog
 
+## CLEAN FOUNDATION — architecture repair (2026-09-15)
+
+Full audit (every script, remote, config, world object, dependency).
+Finding: `src/` was already clean (one service per system, one boot,
+central remotes/configs, zero duplicates, zero require cycles) — the
+real chaos was the LIVE Workspace: each world service invented its own
+top-level folder, and server-built plot content sat beside static parts.
+Fixed at the root; full gate green (health 6/6, sim `WARNS:0 ERRORS:0`).
+
+- ONE runtime root: `EggHeist/Runtime/{Activities,Decor,Gameplay,Npcs,
+  Spawns,Live,Diagnostics}` via `WorldService.GetRuntimeFolder()`.
+  Legacy top-level folders (`EggHeistLive/Activities/Decor`) removed;
+  loose `SpawnLocation` + READY marker moved under the world.
+- Plot rule: ALL server-built plot content lives in the plot's
+  `ServerFurniture` folder (vault glow/pile, decor, lockdown shield,
+  security rigs, built-marker). Plot release destroys it: cleanup is
+  automatic. Removed the dead empty `Interactables` shell.
+- NEW `Admin/HealthService`: 6 boot checks (services, remotes, configs,
+  world+plots, assets, data API) with PASS/FAIL log + `HealthOK` value.
+  The sim fails the build on any FAIL.
+- Income made testable: `EconomyService.PayIncomeTick()` extracted from
+  the loop; sim proves equipped pets raise cash.
+- Docs refreshed (`architecture.md`, `development.md`): Runtime layout,
+  health checks, current counts, mutation/NPC/hotspot recipes.
+- Deliverable renamed: `Egg-Heist-CLEAN-FOUNDATION.zip` (one clean
+  project — the old `FINAL-MAX` zip is gone).
+
 ## PARADE — pet parade, fusion, slap glove (2026-09-15)
 
 Market attractions, defensive gadget, lockdown timer label. Full gate green

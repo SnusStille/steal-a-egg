@@ -8,7 +8,7 @@ always works.
 
 1. Install the Rojo CLI (`cargo install rojo`, or the VS Code extension).
 2. Install the Rojo plugin inside Studio.
-3. Unzip `Egg-Heist-FINAL-MAX.zip` and `cd` into the folder.
+3. Unzip `Egg-Heist-CLEAN-FOUNDATION.zip` and `cd` into the folder.
 
 ## Every session
 
