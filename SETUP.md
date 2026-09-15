@@ -4,6 +4,7 @@
 
 1. Open **Roblox Studio**.
 2. Open `build/Egg-Heist.rbxlx` (`File > Open from File`).
+   (Unzipping `Egg-Heist-v2.zip` gives you this file plus everything else.)
 3. Insert the world: in the Asset Manager / Explorer, right-click **Workspace >
    Insert from File…** and choose `Egg heist.rbxm` (repo root or `build/`).
    - The model must be named `EggHeist` directly under Workspace.
@@ -32,7 +33,7 @@
       `src/ReplicatedStorage/EggHeistShared/Config/Shop.lua` with real IDs
       from Creator Dashboard > Monetization (see `docs/MONETIZATION.md`).
 - [ ] **Admins**: add your userId(s) to `ADMINS` in
-      `src/ServerScriptService/EggHeistServer/Server/Services/AdminService.lua`.
+      `src/ServerScriptService/EggHeistServer/Server/Admin/AdminService.lua`.
 - [ ] **Max players**: 8 recommended (8 base plots). Set in
       Game Settings > Worlds, or raise `Settings.MaxBasePlots` and add plot
       models to the world.

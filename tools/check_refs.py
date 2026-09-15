@@ -26,21 +26,31 @@ def err(msg: str):
 
 
 # ---------------------------------------------------------------- services --
-server_dir = SRC / "ServerScriptService/EggHeistServer/Server/Services"
-server_utils = SRC / "ServerScriptService/EggHeistServer/Server/Util"
+# v2 layout: Server/<Domain>/<Name>Service.lua, Shared/{Config,Utilities},
+# Client/{Controllers,UI,Effects,Input}.
+server_root = SRC / "ServerScriptService/EggHeistServer/Server"
+server_utils = server_root / "Util"
 shared_dir = SRC / "ReplicatedStorage/EggHeistShared"
 config_dir = shared_dir / "Config"
-shared_utils = shared_dir / "Util"
-client_dir = SRC / "StarterPlayer/StarterPlayerScripts/EggHeistClient"
+shared_utils = shared_dir / "Utilities"
+client_dir = SRC / "StarterPlayer/StarterPlayerScripts/EggHeistClient/Client"
 controllers_dir = client_dir / "Controllers"
+input_dir = client_dir / "Input"
 ui_dir = client_dir / "UI"
 effects_dir = client_dir / "Effects"
 
-services = {p.stem: p for p in server_dir.glob("*.lua")}
+# services: every *Service.lua directly inside a domain folder (one level deep)
+services: dict[str, Path] = {}
+for path in sorted(server_root.glob("*/*.lua")):
+    if path.stem.endswith("Service"):
+        services[path.stem] = path
+# domain lookup for LOAD_ORDER validation: "Domain/Module" -> exists
+service_paths = {f"{p.parent.name}/{p.stem}" for p in services.values()}
 server_utils_mods = {p.stem: p for p in server_utils.glob("*.lua")}
 configs = {p.stem: p for p in config_dir.glob("*.lua")}
 shared_utils_mods = {p.stem: p for p in shared_utils.glob("*.lua")}
 controllers = {p.stem: p for p in controllers_dir.glob("*.lua")}
+controllers.update({p.stem: p for p in input_dir.glob("*.lua")})
 uis = {p.stem: p for p in ui_dir.glob("*.lua")}
 effects = {p.stem: p for p in effects_dir.glob("*.lua")}
 
@@ -105,13 +115,16 @@ for path in all_lua:
         # Resolve based on file location + chain shape
         if "Shared" in chain or "ReplicatedStorage" in chain:
             # Shared:WaitForChild("Config"):WaitForChild("X") etc.
-            if len(steps) >= 2 and steps[0] in ("Config", "Util"):
+            if len(steps) >= 2 and steps[0] in ("Config", "Utilities", "Util"):
                 target = steps[1]
+                if steps[0] == "Util":  # v1 name; must have been renamed
+                    err(f"{rel}: require uses old Shared/Util path (now Utilities)")
+                    continue
                 pool = configs if steps[0] == "Config" else shared_utils_mods
                 if target not in pool:
                     err(f"{rel}: require Shared/{steps[0]}/{target} NOT FOUND")
             elif len(steps) == 1 and steps[0] not in (
-                "EggHeistShared", "Config", "Util", "Remotes",
+                "EggHeistShared", "Config", "Utilities", "Remotes", "Types",
             ):
                 # e.g. Shared:WaitForChild("Remotes")
                 if steps[0] == "Remotes":
@@ -124,7 +137,7 @@ for path in all_lua:
                     s for s in services
                 ]:
                     break
-            # explicit service file requires happen only in Init.server.lua via WaitForChild(moduleName) var - skip
+            # explicit service file requires happen only in ServerMain via WaitForChild(moduleName) var - skip
         if chain.strip().startswith("script.Parent"):
             # relative requires: resolve against file's directory
             # count .Parent hops
@@ -223,18 +236,23 @@ for path in all_lua:
             err(f"{rel}: Invoke {m.group(1)} not in Remotes.Fn")
 
 # ------------------------------------------------- 6. load order vs files --
-init_server = (SRC / "ServerScriptService/EggHeistServer/Init.server.lua").read_text()
+init_server = (SRC / "ServerScriptService/EggHeistServer/ServerMain.server.lua").read_text()
 load_block = init_server.split("LOAD_ORDER")[1].split("}")[0] if "LOAD_ORDER" in init_server else ""
-for m in re.finditer(r'"(\w+Service)"', load_block):
-    if m.group(1) not in services:
-        err(f"Init.server.lua: service file {m.group(1)} NOT FOUND")
-init_client = (SRC / "StarterPlayer/StarterPlayerScripts/EggHeistClient/Init.client.lua").read_text()
+for m in re.finditer(r'"([\w/]+Service)"', load_block):
+    entry = m.group(1)
+    module = entry.split("/")[-1]
+    if "/" in entry:
+        if entry not in service_paths:
+            err(f"ServerMain.server.lua: service path {entry} NOT FOUND")
+    elif module not in services:
+        err(f"ServerMain.server.lua: service file {module} NOT FOUND")
+init_client = (SRC / "StarterPlayer/StarterPlayerScripts/EggHeistClient/ClientMain.client.lua").read_text()
 for m in re.finditer(r'"(\w+Controller)"', init_client):
     if m.group(1) not in controllers:
-        err(f"Init.client.lua: controller {m.group(1)} NOT FOUND")
+        err(f"ClientMain.client.lua: controller {m.group(1)} NOT FOUND")
 for m in re.finditer(r'"(\w+UI)"', init_client):
     if m.group(1) not in uis:
-        err(f"Init.client.lua: UI module {m.group(1)} NOT FOUND")
+        err(f"ClientMain.client.lua: UI module {m.group(1)} NOT FOUND")
 
 # ------------------------------------------------- report --
 print(f"services={len(services)} controllers={len(controllers)} uis={len(uis)} "

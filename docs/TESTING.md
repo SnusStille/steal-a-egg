@@ -3,15 +3,15 @@
 ## Automated (no Studio needed)
 
 ```bash
-python3 tools/validate_lua.py   # 63/63 scripts must parse
+python3 tools/validate_lua.py   # 65/65 scripts must parse
 python3 tools/check_refs.py     # requires, registry, methods, remotes, load order
 python3 tools/build_place.py    # regenerates build/Egg-Heist.rbxlx
 ```
 
 `check_refs.py` verifies: every `require` resolves, every `registry.X` /
 `ctx.Controllers.X` / `ctx.UI.X` exists, every cross-service method call is
-defined, every remote endpoint matches `Remotes.lua`, and both `Init` load
-orders match files on disk.
+defined, every remote endpoint matches `Remotes.lua`, and both `ServerMain`/
+`ClientMain` load orders match files on disk.
 
 ## In-Studio smoke test (1 player, ~10 min)
 
@@ -37,7 +37,7 @@ orders match files on disk.
    takes laser damage; A buys Lockdown → triggers → B ejected.
 6. Admin (your userId in ADMINS): `/admin`? No chat commands — use the
    `Admin` remote via command bar, or test events via
-   `require(ServerScriptService.EggHeistServer.Server.Services.EventService)`
+   `_G.EggHeist.Registry.Event`
    … simpler: temporarily lower `Events.IdleRollInterval` and wait.
 
 ## Event test

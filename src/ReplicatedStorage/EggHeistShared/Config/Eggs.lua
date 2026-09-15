@@ -7,6 +7,7 @@ local Eggs = {}
 Eggs.List = {
 	{
 		Id = "Basic",
+		Tier = 1,
 		DisplayName = "Basic Egg",
 		Description = "A humble egg. Every legend starts somewhere.",
 		Price = 100,
@@ -18,6 +19,7 @@ Eggs.List = {
 	},
 	{
 		Id = "Stone",
+		Tier = 2,
 		DisplayName = "Stone Egg",
 		Description = "Heavy, rough, and full of surprises.",
 		Price = 750,
@@ -29,6 +31,7 @@ Eggs.List = {
 	},
 	{
 		Id = "Golden",
+		Tier = 3,
 		DisplayName = "Golden Egg",
 		Description = "Shines with promise. Greatly improved odds.",
 		Price = 4000,
@@ -40,6 +43,7 @@ Eggs.List = {
 	},
 	{
 		Id = "Crystal",
+		Tier = 4,
 		DisplayName = "Crystal Egg",
 		Description = "Refracts luck itself. For serious collectors.",
 		Price = 25000,
@@ -51,6 +55,7 @@ Eggs.List = {
 	},
 	{
 		Id = "Lava",
+		Tier = 5,
 		DisplayName = "Lava Egg",
 		Description = "Burning with mythic potential.",
 		Price = 150000,
@@ -62,6 +67,7 @@ Eggs.List = {
 	},
 	{
 		Id = "Void",
+		Tier = 6,
 		DisplayName = "Void Egg",
 		Description = "It stares back. The rarest egg money can buy.",
 		Price = 1000000,
@@ -74,6 +80,7 @@ Eggs.List = {
 	-- Special eggs (not sold in the normal shop rotation)
 	{
 		Id = "Toxic",
+		Tier = 2,
 		DisplayName = "Toxic Egg",
 		Description = "Event egg. Oozes with mutated power.",
 		Price = 0,
@@ -86,6 +93,7 @@ Eggs.List = {
 	},
 	{
 		Id = "Shadow",
+		Tier = 3,
 		DisplayName = "Shadow Egg",
 		Description = "Blood Moon exclusive. Darkness hatches here.",
 		Price = 0,
@@ -98,6 +106,7 @@ Eggs.List = {
 	},
 	{
 		Id = "Galaxy",
+		Tier = 4,
 		DisplayName = "Galaxy Egg",
 		Description = "A universe in a shell. Meteor Shower exclusive.",
 		Price = 0,
@@ -110,6 +119,7 @@ Eggs.List = {
 	},
 	{
 		Id = "Ancient",
+		Tier = 5,
 		DisplayName = "Ancient Egg",
 		Description = "Older than the plaza stones. Prestige reward.",
 		Price = 0,

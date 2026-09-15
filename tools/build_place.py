@@ -304,8 +304,21 @@ def build() -> str:
         Item("StarterPlayer", xml_string("Name", "StarterPlayer"), sp_children).to_xml()
     )
 
-    # StarterGui / SoundService / Teams (empty but present)
-    parts.append(Item("StarterGui", xml_string("Name", "StarterGui")).to_xml())
+    # StarterGui (from src/StarterGui when present; UI is code-built by default,
+    # so this is usually empty - Client/UI modules construct the ScreenGuis)
+    sg_children = service_dir("StarterGui") or []
+    parts.append(
+        Item("StarterGui", xml_string("Name", "StarterGui"), sg_children).to_xml()
+    )
+
+    # ServerStorage (from src/ServerStorage when present; reserved for
+    # server-only binary assets - none needed yet, everything is procedural)
+    ss_children = service_dir("ServerStorage") or []
+    parts.append(
+        Item("ServerStorage", xml_string("Name", "ServerStorage"), ss_children).to_xml()
+    )
+
+    # SoundService / Teams (empty but present)
     parts.append(Item("SoundService", xml_string("Name", "SoundService")).to_xml())
     parts.append(Item("Teams", xml_string("Name", "Teams")).to_xml())
 

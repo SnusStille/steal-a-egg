@@ -15,7 +15,7 @@ Tutorial.Steps = {
 	{
 		Id = "claim_base",
 		Title = "Claim your base",
-		Text = "Walk to an glowing empty plot and step on the pad to claim it.",
+		Text = "Walk to a glowing empty plot and step on the pad to claim it.",
 		Action = "ClaimBase",
 		Highlight = "Bases",
 	},

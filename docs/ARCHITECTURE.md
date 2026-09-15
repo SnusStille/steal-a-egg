@@ -2,17 +2,19 @@
 
 ## Service model (server)
 
-`ServerScriptService/EggHeistServer/Init.server.lua` requires 16 services in
-dependency order, then calls `Init(registry)` on each (wiring), then `Start()`
-(loops/listeners). Services talk through the shared `registry` table — never
-through globals or direct requires between services.
+`ServerScriptService/EggHeistServer/ServerMain.server.lua` requires 17 domain
+services in dependency order (`Server/<Domain>/<Name>Service.lua`), then calls
+`Init(registry)` on each (wiring), then `Start()` (loops/listeners). Services
+talk through the shared `registry` table — never through globals or direct
+requires between services. Registry key = module name minus "Service".
 
 ```
 Net          remotes + routing + per-endpoint rate limits
 World        world discovery, fallback builder, spawn, extraction, lighting
 Data         profiles, DataStores, autosave, offline earnings, client sync
 Notify       toast wrapper (S2C Notify)
-Economy      ONLY writer of cash/gems/xp; income ticks; prestige
+Economy      ONLY writer of cash/gems/xp; income ticks; multipliers
+Progression  prestige/rebirth ranks (uses DataService default builders)
 Egg          buy/hatch; all RNG server-side; collection; broadcasts
 Pet          inventory/equip/level/sell; 3D followers (single heartbeat)
 Base         plots, template builds, upgrades, vault, decorations
@@ -30,18 +32,28 @@ Admin        allow-listed commands (testing/live-ops)
 
 `ReplicatedStorage/EggHeistShared/Config/*` — every tunable number.
 `Remotes.lua` — the contract: 21 C2S events, 9 S2C events, 2 functions.
-`Util/*` — Format, TableUtil, Validate, Signal, Maid (client+server safe).
+`Types.lua` — data-model docs (EmmyLua) + Egg/Pet record constructors.
+`Utilities/*` — Format, TableUtil, Validate, Signal (client+server safe).
 
 `NetService` creates the `EggHeistRemotes` folder at runtime from `Remotes.lua`,
 so the registry can never drift from reality.
 
 ## Client model
 
-`EggHeistClient/Init.client.lua` inits `ClientNet`, then 9 controllers
-(datastore cache + intent dispatch), then 14 UI modules. UI modules are
-self-contained windows (`Init(ctx)`, `Toggle()`, `SetVisible()`, `Refresh()`),
-styled by `UIFactory` (one theme). All 3D/UI effects funnel through
-`Effects` + `SoundManager` (built-in sounds only — zero asset dependencies).
+`EggHeistClient/ClientMain.client.lua` inits `ClientNet`, then 10 controllers
+(profile cache + intent dispatch + `InputController` keybinds), then 14 UI
+modules. UI modules are self-contained windows (`Init(ctx)`, `Toggle()`,
+`SetVisible()`, `Refresh()`), styled by `UIFactory` (one theme). All 3D/UI
+effects funnel through `Effects` + `SoundManager` (built-in sounds only —
+zero asset dependencies).
+
+## Why no StarterGui / ServerStorage source?
+
+UI is built in code by `Client/UI/*` (standard for Rojo projects — no binary
+`.rbxmx` clutter, everything diffable). Nothing needs `ServerStorage` yet:
+all visuals are procedural or live in the world model. `build_place.py` and
+`default.project.json` already support `src/StarterGui` and `src/ServerStorage`
+folders if binary assets are ever needed.
 
 ## Data model (per player)
 

@@ -62,6 +62,9 @@ Economy.PrestigeCashCost = 500000
 Economy.PrestigeIncomeBonus = 0.25 -- +25% income per prestige, permanent
 Economy.PrestigeMaxStacks = 20
 Economy.PrestigeKeepPets = 3 -- keep N highest-income pets (rest converted to gems)
+Economy.PrestigeGemBonusCap = 500 -- max gems granted from converted pets
+Economy.PrestigeGemBonusDivisor = 5000 -- 1 gem per this much converted sell value
+Economy.PrestigeGiftEgg = "Ancient" -- gift egg granted on every prestige
 
 -- Daily rewards (streak day -> reward). Cycles after day 7 with bonus.
 Economy.DailyRewards = {
