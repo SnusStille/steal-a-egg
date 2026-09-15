@@ -1,5 +1,28 @@
 # Changelog
 
+## JUICE — Map + game-feel update (2026-09-15)
+
+Everything cooler, zero systems broken (validation still fully green,
+sim still `WARNS:0 ERRORS:0`, economy behavior byte-identical).
+
+- NEW SERVICE `World/AtmosphereService`: the map dresses itself at
+  runtime — beacon towers, floating sky islands, golden spawn statue,
+  heist alert arch, event stage spotlight rig, lava volcano, drifting
+  clouds, full lighting rig (atmosphere/bloom/sunrays/color), per-event
+  sky moods, ambient firework celebrations. World model untouched.
+- NEW `Shared/Config/Juice.luau`: all feel is data (banner styles,
+  hatch FX per rarity tier, mood presets, firework palettes).
+- NEW `Screens/AnnounceScreen`: big queued banners for events, secret
+  hatches, big heists, breaches, prestiges (phone-safe sizing).
+- Client FX: floating +$ / hatch / level text, 3D particle bursts,
+  shockwave rings, firework volleys, FOV kicks, heist letterbox,
+  rising-pitch fanfares, every button punches on click.
+- Hooks: hatch rarity celebrations, event start/end moods + fireworks,
+  grab/extraction/robbed heist cinema, prestige shockwave, meteor
+  impact bursts, travel warp, gadget/decoy/vault feedback.
+- All FX respect the existing settings gates (camera shake / reduced
+  effects / performance mode) and cost zero replication (client-side 3D).
+
 ## MAX — Professional rebuild (2026-09-15)
 
 Full project restructure on the same proven systems (this is now the main

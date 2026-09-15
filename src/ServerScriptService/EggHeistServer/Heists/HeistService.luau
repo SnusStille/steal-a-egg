@@ -435,6 +435,7 @@ function HeistService.CompleteGrab(thief, victim, plotIndex, target, scenarioId)
 	registry.Notify.Send(victim, "error", "You've been robbed!",
 		thief.DisplayName .. " grabbed loot! Stop them before extraction!", 6)
 	registry.Net.Fire(victim, "Fx", "HeistAlarm", thief.DisplayName)
+	registry.Net.Fire(thief, "Fx", "GrabFx")
 	registry.Net.Fire(thief, "HeistUpdate", {
 		carrying = true,
 		amount = loot,
@@ -522,6 +523,12 @@ local function completeExtraction(thief)
 	end
 	registry.Net.Fire(thief, "HeistUpdate", { carrying = false, extracted = true })
 	registry.Net.Fire(thief, "Fx", "HeistWin", state.amount)
+	if registry.World and registry.World.GetExtractionPad then
+		local pad = registry.World.GetExtractionPad()
+		if pad then
+			registry.Net.Fire(thief, "Fx", "Shockwave", pad.Position)
+		end
+	end
 	local feedVictim = Players:GetPlayerByUserId(state.victimUserId)
 	registry.Net.FireAll("Feed", { icon = "HEIST",
 		text = thief.DisplayName .. " robbed " .. (feedVictim and feedVictim.DisplayName or "a vault")
@@ -529,11 +536,14 @@ local function completeExtraction(thief)
 	if state.amount >= 25000 then
 		registry.Notify.Broadcast("rare", "Big heist!",
 			thief.DisplayName .. " extracted a massive haul!", 6)
+		registry.Net.FireAll("Fx", "Announce", "heist", "BIG HEIST!",
+			thief.DisplayName .. " extracted a massive haul!")
 	end
 	local victim = Players:GetPlayerByUserId(state.victimUserId)
 	if victim then
 		registry.Notify.Send(victim, "error", "Loot extracted",
 			thief.DisplayName .. " got away with your loot!", 6)
+		registry.Net.Fire(victim, "Fx", "Robbed", thief.DisplayName)
 	end
 	updateMostWanted()
 end

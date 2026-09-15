@@ -55,4 +55,27 @@ function SoundManager.Play(soundName, volume, pitch)
 	end)
 end
 
+-- Rising arpeggio for big wins. tier 4..6 scales length + brightness.
+function SoundManager.Fanfare(tier)
+	tier = tonumber(tier) or 4
+	if tier < 4 then
+		tier = 4
+	elseif tier > 6 then
+		tier = 6
+	end
+	local notes = 2 + tier
+	for i = 1, notes do
+		local pitch = 1 + i * 0.1
+		local last = (i == notes)
+		task.delay((i - 1) * 0.09, function()
+			SoundManager.Play(last and "Rare" or "Success", 0.55, pitch)
+		end)
+	end
+	if tier >= 5 then
+		task.delay(notes * 0.09, function()
+			SoundManager.Play("Achievement", 0.7, 1.2)
+		end)
+	end
+end
+
 return SoundManager

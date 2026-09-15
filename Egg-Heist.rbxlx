@@ -45,15 +45,15 @@
 			<Color3 name="OutdoorAmbient"><R>0.47058823529411764</R><G>0.47058823529411764</G><B>0.47058823529411764</B></Color3>
 		</Properties>
 	</Item>
-	<Item class="ReplicatedStorage" referent="RBX30">
+	<Item class="ReplicatedStorage" referent="RBX31">
 		<Properties>
 			<string name="Name">ReplicatedStorage</string>
 		</Properties>
-		<Item class="Folder" referent="RBX29">
+		<Item class="Folder" referent="RBX30">
 			<Properties>
 				<string name="Name">EggHeistShared</string>
 			</Properties>
-			<Item class="Folder" referent="RBX21">
+			<Item class="Folder" referent="RBX22">
 				<Properties>
 					<string name="Name">Config</string>
 				</Properties>
@@ -773,6 +773,177 @@
 				</Item>
 				<Item class="ModuleScript" referent="RBX11">
 					<Properties>
+						<string name="Name">Juice</string>
+						<ProtectedString name="Source">-- EggHeist | Shared/Config/Juice.luau
+						-- DATA for game feel: announcement banner styles, per-tier hatch FX,
+						-- world mood presets (fog/atmosphere/post) per event, fireworks.
+						-- Pure data, no logic. Client + AtmosphereService read this.
+						
+						local Juice = {}
+						
+						-- Announcement banner styles: Announce(styleId, title, sub, duration?)
+						Juice.Announce = {
+						info = {
+						Color = Color3.fromRGB(120, 180, 255),
+						Sound = "Notify",
+						Duration = 4,
+						},
+						event = {
+						Color = Color3.fromRGB(255, 200, 80),
+						Sound = "Rare",
+						Duration = 6,
+						},
+						rare = {
+						Color = Color3.fromRGB(255, 176, 32),
+						Sound = "Rare",
+						Duration = 6,
+						},
+						secret = {
+						Color = Color3.fromRGB(60, 255, 210),
+						Sound = "Achievement",
+						Duration = 7,
+						},
+						heist = {
+						Color = Color3.fromRGB(255, 90, 90),
+						Sound = "HeistAlert",
+						Duration = 6,
+						},
+						prestige = {
+						Color = Color3.fromRGB(190, 130, 255),
+						Sound = "Achievement",
+						Duration = 7,
+						},
+						danger = {
+						Color = Color3.fromRGB(220, 40, 40),
+						Sound = "Alarm",
+						Duration = 5,
+						},
+						}
+						
+						-- Hatch FX per rarity tier (1 Common .. 6 Secret). Colors default to the
+						-- rarity color; only overrides live here.
+						Juice.HatchFx = {
+						[1] = { Confetti = 10, Shake = 0, Fov = 0, Fanfare = false, Sound = "Hatch" },
+						[2] = { Confetti = 18, Shake = 0, Fov = 0, Fanfare = false, Sound = "Hatch" },
+						[3] = { Confetti = 30, Shake = 0.25, Fov = 2, Fanfare = false, Sound = "Hatch" },
+						[4] = { Confetti = 55, Shake = 0.4, Fov = 4, Fanfare = true, Sound = "Rare" },
+						[5] = { Confetti = 80, Shake = 0.6, Fov = 6, Fanfare = true, Sound = "Rare" },
+						[6] = { Confetti = 120, Shake = 0.9, Fov = 9, Fanfare = true, Sound = "Achievement" },
+						}
+						
+						-- World moods. Applied by AtmosphereService on top of the event's base
+						-- Lighting preset (ClockTime/Brightness/Ambient still come from Events).
+						-- Every field is optional; missing fields keep their current value.
+						Juice.Moods = {
+						Default = {
+						FogColor = Color3.fromRGB(190, 200, 215),
+						FogStart = 120,
+						FogEnd = 900,
+						Atmosphere = { Density = 0.28, Haze = 3, Glare = 0.4,
+						Color = Color3.fromRGB(200, 215, 230), Decay = Color3.fromRGB(120, 140, 160) },
+						Bloom = { Intensity = 0.35, Size = 24, Threshold = 1.2 },
+						SunRays = { Intensity = 0.06, Spread = 0.7 },
+						ColorCorrection = { Saturation = 0.08, Contrast = 0.04,
+						TintColor = Color3.fromRGB(255, 250, 242) },
+						},
+						GoldenHour = {
+						FogColor = Color3.fromRGB(255, 205, 140),
+						FogStart = 100,
+						FogEnd = 700,
+						Atmosphere = { Density = 0.32, Haze = 6, Glare = 0.9,
+						Color = Color3.fromRGB(255, 200, 130), Decay = Color3.fromRGB(200, 120, 60) },
+						Bloom = { Intensity = 0.7, Size = 32, Threshold = 1.0 },
+						SunRays = { Intensity = 0.25, Spread = 0.8 },
+						ColorCorrection = { Saturation = 0.22, Contrast = 0.06,
+						TintColor = Color3.fromRGB(255, 225, 180) },
+						},
+						EggRain = {
+						FogColor = Color3.fromRGB(150, 220, 140),
+						FogStart = 80,
+						FogEnd = 500,
+						Atmosphere = { Density = 0.42, Haze = 7, Glare = 0.3,
+						Color = Color3.fromRGB(170, 240, 150), Decay = Color3.fromRGB(70, 140, 70) },
+						Bloom = { Intensity = 0.5, Size = 28, Threshold = 1.0 },
+						SunRays = { Intensity = 0.04, Spread = 0.6 },
+						ColorCorrection = { Saturation = 0.25, Contrast = 0.05,
+						TintColor = Color3.fromRGB(220, 255, 215) },
+						},
+						MeteorShower = {
+						FogColor = Color3.fromRGB(60, 50, 110),
+						FogStart = 90,
+						FogEnd = 600,
+						Atmosphere = { Density = 0.35, Haze = 4, Glare = 0.7,
+						Color = Color3.fromRGB(150, 120, 255), Decay = Color3.fromRGB(60, 40, 120) },
+						Bloom = { Intensity = 0.9, Size = 40, Threshold = 0.85 },
+						SunRays = { Intensity = 0.02, Spread = 0.5 },
+						ColorCorrection = { Saturation = 0.3, Contrast = 0.12,
+						TintColor = Color3.fromRGB(200, 180, 255) },
+						},
+						BloodMoon = {
+						FogColor = Color3.fromRGB(140, 30, 35),
+						FogStart = 70,
+						FogEnd = 450,
+						Atmosphere = { Density = 0.45, Haze = 8, Glare = 0.5,
+						Color = Color3.fromRGB(255, 90, 80), Decay = Color3.fromRGB(140, 20, 30) },
+						Bloom = { Intensity = 0.8, Size = 36, Threshold = 0.9 },
+						SunRays = { Intensity = 0.03, Spread = 0.6 },
+						ColorCorrection = { Saturation = 0.28, Contrast = 0.15,
+						TintColor = Color3.fromRGB(255, 170, 170) },
+						},
+						HeistNight = {
+						FogColor = Color3.fromRGB(30, 35, 80),
+						FogStart = 80,
+						FogEnd = 550,
+						Atmosphere = { Density = 0.38, Haze = 5, Glare = 0.4,
+						Color = Color3.fromRGB(90, 110, 220), Decay = Color3.fromRGB(25, 30, 80) },
+						Bloom = { Intensity = 0.65, Size = 32, Threshold = 0.9 },
+						SunRays = { Intensity = 0.02, Spread = 0.5 },
+						ColorCorrection = { Saturation = 0.18, Contrast = 0.12,
+						TintColor = Color3.fromRGB(180, 195, 255) },
+						},
+						LuckyDay = {
+						FogColor = Color3.fromRGB(210, 235, 200),
+						FogStart = 140,
+						FogEnd = 1000,
+						Atmosphere = { Density = 0.22, Haze = 2, Glare = 0.6,
+						Color = Color3.fromRGB(220, 255, 215), Decay = Color3.fromRGB(130, 180, 130) },
+						Bloom = { Intensity = 0.55, Size = 30, Threshold = 1.0 },
+						SunRays = { Intensity = 0.15, Spread = 0.8 },
+						ColorCorrection = { Saturation = 0.3, Contrast = 0.02,
+						TintColor = Color3.fromRGB(240, 255, 235) },
+						},
+						VoidEvent = {
+						FogColor = Color3.fromRGB(20, 10, 40),
+						FogStart = 50,
+						FogEnd = 380,
+						Atmosphere = { Density = 0.5, Haze = 9, Glare = 0.9,
+						Color = Color3.fromRGB(120, 60, 220), Decay = Color3.fromRGB(15, 5, 35) },
+						Bloom = { Intensity = 1.1, Size = 48, Threshold = 0.8 },
+						SunRays = { Intensity = 0.01, Spread = 0.4 },
+						ColorCorrection = { Saturation = 0.35, Contrast = 0.2,
+						TintColor = Color3.fromRGB(190, 150, 255) },
+						},
+						}
+						
+						-- Fireworks: color palette + pacing (seconds between volleys).
+						Juice.Fireworks = {
+						Palette = {
+						Color3.fromRGB(255, 200, 80),
+						Color3.fromRGB(120, 220, 255),
+						Color3.fromRGB(255, 120, 180),
+						Color3.fromRGB(140, 255, 160),
+						Color3.fromRGB(190, 130, 255),
+						},
+						IdleEvery = 90, -- ambient celebration over the plaza when calm
+						EventEvery = 30, -- volleys over the stage while an event is live
+						}
+						
+						return Juice
+						</ProtectedString>
+					</Properties>
+				</Item>
+				<Item class="ModuleScript" referent="RBX12">
+					<Properties>
 						<string name="Name">Mutations</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Config/Mutations.luau
 						-- Mutation rolls apply on hatch. Multipliers stack with pet level scaling.
@@ -812,7 +983,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX12">
+				<Item class="ModuleScript" referent="RBX13">
 					<Properties>
 						<string name="Name">Npcs</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Config/Npcs.luau
@@ -897,7 +1068,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX13">
+				<Item class="ModuleScript" referent="RBX14">
 					<Properties>
 						<string name="Name">Pets</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Config/Pets.luau
@@ -1015,7 +1186,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX14">
+				<Item class="ModuleScript" referent="RBX15">
 					<Properties>
 						<string name="Name">Quests</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Config/Quests.luau
@@ -1063,7 +1234,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX15">
+				<Item class="ModuleScript" referent="RBX16">
 					<Properties>
 						<string name="Name">Rarities</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Config/Rarities.luau
@@ -1118,7 +1289,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX16">
+				<Item class="ModuleScript" referent="RBX17">
 					<Properties>
 						<string name="Name">Security</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Config/Security.luau
@@ -1232,7 +1403,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX17">
+				<Item class="ModuleScript" referent="RBX18">
 					<Properties>
 						<string name="Name">Settings</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Config/Settings.luau
@@ -1345,7 +1516,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX18">
+				<Item class="ModuleScript" referent="RBX19">
 					<Properties>
 						<string name="Name">Shop</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Config/Shop.luau
@@ -1439,7 +1610,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX19">
+				<Item class="ModuleScript" referent="RBX20">
 					<Properties>
 						<string name="Name">Tutorial</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Config/Tutorial.luau
@@ -1504,7 +1675,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX20">
+				<Item class="ModuleScript" referent="RBX21">
 					<Properties>
 						<string name="Name">Upgrades</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Config/Upgrades.luau
@@ -1574,7 +1745,7 @@
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="ModuleScript" referent="RBX22">
+			<Item class="ModuleScript" referent="RBX23">
 				<Properties>
 					<string name="Name">Remotes</string>
 					<ProtectedString name="Source">-- EggHeist | Shared/Remotes.luau
@@ -1699,7 +1870,7 @@
 					</ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX23">
+			<Item class="ModuleScript" referent="RBX24">
 				<Properties>
 					<string name="Name">Types</string>
 					<ProtectedString name="Source">-- EggHeist | Shared/Types.luau
@@ -1799,11 +1970,11 @@
 					</ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="Folder" referent="RBX28">
+			<Item class="Folder" referent="RBX29">
 				<Properties>
 					<string name="Name">Utilities</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX24">
+				<Item class="ModuleScript" referent="RBX25">
 					<Properties>
 						<string name="Name">Format</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Utilities/Format.luau
@@ -1889,7 +2060,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX25">
+				<Item class="ModuleScript" referent="RBX26">
 					<Properties>
 						<string name="Name">Signal</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Utilities/Signal.luau
@@ -1940,7 +2111,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX26">
+				<Item class="ModuleScript" referent="RBX27">
 					<Properties>
 						<string name="Name">TableUtil</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Utilities/TableUtil.luau
@@ -2050,7 +2221,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX27">
+				<Item class="ModuleScript" referent="RBX28">
 					<Properties>
 						<string name="Name">Validate</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Utilities/Validate.luau
@@ -2119,19 +2290,19 @@
 			</Item>
 		</Item>
 	</Item>
-	<Item class="ServerScriptService" referent="RBX74">
+	<Item class="ServerScriptService" referent="RBX76">
 		<Properties>
 			<string name="Name">ServerScriptService</string>
 		</Properties>
-		<Item class="Folder" referent="RBX73">
+		<Item class="Folder" referent="RBX75">
 			<Properties>
 				<string name="Name">EggHeistServer</string>
 			</Properties>
-			<Item class="Folder" referent="RBX32">
+			<Item class="Folder" referent="RBX33">
 				<Properties>
 					<string name="Name">Admin</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX31">
+				<Item class="ModuleScript" referent="RBX32">
 					<Properties>
 						<string name="Name">AdminService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/Admin/AdminService.luau
@@ -2261,11 +2432,11 @@
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="Folder" referent="RBX34">
+			<Item class="Folder" referent="RBX35">
 				<Properties>
 					<string name="Name">Bases</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX33">
+				<Item class="ModuleScript" referent="RBX34">
 					<Properties>
 						<string name="Name">BaseService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/Bases/BaseService.luau
@@ -2941,11 +3112,11 @@
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="Folder" referent="RBX36">
+			<Item class="Folder" referent="RBX37">
 				<Properties>
 					<string name="Name">Data</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX35">
+				<Item class="ModuleScript" referent="RBX36">
 					<Properties>
 						<string name="Name">DataService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/Data/DataService.luau
@@ -3441,11 +3612,11 @@
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="Folder" referent="RBX38">
+			<Item class="Folder" referent="RBX39">
 				<Properties>
 					<string name="Name">Economy</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX37">
+				<Item class="ModuleScript" referent="RBX38">
 					<Properties>
 						<string name="Name">EconomyService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/Economy/EconomyService.luau
@@ -3733,11 +3904,11 @@
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="Folder" referent="RBX40">
+			<Item class="Folder" referent="RBX41">
 				<Properties>
 					<string name="Name">Eggs</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX39">
+				<Item class="ModuleScript" referent="RBX40">
 					<Properties>
 						<string name="Name">EggService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/Eggs/EggService.luau
@@ -3942,6 +4113,16 @@
 						registry.Net.FireAll("Feed", { icon = "HATCH", text = player.DisplayName .. " hatched " .. petName })
 						end
 						
+						-- client juice: rarity-scaled hatch celebration for the hatcher
+						registry.Net.Fire(player, "Fx", "HatchFx", tier, roll.rarity, petName, isNew)
+						if tier &gt;= 6 then
+						registry.Net.FireAll("Fx", "Announce", "secret", "SECRET HATCH!",
+						player.DisplayName .. " hatched " .. petName .. "!")
+						elseif tier &gt;= 4 then
+						registry.Net.FireAll("Fx", "Announce", "rare", "LEGENDARY HATCH!",
+						player.DisplayName .. " hatched " .. petName .. "!")
+						end
+						
 						registry.Data.MarkDirty(player)
 						local sourceDef = Eggs.ById[egg.eggId]
 						return {
@@ -4111,11 +4292,11 @@
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="Folder" referent="RBX42">
+			<Item class="Folder" referent="RBX43">
 				<Properties>
 					<string name="Name">Events</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX41">
+				<Item class="ModuleScript" referent="RBX42">
 					<Properties>
 						<string name="Name">EventService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/Events/EventService.luau
@@ -4307,7 +4488,15 @@
 						endsAt = activeEvent.endsAt,
 						serverNow = os.time(),
 						})
-						registry.Net.FireAll("Fx", "EventStart", eventId)
+						if registry.Atmosphere then
+						registry.Atmosphere.ApplyMood(eventId)
+						end
+						local stagePos = registry.Atmosphere and registry.Atmosphere.GetAnchor("stage") or nil
+						registry.Net.FireAll("Fx", "EventStart", eventId, stagePos)
+						registry.Net.FireAll("Fx", "Announce", "event", def.DisplayName .. "!", def.Description)
+						if registry.Atmosphere then
+						registry.Atmosphere.Celebrate("stage")
+						end
 						if registry.World.SetEventBoard then
 						registry.World.SetEventBoard("LIVE NOW: " .. def.DisplayName)
 						end
@@ -4358,6 +4547,9 @@
 						activeEvent = nil
 						clearPickups()
 						registry.World.RestoreLighting()
+						if registry.Atmosphere then
+						registry.Atmosphere.RestoreMood()
+						end
 						registry.Notify.Broadcast("info", "Event over",
 						def.DisplayName .. " has ended.", 5)
 						registry.Net.FireAll("EventUpdate", { active = false, serverNow = os.time() })
@@ -4440,11 +4632,11 @@
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="Folder" referent="RBX45">
+			<Item class="Folder" referent="RBX46">
 				<Properties>
 					<string name="Name">Heists</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX43">
+				<Item class="ModuleScript" referent="RBX44">
 					<Properties>
 						<string name="Name">GadgetService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/Heists/GadgetService.luau
@@ -4730,7 +4922,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX44">
+				<Item class="ModuleScript" referent="RBX45">
 					<Properties>
 						<string name="Name">HeistService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/Heists/HeistService.luau
@@ -5170,6 +5362,7 @@
 						registry.Notify.Send(victim, "error", "You've been robbed!",
 						thief.DisplayName .. " grabbed loot! Stop them before extraction!", 6)
 						registry.Net.Fire(victim, "Fx", "HeistAlarm", thief.DisplayName)
+						registry.Net.Fire(thief, "Fx", "GrabFx")
 						registry.Net.Fire(thief, "HeistUpdate", {
 						carrying = true,
 						amount = loot,
@@ -5257,6 +5450,12 @@
 						end
 						registry.Net.Fire(thief, "HeistUpdate", { carrying = false, extracted = true })
 						registry.Net.Fire(thief, "Fx", "HeistWin", state.amount)
+						if registry.World and registry.World.GetExtractionPad then
+						local pad = registry.World.GetExtractionPad()
+						if pad then
+						registry.Net.Fire(thief, "Fx", "Shockwave", pad.Position)
+						end
+						end
 						local feedVictim = Players:GetPlayerByUserId(state.victimUserId)
 						registry.Net.FireAll("Feed", { icon = "HEIST",
 						text = thief.DisplayName .. " robbed " .. (feedVictim and feedVictim.DisplayName or "a vault")
@@ -5264,11 +5463,14 @@
 						if state.amount &gt;= 25000 then
 						registry.Notify.Broadcast("rare", "Big heist!",
 						thief.DisplayName .. " extracted a massive haul!", 6)
+						registry.Net.FireAll("Fx", "Announce", "heist", "BIG HEIST!",
+						thief.DisplayName .. " extracted a massive haul!")
 						end
 						local victim = Players:GetPlayerByUserId(state.victimUserId)
 						if victim then
 						registry.Notify.Send(victim, "error", "Loot extracted",
 						thief.DisplayName .. " got away with your loot!", 6)
+						registry.Net.Fire(victim, "Fx", "Robbed", thief.DisplayName)
 						end
 						updateMostWanted()
 						end
@@ -5470,7 +5672,7 @@
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="Script" referent="RBX46">
+			<Item class="Script" referent="RBX47">
 				<Properties>
 					<string name="Name">Main</string>
 					<bool name="Disabled">false</bool>
@@ -5491,6 +5693,7 @@
 					local LOAD_ORDER = {
 					"Net/NetService", -- remotes + routing first (everyone depends on Net)
 					"World/WorldService", -- world discovery / fallback before gameplay builds on it
+					"World/AtmosphereService", -- map dressing + sky moods (needs the world root)
 					"World/NpcService", -- world NPCs (needs the world root)
 					"World/TravelService", -- fast travel (needs world anchors + base/heist state)
 					"Data/DataService", -- profiles before any system touches player data
@@ -5614,11 +5817,11 @@
 					</ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="Folder" referent="RBX48">
+			<Item class="Folder" referent="RBX49">
 				<Properties>
 					<string name="Name">Monetization</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX47">
+				<Item class="ModuleScript" referent="RBX48">
 					<Properties>
 						<string name="Name">ShopService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/Monetization/ShopService.luau
@@ -5779,11 +5982,11 @@
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="Folder" referent="RBX51">
+			<Item class="Folder" referent="RBX52">
 				<Properties>
 					<string name="Name">Net</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX49">
+				<Item class="ModuleScript" referent="RBX50">
 					<Properties>
 						<string name="Name">NetService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/Net/NetService.luau
@@ -5920,7 +6123,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX50">
+				<Item class="ModuleScript" referent="RBX51">
 					<Properties>
 						<string name="Name">NotifyService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/Net/NotifyService.luau
@@ -5958,11 +6161,11 @@
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="Folder" referent="RBX53">
+			<Item class="Folder" referent="RBX54">
 				<Properties>
 					<string name="Name">Pets</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX52">
+				<Item class="ModuleScript" referent="RBX53">
 					<Properties>
 						<string name="Name">PetService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/Pets/PetService.luau
@@ -6554,11 +6757,11 @@
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="Folder" referent="RBX56">
+			<Item class="Folder" referent="RBX57">
 				<Properties>
 					<string name="Name">Progression</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX54">
+				<Item class="ModuleScript" referent="RBX55">
 					<Properties>
 						<string name="Name">AchievementService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/Progression/AchievementService.luau
@@ -6693,7 +6896,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX55">
+				<Item class="ModuleScript" referent="RBX56">
 					<Properties>
 						<string name="Name">ProgressionService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/Progression/ProgressionService.luau
@@ -6812,6 +7015,10 @@
 						.. " (+" .. tostring(math.floor(p.prestige.bonus * 100)) .. "% income)!", 8)
 						registry.Net.FireAll("Feed", { icon = "STAR",
 						text = player.DisplayName .. " prestiged to rank " .. tostring(p.prestige.count) })
+						registry.Net.Fire(player, "Fx", "Prestige", p.prestige.count)
+						registry.Net.FireAll("Fx", "Announce", "prestige",
+						"PRESTIGE " .. tostring(p.prestige.count) .. "!",
+						player.DisplayName .. " ascended to new power!")
 						if registry.Achievement then
 						registry.Achievement.Check(player, "Prestige")
 						end
@@ -6829,11 +7036,11 @@
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="Folder" referent="RBX58">
+			<Item class="Folder" referent="RBX59">
 				<Properties>
 					<string name="Name">Quests</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX57">
+				<Item class="ModuleScript" referent="RBX58">
 					<Properties>
 						<string name="Name">QuestService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/Quests/QuestService.luau
@@ -7104,11 +7311,11 @@
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="Folder" referent="RBX61">
+			<Item class="Folder" referent="RBX62">
 				<Properties>
 					<string name="Name">Rewards</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX59">
+				<Item class="ModuleScript" referent="RBX60">
 					<Properties>
 						<string name="Name">CollectionService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/Rewards/CollectionService.luau
@@ -7183,7 +7390,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX60">
+				<Item class="ModuleScript" referent="RBX61">
 					<Properties>
 						<string name="Name">RewardService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/Rewards/RewardService.luau
@@ -7262,11 +7469,11 @@
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="Folder" referent="RBX63">
+			<Item class="Folder" referent="RBX64">
 				<Properties>
 					<string name="Name">Security</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX62">
+				<Item class="ModuleScript" referent="RBX63">
 					<Properties>
 						<string name="Name">SecurityService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/Security/SecurityService.luau
@@ -7848,11 +8055,11 @@
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="Folder" referent="RBX66">
+			<Item class="Folder" referent="RBX67">
 				<Properties>
 					<string name="Name">Social</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX64">
+				<Item class="ModuleScript" referent="RBX65">
 					<Properties>
 						<string name="Name">LeaderboardService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/Social/LeaderboardService.luau
@@ -8125,7 +8332,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX65">
+				<Item class="ModuleScript" referent="RBX66">
 					<Properties>
 						<string name="Name">TradeService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/Social/TradeService.luau
@@ -8769,11 +8976,11 @@
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="Folder" referent="RBX68">
+			<Item class="Folder" referent="RBX69">
 				<Properties>
 					<string name="Name">Utilities</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX67">
+				<Item class="ModuleScript" referent="RBX68">
 					<Properties>
 						<string name="Name">RateLimiter</string>
 						<ProtectedString name="Source">-- EggHeist | Server/Util/RateLimiter.luau
@@ -8821,11 +9028,528 @@
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="Folder" referent="RBX72">
+			<Item class="Folder" referent="RBX74">
 				<Properties>
 					<string name="Name">World</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX69">
+				<Item class="ModuleScript" referent="RBX70">
+					<Properties>
+						<string name="Name">AtmosphereService</string>
+						<ProtectedString name="Source">-- EggHeist | Server/World/AtmosphereService.luau
+						-- MAP UPGRADE: builds animated dressing on top of whatever world exists
+						-- (real EggHeist model or fallback) at runtime. Never touches the world
+						-- model itself. Owns: lighting rig (atmosphere/bloom/sunrays/color),
+						-- per-event sky moods, beacon towers, floating islands, spawn statue,
+						-- heist alert props, event stage rig, volcano landmark, drifting clouds,
+						-- and ambient firework celebrations.
+						--
+						-- Sim-safe rules (this runs in sim_boot): no CFrame.Angles, no UDim2 math,
+						-- every loop waits FIRST, particle Emit wrapped in pcall.
+						
+						local Workspace = game:GetService("Workspace")
+						local Lighting = game:GetService("Lighting")
+						local ReplicatedStorage = game:GetService("ReplicatedStorage")
+						
+						local Shared = ReplicatedStorage:WaitForChild("EggHeistShared")
+						local Juice = require(Shared:WaitForChild("Config"):WaitForChild("Juice"))
+						
+						local AtmosphereService = {}
+						AtmosphereService.Name = "AtmosphereService"
+						
+						local registry = nil
+						local decorFolder = nil
+						local anchors = {} -- name -&gt; Vector3 (statue, stage, plaza, event, heist)
+						local islands = {} -- { root, baseY, phase, speed }
+						local pulseBeams = {} -- { part, base, phase, speed }
+						local clouds = {} -- { part, base, axis, range, speed, phase }
+						local built = false
+						
+						-- Fallback district centers (match the fallback map layout)
+						local FALLBACK_POS = {
+						plaza = Vector3.new(0, 2, 0),
+						market = Vector3.new(90, 2, 0),
+						heist = Vector3.new(0, 2, 120),
+						event = Vector3.new(-90, 2, 0),
+						bases = Vector3.new(0, 2, -90),
+						}
+						
+						--------------------------------------------------------------------------------
+						-- Small builders
+						--------------------------------------------------------------------------------
+						
+						local function mkPart(name, size, position, color, material)
+						local part = Instance.new("Part")
+						part.Name = name
+						part.Size = size
+						part.CFrame = CFrame.new(position)
+						part.Color = color or Color3.fromRGB(150, 150, 150)
+						part.Material = material or Enum.Material.SmoothPlastic
+						part.Anchored = true
+						part.CanCollide = false
+						part.CanQuery = false
+						part.TopSurface = Enum.SurfaceType.Smooth
+						part.BottomSurface = Enum.SurfaceType.Smooth
+						part.Parent = decorFolder
+						return part
+						end
+						
+						local function mkLight(parent, color, range, brightness)
+						local light = Instance.new("PointLight")
+						light.Color = color
+						light.Range = range or 30
+						light.Brightness = brightness or 2
+						light.Shadows = false
+						light.Parent = parent
+						return light
+						end
+						
+						local function mkSparkles(parent, color, rate, speed, size, lifetime)
+						local emitter = Instance.new("ParticleEmitter")
+						emitter.Color = ColorSequence.new(color)
+						emitter.LightEmission = 0.8
+						emitter.Rate = rate or 6
+						emitter.Speed = NumberRange.new((speed or 6) * 0.5, speed or 6)
+						emitter.Size = NumberSequence.new(size or 0.7)
+						emitter.Lifetime = NumberRange.new((lifetime or 1.5) * 0.6, lifetime or 1.5)
+						emitter.SpreadAngle = Vector2.new(180, 180)
+						emitter.Parent = parent
+						return emitter
+						end
+						
+						local function mkBillboard(parent, text, textColor, size, studsOffset)
+						local gui = Instance.new("BillboardGui")
+						gui.Name = "Label"
+						gui.Size = size or UDim2.new(0, 220, 0, 60)
+						gui.StudsOffset = studsOffset or Vector3.new(0, 4, 0)
+						gui.AlwaysOnTop = true
+						gui.Parent = parent
+						local label = Instance.new("TextLabel")
+						label.Size = UDim2.fromScale(1, 1)
+						label.BackgroundTransparency = 1
+						label.Text = text
+						label.TextColor3 = textColor or Color3.fromRGB(255, 255, 255)
+						label.Font = Enum.Font.GothamBold
+						label.TextScaled = true
+						label.TextStrokeTransparency = 0.3
+						label.Parent = gui
+						return gui
+						end
+						
+						local function districtPosition(areaName, floorName, fallback)
+						if registry and registry.World and registry.World.Find then
+						local ok, part = pcall(function()
+						return registry.World.Find("Map", areaName, floorName)
+						end)
+						if ok and part and part:IsA("BasePart") then
+						return part.Position + Vector3.new(0, part.Size.Y / 2, 0)
+						end
+						end
+						return fallback
+						end
+						
+						--------------------------------------------------------------------------------
+						-- Lighting rig + moods
+						--------------------------------------------------------------------------------
+						
+						local function ensureLightingRig()
+						local function ensure(className, name)
+						local existing = Lighting:FindFirstChild(name)
+						if existing then
+						return existing
+						end
+						local inst = Instance.new(className)
+						inst.Name = name
+						inst.Parent = Lighting
+						return inst
+						end
+						ensure("Atmosphere", "EggHeistAtmosphere")
+						ensure("BloomEffect", "EggHeistBloom")
+						ensure("SunRaysEffect", "EggHeistSunRays")
+						ensure("ColorCorrectionEffect", "EggHeistColor")
+						end
+						
+						local function applyMoodTable(mood)
+						if not mood then
+						return
+						end
+						pcall(function()
+						if mood.FogColor then
+						Lighting.FogColor = mood.FogColor
+						end
+						if mood.FogStart then
+						Lighting.FogStart = mood.FogStart
+						end
+						if mood.FogEnd then
+						Lighting.FogEnd = mood.FogEnd
+						end
+						local atmo = Lighting:FindFirstChild("EggHeistAtmosphere")
+						if atmo and mood.Atmosphere then
+						local a = mood.Atmosphere
+						if a.Density then atmo.Density = a.Density end
+						if a.Haze then atmo.Haze = a.Haze end
+						if a.Glare then atmo.Glare = a.Glare end
+						if a.Color then atmo.Color = a.Color end
+						if a.Decay then atmo.Decay = a.Decay end
+						end
+						local bloom = Lighting:FindFirstChild("EggHeistBloom")
+						if bloom and mood.Bloom then
+						if mood.Bloom.Intensity then bloom.Intensity = mood.Bloom.Intensity end
+						if mood.Bloom.Size then bloom.Size = mood.Bloom.Size end
+						if mood.Bloom.Threshold then bloom.Threshold = mood.Bloom.Threshold end
+						end
+						local rays = Lighting:FindFirstChild("EggHeistSunRays")
+						if rays and mood.SunRays then
+						if mood.SunRays.Intensity then rays.Intensity = mood.SunRays.Intensity end
+						if mood.SunRays.Spread then rays.Spread = mood.SunRays.Spread end
+						end
+						local cc = Lighting:FindFirstChild("EggHeistColor")
+						if cc and mood.ColorCorrection then
+						local c = mood.ColorCorrection
+						if c.Saturation then cc.Saturation = c.Saturation end
+						if c.Contrast then cc.Contrast = c.Contrast end
+						if c.TintColor then cc.TintColor = c.TintColor end
+						end
+						end)
+						end
+						
+						--- Full-sky mood for an event id (falls back to Default when unknown).
+						function AtmosphereService.ApplyMood(eventId)
+						applyMoodTable(Juice.Moods[eventId] or Juice.Moods.Default)
+						end
+						
+						function AtmosphereService.RestoreMood()
+						applyMoodTable(Juice.Moods.Default)
+						end
+						
+						--- Named world anchor for FX positions (statue/stage/plaza/heist/event).
+						function AtmosphereService.GetAnchor(name)
+						return anchors[name]
+						end
+						
+						--- Fire a firework volley over an anchor for every client.
+						function AtmosphereService.Celebrate(anchorName)
+						local pos = anchors[anchorName or "plaza"]
+						if not pos or not registry or not registry.Net then
+						return
+						end
+						registry.Net.FireAll("Fx", "Fireworks", pos)
+						end
+						
+						--------------------------------------------------------------------------------
+						-- Dressing builders (each pcall-guarded so one failure never kills boot)
+						--------------------------------------------------------------------------------
+						
+						local function buildBeacons()
+						-- Four corner towers with sky beams; positions adapt to the real map
+						-- bounds when boundary walls exist, else the fallback footprint.
+						local hx, hz = 165, 165
+						if registry and registry.World and registry.World.Find then
+						local n = registry.World.Find("Decorations", "BoundaryN")
+						local e = registry.World.Find("Decorations", "BoundaryE")
+						if n and n:IsA("BasePart") then
+						hz = math.abs(n.Position.Z) - 15
+						end
+						if e and e:IsA("BasePart") then
+						hx = math.abs(e.Position.X) - 15
+						end
+						end
+						local corners = {
+						Vector3.new(-hx, 0, -hz), Vector3.new(hx, 0, -hz),
+						Vector3.new(-hx, 0, hz), Vector3.new(hx, 0, hz),
+						}
+						local colors = {
+						Color3.fromRGB(255, 200, 80), Color3.fromRGB(120, 220, 255),
+						Color3.fromRGB(255, 120, 180), Color3.fromRGB(140, 255, 160),
+						}
+						for i, corner in ipairs(corners) do
+						local color = colors[i]
+						mkPart("BeaconBase" .. i, Vector3.new(6, 4, 6),
+						Vector3.new(corner.X, 2, corner.Z), Color3.fromRGB(45, 48, 62))
+						local beam = mkPart("BeaconBeam" .. i, Vector3.new(2.5, 160, 2.5),
+						Vector3.new(corner.X, 82, corner.Z), color, Enum.Material.Neon)
+						beam.Transparency = 0.45
+						local gem = mkPart("BeaconGem" .. i, Vector3.new(4, 4, 4),
+						Vector3.new(corner.X, 8, corner.Z), color, Enum.Material.Neon)
+						gem.Shape = Enum.PartType.Ball
+						mkLight(gem, color, 45, 2)
+						pulseBeams[#pulseBeams + 1] = { part = beam, base = 0.45, phase = i * 1.7, speed = 1.4 }
+						pulseBeams[#pulseBeams + 1] = { part = gem, base = 0, phase = i * 1.7, speed = 1.4 }
+						end
+						end
+						
+						local function buildSkyIslands()
+						local spots = {
+						{ x = -50, y = 55, z = -40 }, { x = 55, y = 65, z = -30 },
+						{ x = 0, y = 72, z = 60 }, { x = -70, y = 60, z = 70 }, { x = 75, y = 58, z = 75 },
+						}
+						local eggColors = {
+						Color3.fromRGB(255, 200, 60), Color3.fromRGB(150, 220, 255),
+						Color3.fromRGB(255, 100, 40), Color3.fromRGB(150, 80, 255),
+						Color3.fromRGB(120, 255, 60),
+						}
+						for i, spot in ipairs(spots) do
+						local rootPos = Vector3.new(spot.x, spot.y, spot.z)
+						local rock = mkPart("IslandRock" .. i, Vector3.new(14, 8, 14),
+						rootPos, Color3.fromRGB(110, 105, 115), Enum.Material.Slate)
+						rock.Shape = Enum.PartType.Ball
+						local grass = mkPart("IslandGrass" .. i, Vector3.new(13, 2, 13),
+						rootPos + Vector3.new(0, 4, 0), Color3.fromRGB(80, 190, 90), Enum.Material.Grass)
+						local ring = mkPart("IslandRing" .. i, Vector3.new(15, 0.8, 15),
+						rootPos + Vector3.new(0, -2, 0), eggColors[i], Enum.Material.Neon)
+						ring.Transparency = 0.25
+						local egg = mkPart("IslandEgg" .. i, Vector3.new(3, 4, 3),
+						rootPos + Vector3.new(0, 8, 0), eggColors[i], Enum.Material.SmoothPlastic)
+						local mesh = Instance.new("SpecialMesh")
+						mesh.MeshType = Enum.MeshType.Egg
+						mesh.Scale = Vector3.new(3, 4, 3)
+						mesh.Parent = egg
+						mkSparkles(egg, eggColors[i], 4, 5, 0.6, 1.5)
+						islands[#islands + 1] = { root = rock, baseY = spot.y,
+						phase = i * 1.3, speed = 0.7,
+						extras = {
+						{ part = grass, dy = 4 }, { part = ring, dy = -2 }, { part = egg, dy = 8 },
+						} }
+						end
+						end
+						
+						local function buildSpawnStatue()
+						local plaza = anchors.plaza
+						local base = plaza + Vector3.new(0, 0, -10)
+						mkPart("StatuePedestal", Vector3.new(10, 3, 10), base + Vector3.new(0, 1.5, 0),
+						Color3.fromRGB(50, 52, 68))
+						mkPart("StatueTrim", Vector3.new(10.6, 0.7, 10.6), base + Vector3.new(0, 3.2, 0),
+						Color3.fromRGB(255, 200, 80), Enum.Material.Neon)
+						local egg = mkPart("StatueEgg", Vector3.new(5, 7, 5), base + Vector3.new(0, 8, 0),
+						Color3.fromRGB(255, 205, 70), Enum.Material.SmoothPlastic)
+						local mesh = Instance.new("SpecialMesh")
+						mesh.MeshType = Enum.MeshType.Egg
+						mesh.Scale = Vector3.new(5, 7, 5)
+						mesh.Parent = egg
+						mkLight(egg, Color3.fromRGB(255, 205, 70), 40, 2)
+						mkSparkles(egg, Color3.fromRGB(255, 220, 130), 8, 7, 0.8, 2)
+						mkBillboard(egg, "EGG HEIST", Color3.fromRGB(255, 220, 130),
+						UDim2.new(0, 260, 0, 60), Vector3.new(0, 8, 0))
+						anchors.statue = egg.Position
+						-- neon ring around the plaza floor
+						local ring = mkPart("PlazaRing", Vector3.new(30, 0.4, 30), plaza + Vector3.new(0, 0.3, 0),
+						Color3.fromRGB(255, 200, 80), Enum.Material.Neon)
+						ring.Transparency = 0.35
+						pulseBeams[#pulseBeams + 1] = { part = ring, base = 0.35, phase = 0, speed = 1.0 }
+						end
+						
+						local function buildHeistAlert()
+						local heist = anchors.heist
+						-- warning arch over the approach
+						local archZ = heist.Z - 24
+						mkPart("AlertPillarL", Vector3.new(2, 12, 2), Vector3.new(heist.X - 9, 6, archZ),
+						Color3.fromRGB(50, 50, 60))
+						mkPart("AlertPillarR", Vector3.new(2, 12, 2), Vector3.new(heist.X + 9, 6, archZ),
+						Color3.fromRGB(50, 50, 60))
+						local beam = mkPart("AlertBeam", Vector3.new(20, 1.6, 1.6), Vector3.new(heist.X, 12, archZ),
+						Color3.fromRGB(255, 60, 60), Enum.Material.Neon)
+						mkBillboard(beam, "RESTRICTED", Color3.fromRGB(255, 120, 120),
+						UDim2.new(0, 240, 0, 50), Vector3.new(0, 3, 0))
+						pulseBeams[#pulseBeams + 1] = { part = beam, base = 0, phase = 0.5, speed = 2.5 }
+						-- two red beacon poles flanking the vault floor
+						for i, dx in ipairs({ -16, 16 }) do
+						mkPart("AlertPole" .. i, Vector3.new(1, 14, 1),
+						Vector3.new(heist.X + dx, 7, heist.Z), Color3.fromRGB(60, 60, 70))
+						local head = mkPart("AlertHead" .. i, Vector3.new(3, 2, 3),
+						Vector3.new(heist.X + dx, 14.5, heist.Z), Color3.fromRGB(255, 60, 60), Enum.Material.Neon)
+						mkLight(head, Color3.fromRGB(255, 60, 60), 35, 2)
+						pulseBeams[#pulseBeams + 1] = { part = head, base = 0, phase = i * 2.1, speed = 2.5 }
+						end
+						end
+						
+						local function buildStageRig()
+						local stage = anchors.stage
+						-- four spotlight poles around the stage, aimed at center
+						local offsets = { Vector3.new(-14, 0, -14), Vector3.new(14, 0, -14),
+						Vector3.new(-14, 0, 14), Vector3.new(14, 0, 14) }
+						local colors = {
+						Color3.fromRGB(255, 200, 80), Color3.fromRGB(150, 120, 255),
+						Color3.fromRGB(120, 220, 255), Color3.fromRGB(255, 120, 180),
+						}
+						for i, offset in ipairs(offsets) do
+						local foot = stage + offset
+						mkPart("StagePole" .. i, Vector3.new(1, 12, 1), foot + Vector3.new(0, 6, 0),
+						Color3.fromRGB(55, 55, 66))
+						local headPos = foot + Vector3.new(0, 12.5, 0)
+						local head = mkPart("StageHead" .. i, Vector3.new(2.4, 1.6, 2.4), headPos,
+						colors[i], Enum.Material.Neon)
+						local spot = Instance.new("SpotLight")
+						spot.Color = colors[i]
+						spot.Range = 60
+						spot.Brightness = 3
+						spot.Angle = 35
+						spot.Shadows = false
+						spot.Parent = head
+						-- aim the head at the stage (position-accurate in sim, rotated live)
+						pcall(function()
+						head.CFrame = CFrame.lookAt(headPos, stage + Vector3.new(0, 2, 0))
+						end)
+						end
+						-- glowing dance floor inlay
+						local floor = mkPart("StageGlow", Vector3.new(18, 0.4, 18), stage + Vector3.new(0, 0.4, 0),
+						Color3.fromRGB(150, 120, 255), Enum.Material.Neon)
+						floor.Transparency = 0.3
+						pulseBeams[#pulseBeams + 1] = { part = floor, base = 0.3, phase = 1, speed = 2.0 }
+						end
+						
+						local function buildVolcano()
+						-- egg-volcano landmark on the far side of the event grounds
+						local at = anchors.event + Vector3.new(-30, 0, 28)
+						mkPart("VolcanoBase", Vector3.new(24, 10, 24), at + Vector3.new(0, 5, 0),
+						Color3.fromRGB(90, 80, 95), Enum.Material.Slate).Shape = Enum.PartType.Ball
+						mkPart("VolcanoMid", Vector3.new(17, 8, 17), at + Vector3.new(0, 10, 0),
+						Color3.fromRGB(80, 70, 85), Enum.Material.Slate).Shape = Enum.PartType.Ball
+						local crater = mkPart("VolcanoCrater", Vector3.new(10, 4, 10), at + Vector3.new(0, 14, 0),
+						Color3.fromRGB(255, 120, 30), Enum.Material.Neon)
+						crater.Shape = Enum.PartType.Ball
+						mkLight(crater, Color3.fromRGB(255, 130, 40), 45, 2.5)
+						mkSparkles(crater, Color3.fromRGB(255, 150, 50), 10, 14, 1.2, 2.5)
+						local smoke = mkSparkles(crater, Color3.fromRGB(70, 60, 75), 6, 10, 3.5, 4)
+						smoke.LightEmission = 0
+						pulseBeams[#pulseBeams + 1] = { part = crater, base = 0, phase = 2, speed = 0.8 }
+						anchors.volcano = crater.Position
+						end
+						
+						local function buildClouds()
+						local spots = {
+						{ x = -60, y = 70, z = 60 }, { x = 60, y = 78, z = 40 }, { x = 0, y = 74, z = -60 },
+						{ x = -120, y = 68, z = 90 }, { x = 120, y = 70, z = 100 }, { x = 40, y = 82, z = 130 },
+						}
+						for i, spot in ipairs(spots) do
+						local cloud = mkPart("DriftCloud" .. i, Vector3.new(24, 6, 15),
+						Vector3.new(spot.x, spot.y, spot.z), Color3.fromRGB(255, 255, 255))
+						cloud.Shape = Enum.PartType.Ball
+						cloud.Transparency = 0.4
+						clouds[#clouds + 1] = { part = cloud, base = Vector3.new(spot.x, spot.y, spot.z),
+						axis = (i % 2 == 0) and "x" or "z", range = 25 + i * 3, speed = 1.2 + i * 0.15 }
+						end
+						end
+						
+						--------------------------------------------------------------------------------
+						-- Service lifecycle
+						--------------------------------------------------------------------------------
+						
+						function AtmosphereService.Init(_, reg)
+						registry = reg
+						ensureLightingRig()
+						applyMoodTable(Juice.Moods.Default)
+						
+						-- decor root lives next to the world so it never pollutes gameplay folders
+						decorFolder = Workspace:FindFirstChild("EggHeistDecor")
+						if not decorFolder then
+						decorFolder = Instance.new("Folder")
+						decorFolder.Name = "EggHeistDecor"
+						decorFolder.Parent = Workspace
+						end
+						
+						anchors.plaza = districtPosition("Spawn", "PlazaBase", FALLBACK_POS.plaza)
+						anchors.plaza = districtPosition("Spawn", "PlazaInnerFloor", anchors.plaza)
+						anchors.market = districtPosition("EggMarket", "MarketFloor", FALLBACK_POS.market)
+						anchors.heist = districtPosition("HeistArea", "HeistFloor", FALLBACK_POS.heist)
+						anchors.event = districtPosition("EventArea", "EventFloor", FALLBACK_POS.event)
+						anchors.stage = districtPosition("EventArea", "EventStage", anchors.event)
+						if registry and registry.World and registry.World.GetExtractionPad then
+						local ok, pad = pcall(registry.World.GetExtractionPad)
+						if ok and pad then
+						anchors.extraction = pad.Position
+						end
+						end
+						
+						local builders = {
+						buildBeacons, buildSkyIslands, buildSpawnStatue,
+						buildHeistAlert, buildStageRig, buildVolcano, buildClouds,
+						}
+						for _, builder in ipairs(builders) do
+						local ok, err = pcall(builder)
+						if not ok then
+						warn("[EggHeist] Atmosphere builder failed: " .. tostring(err))
+						end
+						end
+						built = true
+						print("[EggHeist] Atmosphere dressed the map ("
+						.. tostring(#decorFolder:GetDescendants()) .. " decor objects).")
+						end
+						
+						function AtmosphereService.IsBuilt()
+						return built
+						end
+						
+						function AtmosphereService.Start()
+						-- island bob
+						task.spawn(function()
+						while true do
+						task.wait(0.1)
+						local t = os.clock()
+						for _, island in ipairs(islands) do
+						local dy = math.sin(t * island.speed + island.phase) * 1.6
+						pcall(function()
+						island.root.CFrame = CFrame.new(island.root.Position.X,
+						island.baseY + dy, island.root.Position.Z)
+						for _, extra in ipairs(island.extras) do
+						extra.part.CFrame = CFrame.new(extra.part.Position.X,
+						island.baseY + extra.dy + dy, extra.part.Position.Z)
+						end
+						end)
+						end
+						end
+						end)
+						-- neon pulse
+						task.spawn(function()
+						while true do
+						task.wait(0.12)
+						local t = os.clock()
+						for _, beam in ipairs(pulseBeams) do
+						pcall(function()
+						beam.part.Transparency = math.clamp(beam.base
+						+ math.sin(t * beam.speed + beam.phase) * 0.22, 0, 0.9)
+						end)
+						end
+						end
+						end)
+						-- cloud drift
+						task.spawn(function()
+						while true do
+						task.wait(0.25)
+						local t = os.clock()
+						for _, cloud in ipairs(clouds) do
+						pcall(function()
+						local off = math.sin(t * 0.05 * cloud.speed) * cloud.range
+						if cloud.axis == "x" then
+						cloud.part.CFrame = CFrame.new(
+						cloud.base.X + off, cloud.base.Y, cloud.base.Z)
+						else
+						cloud.part.CFrame = CFrame.new(
+						cloud.base.X, cloud.base.Y, cloud.base.Z + off)
+						end
+						end)
+						end
+						end
+						end)
+						-- ambient firework celebrations
+						task.spawn(function()
+						local tick = 0
+						while true do
+						task.wait(15)
+						tick = tick + 1
+						local active = registry.Event and registry.Event.GetActive()
+						local every = active and Juice.Fireworks.EventEvery or Juice.Fireworks.IdleEvery
+						if tick * 15 &gt;= every then
+						tick = 0
+						AtmosphereService.Celebrate(active and "stage" or "plaza")
+						end
+						end
+						end)
+						end
+						
+						return AtmosphereService
+						</ProtectedString>
+					</Properties>
+				</Item>
+				<Item class="ModuleScript" referent="RBX71">
 					<Properties>
 						<string name="Name">NpcService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/World/NpcService.luau
@@ -8969,7 +9693,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX70">
+				<Item class="ModuleScript" referent="RBX72">
 					<Properties>
 						<string name="Name">TravelService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/World/TravelService.luau
@@ -9063,7 +9787,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX71">
+				<Item class="ModuleScript" referent="RBX73">
 					<Properties>
 						<string name="Name">WorldService</string>
 						<ProtectedString name="Source">-- EggHeist | Server/World/WorldService.luau
@@ -9897,19 +10621,19 @@
 			</Item>
 		</Item>
 	</Item>
-	<Item class="StarterPlayer" referent="RBX118">
+	<Item class="StarterPlayer" referent="RBX121">
 		<Properties>
 			<string name="Name">StarterPlayer</string>
 		</Properties>
-		<Item class="StarterPlayerScripts" referent="RBX117">
+		<Item class="StarterPlayerScripts" referent="RBX120">
 			<Properties>
 				<string name="Name">StarterPlayerScripts</string>
 			</Properties>
-			<Item class="Folder" referent="RBX116">
+			<Item class="Folder" referent="RBX119">
 				<Properties>
 					<string name="Name">EggHeistClient</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX75">
+				<Item class="ModuleScript" referent="RBX77">
 					<Properties>
 						<string name="Name">ClientNet</string>
 						<ProtectedString name="Source">-- EggHeist | Client/ClientNet.luau
@@ -9984,11 +10708,11 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="Folder" referent="RBX89">
+				<Item class="Folder" referent="RBX91">
 					<Properties>
 						<string name="Name">Controllers</string>
 					</Properties>
-					<Item class="ModuleScript" referent="RBX76">
+					<Item class="ModuleScript" referent="RBX78">
 						<Properties>
 							<string name="Name">BaseController</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Controllers/BaseController.luau
@@ -10031,7 +10755,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX77">
+					<Item class="ModuleScript" referent="RBX79">
 						<Properties>
 							<string name="Name">CollectionController</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Controllers/CollectionController.luau
@@ -10055,7 +10779,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX78">
+					<Item class="ModuleScript" referent="RBX80">
 						<Properties>
 							<string name="Name">DataController</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Controllers/DataController.luau
@@ -10117,7 +10841,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX79">
+					<Item class="ModuleScript" referent="RBX81">
 						<Properties>
 							<string name="Name">EggController</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Controllers/EggController.luau
@@ -10154,7 +10878,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX80">
+					<Item class="ModuleScript" referent="RBX82">
 						<Properties>
 							<string name="Name">EventController</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Controllers/EventController.luau
@@ -10201,7 +10925,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX81">
+					<Item class="ModuleScript" referent="RBX83">
 						<Properties>
 							<string name="Name">GadgetController</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Controllers/GadgetController.luau
@@ -10229,7 +10953,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX82">
+					<Item class="ModuleScript" referent="RBX84">
 						<Properties>
 							<string name="Name">HeistController</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Controllers/HeistController.luau
@@ -10241,6 +10965,7 @@
 							
 							local Shared = ReplicatedStorage:WaitForChild("EggHeistShared")
 							local Settings = require(Shared:WaitForChild("Config"):WaitForChild("Settings"))
+							local Effects = require(script.Parent.Parent:WaitForChild("Effects"):WaitForChild("Effects"))
 							
 							local HeistController = {}
 							HeistController.State = { carrying = false }
@@ -10257,6 +10982,10 @@
 							local ui = ctx.Screens and ctx.Screens.HeistScreen
 							if ui then
 							ui.OnState(HeistController.State)
+							end
+							-- cinematic letterbox while carrying loot
+							if Effects and Effects.Letterbox then
+							Effects.Letterbox(HeistController.State.carrying == true)
 							end
 							end
 							end)
@@ -10317,7 +11046,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX83">
+					<Item class="ModuleScript" referent="RBX85">
 						<Properties>
 							<string name="Name">NpcController</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Controllers/NpcController.luau
@@ -10420,7 +11149,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX84">
+					<Item class="ModuleScript" referent="RBX86">
 						<Properties>
 							<string name="Name">PetController</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Controllers/PetController.luau
@@ -10459,7 +11188,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX85">
+					<Item class="ModuleScript" referent="RBX87">
 						<Properties>
 							<string name="Name">QuestController</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Controllers/QuestController.luau
@@ -10490,7 +11219,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX86">
+					<Item class="ModuleScript" referent="RBX88">
 						<Properties>
 							<string name="Name">ShopController</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Controllers/ShopController.luau
@@ -10513,7 +11242,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX87">
+					<Item class="ModuleScript" referent="RBX89">
 						<Properties>
 							<string name="Name">TradeController</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Controllers/TradeController.luau
@@ -10582,7 +11311,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX88">
+					<Item class="ModuleScript" referent="RBX90">
 						<Properties>
 							<string name="Name">TutorialController</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Controllers/TutorialController.luau
@@ -10614,11 +11343,11 @@
 						</Properties>
 					</Item>
 				</Item>
-				<Item class="Folder" referent="RBX92">
+				<Item class="Folder" referent="RBX94">
 					<Properties>
 						<string name="Name">Effects</string>
 					</Properties>
-					<Item class="ModuleScript" referent="RBX90">
+					<Item class="ModuleScript" referent="RBX92">
 						<Properties>
 							<string name="Name">Effects</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Effects/Effects.luau
@@ -10784,11 +11513,206 @@
 							return player and player:WaitForChild("PlayerGui") or nil
 							end
 							
+							-- World-space floating text (damage-number style popup that rises + fades)
+							function Effects.FloatingText(worldPos, text, color, duration)
+							if effectsMuted() or typeof(worldPos) ~= "Vector3" then
+							return
+							end
+							duration = duration or 1.4
+							local holder = Instance.new("Part")
+							holder.Name = "FloatText"
+							holder.Size = Vector3.new(1, 1, 1)
+							holder.CFrame = CFrame.new(worldPos)
+							holder.Transparency = 1
+							holder.Anchored = true
+							holder.CanCollide = false
+							holder.CanQuery = false
+							holder.Parent = Workspace
+							local billboard = Instance.new("BillboardGui")
+							billboard.Size = UDim2.new(0, 220, 0, 60)
+							billboard.StudsOffset = Vector3.new(0, 2, 0)
+							billboard.AlwaysOnTop = true
+							billboard.Parent = holder
+							local label = Instance.new("TextLabel")
+							label.Size = UDim2.fromScale(1, 1)
+							label.BackgroundTransparency = 1
+							label.Text = tostring(text)
+							label.TextColor3 = color or Color3.fromRGB(255, 255, 255)
+							label.Font = Enum.Font.GothamBold
+							label.TextScaled = true
+							label.TextStrokeTransparency = 0.2
+							label.Parent = billboard
+							Effects.Tween(billboard, TweenInfo.new(duration,
+							Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+							StudsOffset = Vector3.new(0, 7, 0),
+							})
+							Effects.Tween(label, TweenInfo.new(duration), { TextTransparency = 1 })
+							task.delay(duration + 0.2, function()
+							if holder then
+							holder:Destroy()
+							end
+							end)
+							end
+							
+							-- 3D particle burst at a world position (client-side, zero replication cost)
+							function Effects.Burst3D(worldPos, color, count, power)
+							if effectsMuted() or typeof(worldPos) ~= "Vector3" then
+							return
+							end
+							count = count or 24
+							if effectsReduced() then
+							count = math.min(count, 10)
+							end
+							local flashColor = color or Color3.fromRGB(255, 220, 130)
+							local holder = Instance.new("Part")
+							holder.Name = "Burst3D"
+							holder.Size = Vector3.new(1, 1, 1)
+							holder.CFrame = CFrame.new(worldPos)
+							holder.Transparency = 1
+							holder.Anchored = true
+							holder.CanCollide = false
+							holder.CanQuery = false
+							holder.Parent = Workspace
+							local emitter = Instance.new("ParticleEmitter")
+							emitter.Color = ColorSequence.new(flashColor)
+							emitter.LightEmission = 0.9
+							emitter.Rate = 0
+							emitter.Speed = NumberRange.new(8, 18 + (power or 0))
+							emitter.Size = NumberSequence.new(0.9)
+							emitter.Lifetime = NumberRange.new(0.4, 0.9)
+							emitter.SpreadAngle = Vector2.new(180, 180)
+							emitter.Parent = holder
+							local flash = Instance.new("PointLight")
+							flash.Color = flashColor
+							flash.Range = 25
+							flash.Brightness = 3
+							flash.Shadows = false
+							flash.Parent = holder
+							pcall(function()
+							emitter:Emit(count)
+							end)
+							task.delay(1.6, function()
+							if holder then
+							holder:Destroy()
+							end
+							end)
+							end
+							
+							-- Expanding neon shockwave ring, flat on the ground
+							function Effects.RingShockwave(worldPos, color, maxSize)
+							if effectsMuted() or typeof(worldPos) ~= "Vector3" then
+							return
+							end
+							local ring = Instance.new("Part")
+							ring.Name = "ShockRing"
+							ring.Shape = Enum.PartType.Ball
+							ring.Size = Vector3.new(4, 1.2, 4)
+							ring.CFrame = CFrame.new(worldPos)
+							ring.Color = color or Color3.fromRGB(255, 220, 130)
+							ring.Material = Enum.Material.Neon
+							ring.Transparency = 0.25
+							ring.Anchored = true
+							ring.CanCollide = false
+							ring.CanQuery = false
+							ring.Parent = Workspace
+							local target = maxSize or 30
+							Effects.Tween(ring, TweenInfo.new(0.55,
+							Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+							Size = Vector3.new(target, 1.2, target),
+							Transparency = 1,
+							})
+							task.delay(0.8, function()
+							if ring then
+							ring:Destroy()
+							end
+							end)
+							end
+							
+							-- Quick FOV punch that eases back (speed / win / warp feel)
+							function Effects.FovKick(amount, duration)
+							if effectsMuted() then
+							return
+							end
+							local camera = Workspace.CurrentCamera
+							if not camera then
+							return
+							end
+							local base = camera.FieldOfView or 70
+							pcall(function()
+							camera.FieldOfView = base + (amount or 6)
+							Effects.Tween(camera, TweenInfo.new(duration or 0.5,
+							Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+							FieldOfView = base,
+							})
+							end)
+							end
+							
+							-- Firework volley: staggered 3D bursts above a world position
+							function Effects.Fireworks(worldPos, palette)
+							if effectsMuted() or typeof(worldPos) ~= "Vector3" then
+							return
+							end
+							palette = palette or {
+							Color3.fromRGB(255, 200, 80), Color3.fromRGB(120, 220, 255),
+							Color3.fromRGB(255, 120, 180), Color3.fromRGB(140, 255, 160),
+							}
+							local shots = 5
+							if effectsReduced() then
+							shots = 2
+							end
+							for i = 1, shots do
+							local color = palette[math.random(1, #palette)]
+							local offset = Vector3.new(math.random(-14, 14), math.random(6, 22), math.random(-14, 14))
+							task.delay((i - 1) * 0.28, function()
+							Effects.Burst3D(worldPos + offset, color, 30, 14)
+							end)
+							end
+							end
+							
+							-- Cinematic letterbox bars (heist carry mode)
+							local letterboxTop = nil
+							local letterboxBottom = nil
+							
+							function Effects.Letterbox(show)
+							local playerGui = Effects.LocalPlayerGui()
+							if not playerGui then
+							return
+							end
+							if not letterboxTop then
+							letterboxTop = Instance.new("Frame")
+							letterboxTop.Name = "LetterboxTop"
+							letterboxTop.Size = UDim2.new(1, 0, 0, 64)
+							letterboxTop.Position = UDim2.new(0, 0, 0, -64)
+							letterboxTop.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+							letterboxTop.BackgroundTransparency = 0.15
+							letterboxTop.BorderSizePixel = 0
+							letterboxTop.ZIndex = 500
+							letterboxTop.Parent = playerGui
+							letterboxBottom = Instance.new("Frame")
+							letterboxBottom.Name = "LetterboxBottom"
+							letterboxBottom.AnchorPoint = Vector2.new(0, 1)
+							letterboxBottom.Size = UDim2.new(1, 0, 0, 64)
+							letterboxBottom.Position = UDim2.new(0, 0, 1, 64)
+							letterboxBottom.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+							letterboxBottom.BackgroundTransparency = 0.15
+							letterboxBottom.BorderSizePixel = 0
+							letterboxBottom.ZIndex = 500
+							letterboxBottom.Parent = playerGui
+							end
+							if show then
+							Effects.Tween(letterboxTop, TweenInfo.new(0.4), { Position = UDim2.new(0, 0, 0, 0) })
+							Effects.Tween(letterboxBottom, TweenInfo.new(0.4), { Position = UDim2.new(0, 0, 1, 0) })
+							else
+							Effects.Tween(letterboxTop, TweenInfo.new(0.4), { Position = UDim2.new(0, 0, 0, -64) })
+							Effects.Tween(letterboxBottom, TweenInfo.new(0.4), { Position = UDim2.new(0, 0, 1, 64) })
+							end
+							end
+							
 							return Effects
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX91">
+					<Item class="ModuleScript" referent="RBX93">
 						<Properties>
 							<string name="Name">SoundManager</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Effects/SoundManager.luau
@@ -10848,16 +11772,39 @@
 							end)
 							end
 							
+							-- Rising arpeggio for big wins. tier 4..6 scales length + brightness.
+							function SoundManager.Fanfare(tier)
+							tier = tonumber(tier) or 4
+							if tier &lt; 4 then
+							tier = 4
+							elseif tier &gt; 6 then
+							tier = 6
+							end
+							local notes = 2 + tier
+							for i = 1, notes do
+							local pitch = 1 + i * 0.1
+							local last = (i == notes)
+							task.delay((i - 1) * 0.09, function()
+							SoundManager.Play(last and "Rare" or "Success", 0.55, pitch)
+							end)
+							end
+							if tier &gt;= 5 then
+							task.delay(notes * 0.09, function()
+							SoundManager.Play("Achievement", 0.7, 1.2)
+							end)
+							end
+							end
+							
 							return SoundManager
 							</ProtectedString>
 						</Properties>
 					</Item>
 				</Item>
-				<Item class="Folder" referent="RBX94">
+				<Item class="Folder" referent="RBX96">
 					<Properties>
 						<string name="Name">Input</string>
 					</Properties>
-					<Item class="ModuleScript" referent="RBX93">
+					<Item class="ModuleScript" referent="RBX95">
 						<Properties>
 							<string name="Name">InputController</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Input/InputController.luau
@@ -10960,7 +11907,7 @@
 						</Properties>
 					</Item>
 				</Item>
-				<Item class="LocalScript" referent="RBX95">
+				<Item class="LocalScript" referent="RBX97">
 					<Properties>
 						<string name="Name">Main</string>
 						<bool name="Disabled">false</bool>
@@ -11118,6 +12065,7 @@
 						"HatchScreen",
 						"HeistScreen",
 						"EventBannerScreen",
+						"AnnounceScreen", -- big queued banners (fed by Fx "Announce")
 						"TutorialScreen",
 						"ObjectiveScreen",
 						"TradeScreen",
@@ -11216,11 +12164,115 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="Folder" referent="RBX115">
+				<Item class="Folder" referent="RBX118">
 					<Properties>
 						<string name="Name">Screens</string>
 					</Properties>
-					<Item class="ModuleScript" referent="RBX96">
+					<Item class="ModuleScript" referent="RBX98">
+						<Properties>
+							<string name="Name">AnnounceScreen</string>
+							<ProtectedString name="Source">-- EggHeist | Client/Screens/AnnounceScreen.luau
+							-- Big queued announcement banners: event starts, secret hatches, big
+							-- heists, prestiges. Fed by the Fx "Announce" channel via MainScreen.
+							-- One banner at a time, auto-sized for phone screens.
+							
+							local Players = game:GetService("Players")
+							local ReplicatedStorage = game:GetService("ReplicatedStorage")
+							
+							local Shared = ReplicatedStorage:WaitForChild("EggHeistShared")
+							local Juice = require(Shared:WaitForChild("Config"):WaitForChild("Juice"))
+							local UIFactory = require(script.Parent:WaitForChild("UIFactory"))
+							local Effects = require(script.Parent.Parent:WaitForChild("Effects"):WaitForChild("Effects"))
+							local SoundManager = require(script.Parent.Parent:WaitForChild("Effects"):WaitForChild("SoundManager"))
+							
+							local AnnounceScreen = {}
+							local gui = nil
+							local queue = {}
+							local showing = false
+							
+							local Theme = UIFactory.Theme
+							
+							function AnnounceScreen.Init(_ctx)
+							local player = Players.LocalPlayer
+							local playerGui = player and player:WaitForChild("PlayerGui")
+							if not playerGui then
+							return
+							end
+							gui = UIFactory.ScreenGui("EggHeistAnnounce", 60)
+							gui.Parent = playerGui
+							end
+							
+							local function pump()
+							if showing or gui == nil or #queue == 0 then
+							return
+							end
+							showing = true
+							local item = table.remove(queue, 1)
+							local style = Juice.Announce[item.style] or Juice.Announce.info
+							local banner = Instance.new("Frame")
+							banner.Name = "Banner"
+							banner.AnchorPoint = Vector2.new(0.5, 0)
+							banner.Position = UDim2.new(0.5, 0, 0.1, 0)
+							banner.Size = UDim2.new(0.85, 0, 0, 92)
+							banner.BackgroundColor3 = Theme.Panel
+							banner.BackgroundTransparency = 0.08
+							banner.BorderSizePixel = 0
+							banner.Parent = gui
+							UIFactory.Corner(banner, 12)
+							UIFactory.Stroke(banner, style.Color, 2)
+							local bar = Instance.new("Frame")
+							bar.Size = UDim2.new(1, 0, 0, 6)
+							bar.BackgroundColor3 = style.Color
+							bar.BorderSizePixel = 0
+							bar.Parent = banner
+							UIFactory.Corner(bar, 6)
+							local title = UIFactory.Label(item.title, UDim2.new(1, -24, 0, 44), style.Color, 30)
+							title.AnchorPoint = Vector2.new(0.5, 0)
+							title.Position = UDim2.new(0.5, 0, 0, 10)
+							title.TextScaled = true
+							title.Parent = banner
+							local sub = UIFactory.Label(item.sub, UDim2.new(1, -24, 0, 26), Theme.Text, 15)
+							sub.AnchorPoint = Vector2.new(0.5, 0)
+							sub.Position = UDim2.new(0.5, 0, 0, 56)
+							sub.TextTruncate = Enum.TextTruncate.AtEnd
+							sub.Parent = banner
+							SoundManager.Play(style.Sound, 0.7)
+							Effects.Pop(banner, 1.04)
+							task.delay(item.duration or style.Duration or 5, function()
+							if banner and banner.Parent then
+							Effects.Tween(banner, TweenInfo.new(0.4), { BackgroundTransparency = 1 }, function()
+							if banner then
+							banner:Destroy()
+							end
+							end)
+							end
+							showing = false
+							pump()
+							end)
+							end
+							
+							--- Queue a banner. style: key of Juice.Announce (info/event/rare/...).
+							function AnnounceScreen.Announce(style, title, sub, duration)
+							if gui == nil then
+							return
+							end
+							queue[#queue + 1] = {
+							style = style or "info",
+							title = tostring(title or ""),
+							sub = tostring(sub or ""),
+							duration = tonumber(duration),
+							}
+							while #queue &gt; 3 do
+							table.remove(queue, 1)
+							end
+							pump()
+							end
+							
+							return AnnounceScreen
+							</ProtectedString>
+						</Properties>
+					</Item>
+					<Item class="ModuleScript" referent="RBX99">
 						<Properties>
 							<string name="Name">BaseScreen</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Screens/BaseScreen.luau
@@ -11466,7 +12518,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX97">
+					<Item class="ModuleScript" referent="RBX100">
 						<Properties>
 							<string name="Name">CollectionScreen</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Screens/CollectionScreen.luau
@@ -11757,7 +12809,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX98">
+					<Item class="ModuleScript" referent="RBX101">
 						<Properties>
 							<string name="Name">DailyScreen</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Screens/DailyScreen.luau
@@ -11894,7 +12946,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX99">
+					<Item class="ModuleScript" referent="RBX102">
 						<Properties>
 							<string name="Name">EventBannerScreen</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Screens/EventBannerScreen.luau
@@ -11956,7 +13008,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX100">
+					<Item class="ModuleScript" referent="RBX103">
 						<Properties>
 							<string name="Name">FeedScreen</string>
 							<ProtectedString name="Source">-- FeedScreen: server event ticker (heists, rare hatches, prestige, events).
@@ -12047,7 +13099,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX101">
+					<Item class="ModuleScript" referent="RBX104">
 						<Properties>
 							<string name="Name">HatchScreen</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Screens/HatchScreen.luau
@@ -12237,7 +13289,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX102">
+					<Item class="ModuleScript" referent="RBX105">
 						<Properties>
 							<string name="Name">HeistScreen</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Screens/HeistScreen.luau
@@ -12517,7 +13569,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX103">
+					<Item class="ModuleScript" referent="RBX106">
 						<Properties>
 							<string name="Name">HelpScreen</string>
 							<ProtectedString name="Source">-- HelpScreen: "?" button + quick-start guide popup. Zero dependencies besides UIFactory.
@@ -12588,7 +13640,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX104">
+					<Item class="ModuleScript" referent="RBX107">
 						<Properties>
 							<string name="Name">InventoryScreen</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Screens/InventoryScreen.luau
@@ -12895,7 +13947,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX105">
+					<Item class="ModuleScript" referent="RBX108">
 						<Properties>
 							<string name="Name">MainScreen</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Screens/MainScreen.luau
@@ -12908,6 +13960,7 @@
 							local Shared = ReplicatedStorage:WaitForChild("EggHeistShared")
 							local ConfigFolder = Shared:WaitForChild("Config")
 							local Economy = require(ConfigFolder:WaitForChild("Economy"))
+							local Rarities = require(ConfigFolder:WaitForChild("Rarities"))
 							local Format = require(Shared:WaitForChild("Utilities"):WaitForChild("Format"))
 							local UIFactory = require(script.Parent:WaitForChild("UIFactory"))
 							local Effects = require(script.Parent.Parent:WaitForChild("Effects"):WaitForChild("Effects"))
@@ -13264,14 +14317,26 @@
 							end
 							end
 							
-							function MainScreen.HandleFx(fxName, arg1, _arg2)
+							function MainScreen.HandleFx(fxName, arg1, arg2, arg3, arg4)
 							local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
+							local character = Players.LocalPlayer.Character
+							local hrp = character and character:FindFirstChild("HumanoidRootPart")
+							local hrpPos = hrp and (hrp.Position + Vector3.new(0, 5, 0)) or nil
 							if fxName == "LevelUp" then
 							SoundManager.Play("Success", 0.7)
 							Effects.Flash(playerGui, Color3.fromRGB(80, 220, 120), 0.4)
 							Effects.Confetti(playerGui, 30)
+							Effects.FovKick(5, 0.5)
+							if hrpPos then
+							Effects.FloatingText(hrpPos, "LEVEL " .. tostring(arg1 or "?"),
+							Color3.fromRGB(120, 255, 160))
+							end
 							elseif fxName == "VaultCollect" then
 							SoundManager.Play("Coins", 0.7)
+							if hrpPos then
+							Effects.FloatingText(hrpPos, "+" .. Format.Money(tonumber(arg1) or 0),
+							Color3.fromRGB(255, 215, 100))
+							end
 							elseif fxName == "Upgrade" then
 							SoundManager.Play("Success", 0.6)
 							elseif fxName == "QuestClaim" or fxName == "DailyClaim" then
@@ -13281,34 +14346,114 @@
 							SoundManager.Play("Success", 0.8)
 							Effects.Confetti(playerGui, 50)
 							Effects.ShakeCamera(0.4, 0.3)
+							Effects.FovKick(7, 0.6)
+							if hrpPos then
+							Effects.FloatingText(hrpPos, "+" .. Format.Money(tonumber(arg1) or 0),
+							Color3.fromRGB(120, 255, 160))
+							end
 							elseif fxName == "Achievement" then
 							SoundManager.Play("Achievement", 0.8, 1.1)
 							Effects.Confetti(playerGui, 40)
+							if ctx.Screens and ctx.Screens.AnnounceScreen then
+							ctx.Screens.AnnounceScreen.Announce("rare", "ACHIEVEMENT UNLOCKED!",
+							tostring(arg1 or ""))
+							end
 							elseif fxName == "Gadget" then
 							SoundManager.Play("Gadget", 0.7, 0.9 + math.random() * 0.2)
+							Effects.FovKick(4, 0.4)
 							elseif fxName == "Travel" then
 							SoundManager.Play("Gadget", 0.5, 1.3)
+							Effects.FovKick(10, 0.7)
+							Effects.Flash(playerGui, Color3.fromRGB(255, 255, 255), 0.25)
 							elseif fxName == "TrapStun" then
 							SoundManager.Play("Error", 0.7)
 							Effects.ShakeCamera(0.8, 0.4)
+							Effects.Flash(playerGui, Color3.fromRGB(220, 40, 40), 0.4)
 							elseif fxName == "DecoyGrab" then
 							SoundManager.Play("Error", 0.6)
+							Effects.ShakeCamera(0.4, 0.3)
+							if hrpPos then
+							Effects.FloatingText(hrpPos, "DECOY!", Color3.fromRGB(255, 170, 60))
+							end
 							elseif fxName == "HeistAlarm" then
 							local alertsOn = not ctx.Data or ctx.Data.GetSetting("heistAlerts") ~= false
 							if alertsOn then
 							SoundManager.Play("HeistAlert", 0.8)
 							Effects.Flash(playerGui, Color3.fromRGB(220, 40, 40), 0.7)
 							Effects.ShakeCamera(0.5, 0.4)
+							if ctx.Screens and ctx.Screens.AnnounceScreen then
+							ctx.Screens.AnnounceScreen.Announce("danger", "VAULT BREACH!",
+							tostring(arg1 or "Someone") .. " is robbing you!")
+							end
 							end
 							elseif fxName == "EventStart" then
 							SoundManager.Play("Rare", 0.8)
+							Effects.Flash(playerGui, Color3.fromRGB(255, 200, 80), 0.4)
+							if typeof(arg2) == "Vector3" then
+							Effects.Fireworks(arg2)
+							end
 							elseif fxName == "MeteorLand" then
-							-- positional 3D shake if close
-							local character = Players.LocalPlayer.Character
-							local hrp = character and character:FindFirstChild("HumanoidRootPart")
-							if hrp and typeof(arg1) == "Vector3" and (hrp.Position - arg1).Magnitude &lt; 80 then
+							-- landing burst always renders (visible across the map), shake only near
+							if typeof(arg1) == "Vector3" then
+							local near = hrp and (hrp.Position - arg1).Magnitude &lt; 80
+							Effects.Burst3D(arg1, Color3.fromRGB(255, 150, 50), near and 40 or 16, 10)
+							if near then
 							Effects.ShakeCamera(0.6, 0.4)
-							SoundManager.Play("Error", 0.4)
+							Effects.RingShockwave(arg1, Color3.fromRGB(255, 150, 50), 24)
+							SoundManager.Play("Error", 0.5, 0.7)
+							end
+							end
+							-- NEW JUICE CHANNELS ------------------------------------------------
+							elseif fxName == "Announce" then
+							if ctx.Screens and ctx.Screens.AnnounceScreen then
+							ctx.Screens.AnnounceScreen.Announce(arg1, arg2, arg3, arg4)
+							end
+							elseif fxName == "HatchFx" then
+							local tier = tonumber(arg1) or 1
+							local rarityColor = Rarities.GetColor(arg2)
+							SoundManager.Play(tier &gt;= 4 and "Rare" or "Hatch", 0.7, 0.95 + math.random() * 0.1)
+							Effects.Flash(playerGui, rarityColor, 0.35)
+							Effects.Confetti(playerGui, 8 + tier * 10)
+							if tier &gt;= 4 then
+							SoundManager.Fanfare(tier)
+							end
+							if tier &gt;= 5 then
+							Effects.ShakeCamera(0.5, 0.4)
+							Effects.FovKick(6, 0.6)
+							end
+							if hrpPos then
+							Effects.FloatingText(hrpPos, tostring(arg3 or "???"), rarityColor)
+							end
+							elseif fxName == "Fireworks" then
+							if typeof(arg1) == "Vector3" then
+							Effects.Fireworks(arg1)
+							SoundManager.Play("Rare", 0.25, 1.4)
+							end
+							elseif fxName == "Shockwave" then
+							if typeof(arg1) == "Vector3" then
+							Effects.RingShockwave(arg1, Color3.fromRGB(120, 255, 160), 34)
+							Effects.Burst3D(arg1, Color3.fromRGB(120, 255, 160), 30, 8)
+							Effects.FovKick(5, 0.5)
+							end
+							elseif fxName == "GrabFx" then
+							SoundManager.Play("Gadget", 0.6, 0.8)
+							Effects.FovKick(5, 0.5)
+							elseif fxName == "Robbed" then
+							SoundManager.Play("HeistAlert", 0.8)
+							Effects.Flash(playerGui, Color3.fromRGB(220, 40, 40), 0.7)
+							Effects.ShakeCamera(0.5, 0.4)
+							if ctx.Screens and ctx.Screens.AnnounceScreen then
+							ctx.Screens.AnnounceScreen.Announce("danger", "LOOT EXTRACTED!",
+							tostring(arg1 or "Someone") .. " got away with your loot!")
+							end
+							elseif fxName == "Prestige" then
+							SoundManager.Fanfare(6)
+							Effects.Flash(playerGui, Color3.fromRGB(190, 130, 255), 0.6)
+							Effects.Confetti(playerGui, 100)
+							Effects.ShakeCamera(0.6, 0.5)
+							Effects.FovKick(8, 0.7)
+							if hrp then
+							Effects.RingShockwave(hrp.Position, Color3.fromRGB(190, 130, 255), 30)
 							end
 							end
 							end
@@ -13317,7 +14462,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX106">
+					<Item class="ModuleScript" referent="RBX109">
 						<Properties>
 							<string name="Name">NotificationsScreen</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Screens/NotificationsScreen.luau
@@ -13466,7 +14611,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX107">
+					<Item class="ModuleScript" referent="RBX110">
 						<Properties>
 							<string name="Name">ObjectiveScreen</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Screens/ObjectiveScreen.luau
@@ -13627,7 +14772,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX108">
+					<Item class="ModuleScript" referent="RBX111">
 						<Properties>
 							<string name="Name">QuestsScreen</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Screens/QuestsScreen.luau
@@ -13882,7 +15027,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX109">
+					<Item class="ModuleScript" referent="RBX112">
 						<Properties>
 							<string name="Name">SettingsScreen</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Screens/SettingsScreen.luau
@@ -14066,7 +15211,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX110">
+					<Item class="ModuleScript" referent="RBX113">
 						<Properties>
 							<string name="Name">ShopScreen</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Screens/ShopScreen.luau
@@ -14378,7 +15523,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX111">
+					<Item class="ModuleScript" referent="RBX114">
 						<Properties>
 							<string name="Name">TradeScreen</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Screens/TradeScreen.luau
@@ -14813,7 +15958,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX112">
+					<Item class="ModuleScript" referent="RBX115">
 						<Properties>
 							<string name="Name">TravelScreen</string>
 							<ProtectedString name="Source">-- TravelScreen: fast-travel window (server validates + rate-limits).
@@ -14875,7 +16020,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX113">
+					<Item class="ModuleScript" referent="RBX116">
 						<Properties>
 							<string name="Name">TutorialScreen</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Screens/TutorialScreen.luau
@@ -14969,13 +16114,14 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX114">
+					<Item class="ModuleScript" referent="RBX117">
 						<Properties>
 							<string name="Name">UIFactory</string>
 							<ProtectedString name="Source">-- EggHeist | Client/Screens/UIFactory.luau
 							-- Theme + widget builders for a consistent premium UI.
 							
 							local UserInputService = game:GetService("UserInputService")
+							local TweenService = game:GetService("TweenService")
 							
 							local UIFactory = {}
 							
@@ -15068,6 +16214,24 @@
 							UIFactory.Stroke(button, Theme.Stroke, 1)
 							if onClick then
 							button.MouseButton1Click:Connect(function()
+							-- press pop: every factory button punches on click
+							pcall(function()
+							local original = button.Size
+							local punch = TweenService:Create(button,
+							TweenInfo.new(0.07, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+							Size = UDim2.new(original.X.Scale * 0.94, original.X.Offset * 0.94,
+							original.Y.Scale * 0.94, original.Y.Offset * 0.94),
+							})
+							punch:Play()
+							punch.Completed:Connect(function()
+							pcall(function()
+							TweenService:Create(button,
+							TweenInfo.new(0.09, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+							Size = original,
+							}):Play()
+							end)
+							end)
+							end)
 							pcall(onClick)
 							end)
 							end
@@ -15307,22 +16471,22 @@
 			</Item>
 		</Item>
 	</Item>
-	<Item class="StarterGui" referent="RBX119">
+	<Item class="StarterGui" referent="RBX122">
 		<Properties>
 			<string name="Name">StarterGui</string>
 		</Properties>
 	</Item>
-	<Item class="ServerStorage" referent="RBX120">
+	<Item class="ServerStorage" referent="RBX123">
 		<Properties>
 			<string name="Name">ServerStorage</string>
 		</Properties>
 	</Item>
-	<Item class="SoundService" referent="RBX121">
+	<Item class="SoundService" referent="RBX124">
 		<Properties>
 			<string name="Name">SoundService</string>
 		</Properties>
 	</Item>
-	<Item class="Teams" referent="RBX122">
+	<Item class="Teams" referent="RBX125">
 		<Properties>
 			<string name="Name">Teams</string>
 		</Properties>

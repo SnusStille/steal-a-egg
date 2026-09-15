@@ -8,6 +8,7 @@ local UserInputService = game:GetService("UserInputService")
 local Shared = ReplicatedStorage:WaitForChild("EggHeistShared")
 local ConfigFolder = Shared:WaitForChild("Config")
 local Economy = require(ConfigFolder:WaitForChild("Economy"))
+local Rarities = require(ConfigFolder:WaitForChild("Rarities"))
 local Format = require(Shared:WaitForChild("Utilities"):WaitForChild("Format"))
 local UIFactory = require(script.Parent:WaitForChild("UIFactory"))
 local Effects = require(script.Parent.Parent:WaitForChild("Effects"):WaitForChild("Effects"))
@@ -364,14 +365,26 @@ function MainScreen.RefreshRanks()
 	end
 end
 
-function MainScreen.HandleFx(fxName, arg1, _arg2)
+function MainScreen.HandleFx(fxName, arg1, arg2, arg3, arg4)
 	local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
+	local character = Players.LocalPlayer.Character
+	local hrp = character and character:FindFirstChild("HumanoidRootPart")
+	local hrpPos = hrp and (hrp.Position + Vector3.new(0, 5, 0)) or nil
 	if fxName == "LevelUp" then
 		SoundManager.Play("Success", 0.7)
 		Effects.Flash(playerGui, Color3.fromRGB(80, 220, 120), 0.4)
 		Effects.Confetti(playerGui, 30)
+		Effects.FovKick(5, 0.5)
+		if hrpPos then
+			Effects.FloatingText(hrpPos, "LEVEL " .. tostring(arg1 or "?"),
+				Color3.fromRGB(120, 255, 160))
+		end
 	elseif fxName == "VaultCollect" then
 		SoundManager.Play("Coins", 0.7)
+		if hrpPos then
+			Effects.FloatingText(hrpPos, "+" .. Format.Money(tonumber(arg1) or 0),
+				Color3.fromRGB(255, 215, 100))
+		end
 	elseif fxName == "Upgrade" then
 		SoundManager.Play("Success", 0.6)
 	elseif fxName == "QuestClaim" or fxName == "DailyClaim" then
@@ -381,34 +394,114 @@ function MainScreen.HandleFx(fxName, arg1, _arg2)
 		SoundManager.Play("Success", 0.8)
 		Effects.Confetti(playerGui, 50)
 		Effects.ShakeCamera(0.4, 0.3)
+		Effects.FovKick(7, 0.6)
+		if hrpPos then
+			Effects.FloatingText(hrpPos, "+" .. Format.Money(tonumber(arg1) or 0),
+				Color3.fromRGB(120, 255, 160))
+		end
 	elseif fxName == "Achievement" then
 		SoundManager.Play("Achievement", 0.8, 1.1)
 		Effects.Confetti(playerGui, 40)
+		if ctx.Screens and ctx.Screens.AnnounceScreen then
+			ctx.Screens.AnnounceScreen.Announce("rare", "ACHIEVEMENT UNLOCKED!",
+				tostring(arg1 or ""))
+		end
 	elseif fxName == "Gadget" then
 		SoundManager.Play("Gadget", 0.7, 0.9 + math.random() * 0.2)
+		Effects.FovKick(4, 0.4)
 	elseif fxName == "Travel" then
 		SoundManager.Play("Gadget", 0.5, 1.3)
+		Effects.FovKick(10, 0.7)
+		Effects.Flash(playerGui, Color3.fromRGB(255, 255, 255), 0.25)
 	elseif fxName == "TrapStun" then
 		SoundManager.Play("Error", 0.7)
 		Effects.ShakeCamera(0.8, 0.4)
+		Effects.Flash(playerGui, Color3.fromRGB(220, 40, 40), 0.4)
 	elseif fxName == "DecoyGrab" then
 		SoundManager.Play("Error", 0.6)
+		Effects.ShakeCamera(0.4, 0.3)
+		if hrpPos then
+			Effects.FloatingText(hrpPos, "DECOY!", Color3.fromRGB(255, 170, 60))
+		end
 	elseif fxName == "HeistAlarm" then
 		local alertsOn = not ctx.Data or ctx.Data.GetSetting("heistAlerts") ~= false
 		if alertsOn then
 			SoundManager.Play("HeistAlert", 0.8)
 			Effects.Flash(playerGui, Color3.fromRGB(220, 40, 40), 0.7)
 			Effects.ShakeCamera(0.5, 0.4)
+			if ctx.Screens and ctx.Screens.AnnounceScreen then
+				ctx.Screens.AnnounceScreen.Announce("danger", "VAULT BREACH!",
+					tostring(arg1 or "Someone") .. " is robbing you!")
+			end
 		end
 	elseif fxName == "EventStart" then
 		SoundManager.Play("Rare", 0.8)
+		Effects.Flash(playerGui, Color3.fromRGB(255, 200, 80), 0.4)
+		if typeof(arg2) == "Vector3" then
+			Effects.Fireworks(arg2)
+		end
 	elseif fxName == "MeteorLand" then
-		-- positional 3D shake if close
-		local character = Players.LocalPlayer.Character
-		local hrp = character and character:FindFirstChild("HumanoidRootPart")
-		if hrp and typeof(arg1) == "Vector3" and (hrp.Position - arg1).Magnitude < 80 then
-			Effects.ShakeCamera(0.6, 0.4)
-			SoundManager.Play("Error", 0.4)
+		-- landing burst always renders (visible across the map), shake only near
+		if typeof(arg1) == "Vector3" then
+			local near = hrp and (hrp.Position - arg1).Magnitude < 80
+			Effects.Burst3D(arg1, Color3.fromRGB(255, 150, 50), near and 40 or 16, 10)
+			if near then
+				Effects.ShakeCamera(0.6, 0.4)
+				Effects.RingShockwave(arg1, Color3.fromRGB(255, 150, 50), 24)
+				SoundManager.Play("Error", 0.5, 0.7)
+			end
+		end
+	-- NEW JUICE CHANNELS ------------------------------------------------
+	elseif fxName == "Announce" then
+		if ctx.Screens and ctx.Screens.AnnounceScreen then
+			ctx.Screens.AnnounceScreen.Announce(arg1, arg2, arg3, arg4)
+		end
+	elseif fxName == "HatchFx" then
+		local tier = tonumber(arg1) or 1
+		local rarityColor = Rarities.GetColor(arg2)
+		SoundManager.Play(tier >= 4 and "Rare" or "Hatch", 0.7, 0.95 + math.random() * 0.1)
+		Effects.Flash(playerGui, rarityColor, 0.35)
+		Effects.Confetti(playerGui, 8 + tier * 10)
+		if tier >= 4 then
+			SoundManager.Fanfare(tier)
+		end
+		if tier >= 5 then
+			Effects.ShakeCamera(0.5, 0.4)
+			Effects.FovKick(6, 0.6)
+		end
+		if hrpPos then
+			Effects.FloatingText(hrpPos, tostring(arg3 or "???"), rarityColor)
+		end
+	elseif fxName == "Fireworks" then
+		if typeof(arg1) == "Vector3" then
+			Effects.Fireworks(arg1)
+			SoundManager.Play("Rare", 0.25, 1.4)
+		end
+	elseif fxName == "Shockwave" then
+		if typeof(arg1) == "Vector3" then
+			Effects.RingShockwave(arg1, Color3.fromRGB(120, 255, 160), 34)
+			Effects.Burst3D(arg1, Color3.fromRGB(120, 255, 160), 30, 8)
+			Effects.FovKick(5, 0.5)
+		end
+	elseif fxName == "GrabFx" then
+		SoundManager.Play("Gadget", 0.6, 0.8)
+		Effects.FovKick(5, 0.5)
+	elseif fxName == "Robbed" then
+		SoundManager.Play("HeistAlert", 0.8)
+		Effects.Flash(playerGui, Color3.fromRGB(220, 40, 40), 0.7)
+		Effects.ShakeCamera(0.5, 0.4)
+		if ctx.Screens and ctx.Screens.AnnounceScreen then
+			ctx.Screens.AnnounceScreen.Announce("danger", "LOOT EXTRACTED!",
+				tostring(arg1 or "Someone") .. " got away with your loot!")
+		end
+	elseif fxName == "Prestige" then
+		SoundManager.Fanfare(6)
+		Effects.Flash(playerGui, Color3.fromRGB(190, 130, 255), 0.6)
+		Effects.Confetti(playerGui, 100)
+		Effects.ShakeCamera(0.6, 0.5)
+		Effects.FovKick(8, 0.7)
+		if hrp then
+			Effects.RingShockwave(hrp.Position, Color3.fromRGB(190, 130, 255), 30)
 		end
 	end
 end

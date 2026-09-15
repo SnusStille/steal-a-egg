@@ -152,6 +152,7 @@ local SCREEN_MODULES = {
 	"HatchScreen",
 	"HeistScreen",
 	"EventBannerScreen",
+	"AnnounceScreen", -- big queued banners (fed by Fx "Announce")
 	"TutorialScreen",
 	"ObjectiveScreen",
 	"TradeScreen",

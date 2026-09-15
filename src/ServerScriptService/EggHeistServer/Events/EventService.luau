@@ -187,7 +187,15 @@ function EventService.StartEvent(eventId, forced)
 		endsAt = activeEvent.endsAt,
 		serverNow = os.time(),
 	})
-	registry.Net.FireAll("Fx", "EventStart", eventId)
+	if registry.Atmosphere then
+		registry.Atmosphere.ApplyMood(eventId)
+	end
+	local stagePos = registry.Atmosphere and registry.Atmosphere.GetAnchor("stage") or nil
+	registry.Net.FireAll("Fx", "EventStart", eventId, stagePos)
+	registry.Net.FireAll("Fx", "Announce", "event", def.DisplayName .. "!", def.Description)
+	if registry.Atmosphere then
+		registry.Atmosphere.Celebrate("stage")
+	end
 	if registry.World.SetEventBoard then
 		registry.World.SetEventBoard("LIVE NOW: " .. def.DisplayName)
 	end
@@ -238,6 +246,9 @@ function EventService.EndEvent()
 	activeEvent = nil
 	clearPickups()
 	registry.World.RestoreLighting()
+	if registry.Atmosphere then
+		registry.Atmosphere.RestoreMood()
+	end
 	registry.Notify.Broadcast("info", "Event over",
 		def.DisplayName .. " has ended.", 5)
 	registry.Net.FireAll("EventUpdate", { active = false, serverNow = os.time() })

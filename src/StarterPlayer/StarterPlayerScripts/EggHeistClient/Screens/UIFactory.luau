@@ -2,6 +2,7 @@
 -- Theme + widget builders for a consistent premium UI.
 
 local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
 
 local UIFactory = {}
 
@@ -94,6 +95,24 @@ function UIFactory.Button(text, onClick)
 	UIFactory.Stroke(button, Theme.Stroke, 1)
 	if onClick then
 		button.MouseButton1Click:Connect(function()
+			-- press pop: every factory button punches on click
+			pcall(function()
+				local original = button.Size
+				local punch = TweenService:Create(button,
+					TweenInfo.new(0.07, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+					Size = UDim2.new(original.X.Scale * 0.94, original.X.Offset * 0.94,
+						original.Y.Scale * 0.94, original.Y.Offset * 0.94),
+					})
+				punch:Play()
+				punch.Completed:Connect(function()
+					pcall(function()
+						TweenService:Create(button,
+							TweenInfo.new(0.09, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+							Size = original,
+							}):Play()
+					end)
+				end)
+			end)
 			pcall(onClick)
 		end)
 	end

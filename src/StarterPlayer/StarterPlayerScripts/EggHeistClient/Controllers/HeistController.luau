@@ -7,6 +7,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("EggHeistShared")
 local Settings = require(Shared:WaitForChild("Config"):WaitForChild("Settings"))
+local Effects = require(script.Parent.Parent:WaitForChild("Effects"):WaitForChild("Effects"))
 
 local HeistController = {}
 HeistController.State = { carrying = false }
@@ -23,6 +24,10 @@ function HeistController.Init(context)
 			local ui = ctx.Screens and ctx.Screens.HeistScreen
 			if ui then
 				ui.OnState(HeistController.State)
+			end
+			-- cinematic letterbox while carrying loot
+			if Effects and Effects.Letterbox then
+				Effects.Letterbox(HeistController.State.carrying == true)
 			end
 		end
 	end)

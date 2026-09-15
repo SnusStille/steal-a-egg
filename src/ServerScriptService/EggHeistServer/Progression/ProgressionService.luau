@@ -114,6 +114,10 @@ function ProgressionService.DoPrestige(player)
 			.. " (+" .. tostring(math.floor(p.prestige.bonus * 100)) .. "% income)!", 8)
 	registry.Net.FireAll("Feed", { icon = "STAR",
 		text = player.DisplayName .. " prestiged to rank " .. tostring(p.prestige.count) })
+	registry.Net.Fire(player, "Fx", "Prestige", p.prestige.count)
+	registry.Net.FireAll("Fx", "Announce", "prestige",
+		"PRESTIGE " .. tostring(p.prestige.count) .. "!",
+		player.DisplayName .. " ascended to new power!")
 	if registry.Achievement then
 		registry.Achievement.Check(player, "Prestige")
 	end

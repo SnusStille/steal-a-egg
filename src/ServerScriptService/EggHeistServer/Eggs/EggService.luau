@@ -200,6 +200,16 @@ local function doHatch(player, eggUid)
 		registry.Net.FireAll("Feed", { icon = "HATCH", text = player.DisplayName .. " hatched " .. petName })
 	end
 
+	-- client juice: rarity-scaled hatch celebration for the hatcher
+	registry.Net.Fire(player, "Fx", "HatchFx", tier, roll.rarity, petName, isNew)
+	if tier >= 6 then
+		registry.Net.FireAll("Fx", "Announce", "secret", "SECRET HATCH!",
+			player.DisplayName .. " hatched " .. petName .. "!")
+	elseif tier >= 4 then
+		registry.Net.FireAll("Fx", "Announce", "rare", "LEGENDARY HATCH!",
+			player.DisplayName .. " hatched " .. petName .. "!")
+	end
+
 	registry.Data.MarkDirty(player)
 	local sourceDef = Eggs.ById[egg.eggId]
 	return {

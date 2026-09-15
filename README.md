@@ -66,9 +66,9 @@ StarterPlayerScripts/EggHeistClient/{ Main, ClientNet, Controllers, Screens, ...
 
 | Layer | Count | Contents |
 |---|---|---|
-| Server services | 23 | Data, Economy, Eggs, Pets, Bases, Security, Heists, Gadgets, Quests, Rewards, Collection, Progression, Achievements, Events, Shop, Leaderboards, Trade, NPCs, Travel, World, Net, Notify, Admin |
+| Server services | 24 | Data, Economy, Eggs, Pets, Bases, Security, Heists, Gadgets, Quests, Rewards, Collection, Progression, Achievements, Events, Shop, Leaderboards, Trade, NPCs, Travel, World, Atmosphere, Net, Notify, Admin |
 | Client controllers | 14 | Data, Egg, Pet, Base, Heist, Quest, Shop, Event, Tutorial, Gadget, Collection, NPC, Trade, Input |
-| Screens | 18 | Main, Inventory, Shop, Collection, Base, Quests, Daily, Settings, Hatch, Heist, Event banner, Tutorial, Objective, Trade, Help, Feed, Travel, Notifications |
+| Screens | 19 | Main, Inventory, Shop, Collection, Base, Quests, Daily, Settings, Hatch, Heist, Event banner, Announce, Tutorial, Objective, Trade, Help, Feed, Travel, Notifications |
 | Remotes | 38 + 12 + 2 | Validated + rate-limited; server never trusts the client |
 
 ## Content (all data-driven — see `docs/development.md`)
