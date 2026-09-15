@@ -50,7 +50,7 @@ always shows the single next step; the tutorial is 8 steps, all gameplay.
 | **Fail** | Loot returns to the victim, fail stat + rep loss, cooldowns spent. |
 
 Counterplay both ways: thieves bring gadgets (Lockpick/Smoke/EMP/Drill/
-Sprint) and breach-speed pets; defenders stack security tiers, lockdowns,
+Sprint/Slap glove) and breach-speed pets; defenders stack security tiers, lockdowns,
 and decoys — and can chase (carriers are slow).
 
 ## Security (defense is gameplay, not a tax)
@@ -64,7 +64,7 @@ tiers with level gates and exponential costs. Owners get instant alerts
 
 - **Events** — rotating modifiers (income/luck/mutation mults, lighting,
   meteor-egg pickups). Fully data-driven in `Config/Events`.
-- **Quests & achievements** — dailies/weeklies + 37 achievements with cash,
+- **Quests & achievements** — dailies/weeklies + 39 achievements with cash,
   gem, and egg rewards; streaks and milestones included.
 - **Social** — leaderboards (wealth/pets/heists), most-wanted board, live
   Feed ticker, player-to-player trading with lock + timed confirm.
@@ -77,4 +77,6 @@ tiers with level gates and exponential costs. Owners get instant alerts
   few minutes; first claim wins gems + Feed fame.
 - **Map hotspots** — crystal grotto (gem harvest), sunny shores (message
   bottle), wishing well (blessings), jump pads, lava river + obsidian
-  bridge, sky-vault parkour, and a hot-air balloon overhead.
+  bridge, sky-vault parkour, a hot-air balloon overhead, a pet-parade
+  conveyor in the market (buy pets straight off the belt), and a pet
+  fusion machine (3 same-rarity pets → 1 better one).

@@ -1,5 +1,21 @@
 # Changelog
 
+## PARADE — pet parade, fusion, slap glove (2026-09-15)
+
+Market attractions, defensive gadget, lockdown timer label. Full gate green
+(syntax, refs, waits, sim `WARNS:0 ERRORS:0` incl. parade-buy, fusion,
+and slap-launch assertions).
+
+- PET PARADE (market conveyor): 6 pets ride a neon-railed belt; buy the one
+  you want straight off it (price = 10-min income payback, mutated x2.5).
+  Sold slots restock after 10s. Server-authoritative via `PetService.GrantPet`.
+- FUSION MACHINE (market corner): fuse 3 UNEQUIPPED same-rarity pets into
+  1 next-rarity pet (25% mutation; fusing 3 Secrets rerolls a mutated Secret).
+- SLAP GLOVE gadget ($2,000, 5 held): smacks the nearest rival within
+  14 studs flying. Bought/used from the shop gadgets tab.
+- LOCKDOWN now shows a floating `LOCKDOWN <seconds>` countdown over the plot.
+- 2 quests (`parade_1`, `fuse_1`) + 2 achievements (Parade Shopper, Fusion Chef).
+
 ## MAP — the map megapass (2026-09-15)
 
 Two new districts, five interactives, ambient life, and new content.
