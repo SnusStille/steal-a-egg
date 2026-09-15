@@ -22,6 +22,9 @@ Quests.DailyPool = {
 	{ Id = "earn_100k",   Type = "EarnCash",      Target = 100000, Difficulty = 3, Text = "Earn $100,000" },
 	{ Id = "heist_2",     Type = "CompleteHeists",Target = 2,   Difficulty = 3, Text = "Complete 2 heists" },
 	{ Id = "vault_50k",   Type = "BankVault",     Target = 50000, Difficulty = 3, Text = "Bank $50,000 into your vault" },
+	{ Id = "wish_1",      Type = "MakeWishes",    Target = 1,   Difficulty = 1, Text = "Make a wish at the wishing well" },
+	{ Id = "crystal_1",   Type = "ClaimCrystals", Target = 1,   Difficulty = 1, Text = "Harvest the crystal grotto" },
+	{ Id = "skyvault_1",  Type = "SkyVault",      Target = 1,   Difficulty = 2, Text = "Claim the sky vault" },
 }
 
 -- Weekly pool (2 assigned per week, bigger targets)

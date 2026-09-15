@@ -18,6 +18,7 @@ local LOAD_ORDER = {
 	"World/AtmosphereService", -- map dressing + sky moods (needs the world root)
 	"World/NpcService", -- world NPCs (needs the world root)
 	"World/TravelService", -- fast travel (needs world anchors + base/heist state)
+	"World/ActivitiesService", -- map hotspots (needs world + decor anchors)
 	"Data/DataService", -- profiles before any system touches player data
 	"Net/NotifyService",
 	"Economy/EconomyService",

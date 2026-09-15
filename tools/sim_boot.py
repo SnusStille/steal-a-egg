@@ -124,6 +124,7 @@ def main() -> int:
     print("TRADE:", lua.eval("_SIM.tradeLoop()"))
     print("SNATCH:", lua.eval("_SIM.snatchLoop()"))
     print("PETSNATCH:", lua.eval("_SIM.petSnatchLoop()"))
+    print("ACTIVITIES:", lua.eval("_SIM.activitiesLoop()"))
     print("HEIST:", lua.eval("_SIM.heistLoop()"))
     print("HUNT:", lua.eval("_SIM.huntLoop()"))
     print("EVENT:", lua.eval('_SIM.startEvent("GoldenHour")'))

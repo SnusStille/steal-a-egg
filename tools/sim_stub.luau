@@ -1078,6 +1078,49 @@ function _SIM.petSnatchLoop()
 	return table.concat(out, " | ") .. " | petsnatch-ok"
 end
 
+function _SIM.activitiesLoop()
+	local p1 = _SIM.localPlayer
+	local DS = require(_SIM.serverModule("DataService"))
+	local AS = require(_SIM.serverModule("ActivitiesService"))
+	local parts = AS.TestParts()
+	if not parts or not parts.well then return "activities-no-parts" end
+	_SIM.check(parts.pads == 4, "activities", "jump pads missing")
+	local prof = DS.GetProfile(p1)
+	local hrp = p1.Character:FindFirstChild("HumanoidRootPart")
+	-- wishing well: charges 100, then cooldown blocks a second wish
+	hrp.CFrame = CFrame.new(parts.wellPos + Vector3.new(0, 5, 0))
+	local cashBefore = prof.cash
+	rawget(parts.well, "Triggered"):Fire(p1)
+	_SIM.runDelayed()
+	_SIM.check(prof.cash ~= cashBefore, "activities", "well did not transact")
+	local cashAfter = prof.cash
+	rawget(parts.well, "Triggered"):Fire(p1)
+	_SIM.runDelayed()
+	_SIM.check(prof.cash == cashAfter, "activities", "well cooldown ignored")
+	-- crystal: +15 gems, then cooldown
+	hrp.CFrame = CFrame.new(parts.crystalPos + Vector3.new(0, 5, 0))
+	local gemsBefore = prof.gems
+	rawget(parts.crystal, "Triggered"):Fire(p1)
+	_SIM.runDelayed()
+	_SIM.check(prof.gems == gemsBefore + 15, "activities", "crystal gems not granted")
+	rawget(parts.crystal, "Triggered"):Fire(p1)
+	_SIM.runDelayed()
+	_SIM.check(prof.gems == gemsBefore + 15, "activities", "crystal cooldown ignored")
+	-- sky vault: exactly +250 coins
+	hrp.CFrame = CFrame.new(parts.vaultPos + Vector3.new(0, 5, 0))
+	local cashPre = prof.cash
+	rawget(parts.vault, "Triggered"):Fire(p1)
+	_SIM.runDelayed()
+	_SIM.check(prof.cash == cashPre + 250, "activities", "sky vault coins not granted")
+	-- bottle: consumed, then respawns via the delayed queue
+	hrp.CFrame = CFrame.new(parts.bottlePos + Vector3.new(0, 5, 0))
+	rawget(parts.bottle, "Triggered"):Fire(p1)
+	_SIM.check(parts.bottle.Enabled == false, "activities", "bottle not consumed")
+	_SIM.runDelayed()
+	_SIM.check(parts.bottle.Enabled == true, "activities", "bottle did not respawn")
+	return "activities-ok"
+end
+
 function _SIM.huntLoop()
 	local ES = require(_SIM.serverModule("EventService"))
 	local DS = require(_SIM.serverModule("DataService"))
