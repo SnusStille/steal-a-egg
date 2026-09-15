@@ -75,7 +75,8 @@ Shop.Decorations = {
 	{ Id = "BannerBlue",  DisplayName = "Blue Banner", Price = 1500,  Currency = "Cash" },
 	{ Id = "Fountain",    DisplayName = "Egg Fountain",Price = 50,    Currency = "Gems" },
 	{ Id = "StatueGold",  DisplayName = "Gold Statue", Price = 150,   Currency = "Gems" },
-	{ Id = "EggTotem",    DisplayName = "Egg Totem",   Price = 8000,  Currency = "Cash" },
+	{ Id = "EggTotem",    DisplayName = "Egg Totem",   Price = 8000,  Currency = "Cash",
+		Desc = "+10% pet income each (max +50%)" },
 	{ Id = "CrystalSpire", DisplayName = "Crystal Spire", Price = 120, Currency = "Gems" },
 }
 

@@ -283,8 +283,15 @@ function ShopScreen.Refresh()
 		local card = rowCard(64)
 		local name = UIFactory.Label(decor.DisplayName, UDim2.new(1, -130, 0, 24), Theme.Text, 15)
 		name.TextXAlignment = Enum.TextXAlignment.Left
-		name.Position = UDim2.new(0, 0, 0, 12)
+		name.Position = UDim2.new(0, 0, 0, decor.Desc and 4 or 12)
 		name.Parent = card
+		if decor.Desc then
+			local desc = UIFactory.Label(decor.Desc, UDim2.new(1, -130, 0, 18),
+				Color3.fromRGB(140, 230, 160), 12)
+			desc.TextXAlignment = Enum.TextXAlignment.Left
+			desc.Position = UDim2.new(0, 0, 0, 30)
+			desc.Parent = card
+		end
 		local priceText = decor.Currency == "Gems"
 			and (tostring(decor.Price) .. " G") or Format.Money(decor.Price)
 		local buy = UIFactory.Button(priceText, function()

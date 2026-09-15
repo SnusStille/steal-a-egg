@@ -185,6 +185,20 @@ function EconomyService.GetIncomeMultiplier(player)
 		local bonus = registry.Pet.GetEquippedBonuses(player)
 		mult = mult * (1 + (bonus.IncomePct or 0) / 100)
 	end
+	-- egg totem decor: each totem boosts pet income, up to the cap
+	if p.base and p.base.decorations then
+		local totems = 0
+		for _, decorId in ipairs(p.base.decorations) do
+			if decorId == "EggTotem" then
+				totems = totems + 1
+			end
+		end
+		if totems > 0 then
+			local pct = math.min(totems * (Economy.TotemIncomePct or 10),
+				Economy.TotemMaxBonus or 50)
+			mult = mult * (1 + pct / 100)
+		end
+	end
 	return mult
 end
 

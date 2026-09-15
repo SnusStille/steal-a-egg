@@ -378,6 +378,8 @@
 						
 						-- Vault (base storage that thieves target): fraction of income banked
 						Economy.VaultBankRate = 0.15 -- 15% of earned cash goes to vault (collectable)
+						Economy.TotemIncomePct = 10 -- +pet income per Egg Totem decor on your base
+						Economy.TotemMaxBonus = 50 -- totem income bonus caps here (percent)
 						Economy.VaultBaseCapacity = 5000
 						Economy.HeistStealFraction = 0.25 -- thief takes up to 25% of vault contents
 						
@@ -1694,7 +1696,8 @@
 						{ Id = "BannerBlue",  DisplayName = "Blue Banner", Price = 1500,  Currency = "Cash" },
 						{ Id = "Fountain",    DisplayName = "Egg Fountain",Price = 50,    Currency = "Gems" },
 						{ Id = "StatueGold",  DisplayName = "Gold Statue", Price = 150,   Currency = "Gems" },
-						{ Id = "EggTotem",    DisplayName = "Egg Totem",   Price = 8000,  Currency = "Cash" },
+						{ Id = "EggTotem",    DisplayName = "Egg Totem",   Price = 8000,  Currency = "Cash",
+						Desc = "+10% pet income each (max +50%)" },
 						{ Id = "CrystalSpire", DisplayName = "Crystal Spire", Price = 120, Currency = "Gems" },
 						}
 						
@@ -4808,6 +4811,20 @@
 						if registry.Pet and registry.Pet.GetEquippedBonuses and player then
 						local bonus = registry.Pet.GetEquippedBonuses(player)
 						mult = mult * (1 + (bonus.IncomePct or 0) / 100)
+						end
+						-- egg totem decor: each totem boosts pet income, up to the cap
+						if p.base and p.base.decorations then
+						local totems = 0
+						for _, decorId in ipairs(p.base.decorations) do
+						if decorId == "EggTotem" then
+						totems = totems + 1
+						end
+						end
+						if totems &gt; 0 then
+						local pct = math.min(totems * (Economy.TotemIncomePct or 10),
+						Economy.TotemMaxBonus or 50)
+						mult = mult * (1 + pct / 100)
+						end
 						end
 						return mult
 						end
@@ -18604,8 +18621,15 @@
 							local card = rowCard(64)
 							local name = UIFactory.Label(decor.DisplayName, UDim2.new(1, -130, 0, 24), Theme.Text, 15)
 							name.TextXAlignment = Enum.TextXAlignment.Left
-							name.Position = UDim2.new(0, 0, 0, 12)
+							name.Position = UDim2.new(0, 0, 0, decor.Desc and 4 or 12)
 							name.Parent = card
+							if decor.Desc then
+							local desc = UIFactory.Label(decor.Desc, UDim2.new(1, -130, 0, 18),
+							Color3.fromRGB(140, 230, 160), 12)
+							desc.TextXAlignment = Enum.TextXAlignment.Left
+							desc.Position = UDim2.new(0, 0, 0, 30)
+							desc.Parent = card
+							end
 							local priceText = decor.Currency == "Gems"
 							and (tostring(decor.Price) .. " G") or Format.Money(decor.Price)
 							local buy = UIFactory.Button(priceText, function()

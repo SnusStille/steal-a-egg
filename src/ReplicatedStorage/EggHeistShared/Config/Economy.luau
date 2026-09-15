@@ -53,6 +53,8 @@ Economy.MaxPetsStored = 120 -- inventory cap (soft; oldest commons auto-sell pro
 
 -- Vault (base storage that thieves target): fraction of income banked
 Economy.VaultBankRate = 0.15 -- 15% of earned cash goes to vault (collectable)
+Economy.TotemIncomePct = 10 -- +pet income per Egg Totem decor on your base
+Economy.TotemMaxBonus = 50 -- totem income bonus caps here (percent)
 Economy.VaultBaseCapacity = 5000
 Economy.HeistStealFraction = 0.25 -- thief takes up to 25% of vault contents
 
