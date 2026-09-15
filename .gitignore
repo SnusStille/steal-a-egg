@@ -6,3 +6,6 @@
 *.rbxl.lock
 *.rbxlx.lock
 *.rbxm.lock
+
+__pycache__/
+*.pyc
