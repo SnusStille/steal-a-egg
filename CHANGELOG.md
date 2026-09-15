@@ -1,5 +1,86 @@
 # Changelog
 
+## v4.0.0 — Depth (2026-09-15)
+
+Lead-dev pass: full audit, bug fixes, and the missing depth systems.
+22 services, 14 controllers, 16 UIs, 16 configs.
+
+**Audit fixes (real bugs found)**
+
+- `EventService` used `Eggs.ById` without requiring `Eggs`: EVERY meteor/
+  event pickup crashed on spawn. Fixed + pickups re-verified by reading.
+- Pet followers capped at 5 visuals per player (all equipped still earn).
+- Laser damage was silent: both sides now get throttled attribution
+  ("Zapped by X's lasers" / "Your lasers zapped Y") + `defensesTriggered`
+  stat + Untouchable achievement.
+- `EggService` now requires `Settings` (auto-hatch unlock cost).
+
+**Trading (new, roadmap item shipped)**
+
+- New `Social/TradeService`: request → accept → offer → lock (both) →
+  confirm (both, after 3 s review) → execute. Pets + eggs + cash offers.
+- Everything re-validated at execute: ownership, equipped-lock, balances,
+  receiver caps. Level 5+ both sides, 30 s requests, 180 s sessions,
+  cancel anytime, leaving cancels. `Features.Trading` now on.
+- New `TradeController` + `TradeUI`: player lobby, offer builder with
+  pickers, cash presets (mobile-safe, no textbox), readonly partner
+  panel, review countdown, incoming-request modal, MainUI nav button.
+- `CompleteTrades` quest type + daily, `tradesCompleted` stat, Deal Maker
+  / Broker achievements, trade collection discovery.
+
+**Auto-hatch that works (known-issue fixed)**
+
+- Auto-hatch previously required an unconfigured (id 0) gamepass, so the
+  toggle did nothing. Now: gamepass OR permanent 299-gems unlock via
+  `BuyAutoHatch`; Settings shows UNLOCK when locked, toggle when owned.
+
+**Heist depth**
+
+- Scouting: `ScoutBase` intel (owner, vault band, security tiers, alarm/
+  cameras, lockdown), range + cooldown gated; HeistUI SCOUT button +
+  intel panel; Casing-the-Joint achievement.
+- Scenarios: Standard / QuickSteal / VaultRaid / GhostRun rolled per
+  breach (breach/loot mults, silent runs), shown in channel label.
+- Pet bonuses feed breach time, carry speed, and payout.
+
+**Creature depth**
+
+- 13 pets now carry `Bonus` (income / breach / carry / payout %),
+  summed over equipped pets with caps (`PetService.GetEquippedBonuses`),
+  consumed by Economy + Heist services, shown in InventoryUI.
+
+**Collection v2**
+
+- Rarity filter cycling, mutated-only toggle, spoiler-safe search,
+  gold Showcase row (3 rarest owned); progress % + milestones kept.
+
+**Base progression**
+
+- Vault beacon (grows/warms with Vault track, light at 4+), boundary
+  walls redden with security tiers; security purchases refresh visuals.
+
+**Content**
+
+- Frost Egg (T3, 9k, Lv8), Storm Egg (T5, 400k, Lv18); 6 pets (Frost Mite
+  → Aurora Titan); Celestial mutation (T5+, 24x); Heist Night (+75%
+  heist payout) + Lucky Day (3x secret luck) events; Mutation Surge
+  achievement; trade daily quest.
+
+**Social**
+
+- Overhead tags: name · rep title · level (LeaderboardService,
+  refreshed on rep change + respawn).
+
+**Perf verdicts (measured, not guessed)**
+
+- Snapshot upper bound ~14 KB JSON (~10 KB encoded), pushed max 2/sec
+  only when dirty: delta-sync NOT needed; revisit past ~100 KB.
+- Followers: anchored CFrame sets on one heartbeat + 5-visual cap;
+  full client-side rewrite deferred (see ROADMAP).
+
+**Validation:** 80/80 parse OK; cross-refs pass
+(services=22, controllers=14, uis=16, configs=16, c2s=36, s2c=11, fn=2).
+
 ## v3.0.0 — Playable Alpha (2026-09-15)
 
 The full game loop is now connected: join → spawn → starter cash/egg →

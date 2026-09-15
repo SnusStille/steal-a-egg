@@ -180,6 +180,11 @@ function EconomyService.GetIncomeMultiplier(player)
 	if p.gamepasses and p.gamepasses.VIP then
 		mult = mult * 1.25
 	end
+	-- equipped pet bonuses
+	if registry.Pet and registry.Pet.GetEquippedBonuses and player then
+		local bonus = registry.Pet.GetEquippedBonuses(player)
+		mult = mult * (1 + (bonus.IncomePct or 0) / 100)
+	end
 	return mult
 end
 

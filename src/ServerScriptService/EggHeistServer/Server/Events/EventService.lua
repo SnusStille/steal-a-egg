@@ -7,6 +7,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("EggHeistShared")
 local ConfigFolder = Shared:WaitForChild("Config")
 local Events = require(ConfigFolder:WaitForChild("Events"))
+local Eggs = require(ConfigFolder:WaitForChild("Eggs"))
 local Settings = require(ConfigFolder:WaitForChild("Settings"))
 
 local EventService = {}

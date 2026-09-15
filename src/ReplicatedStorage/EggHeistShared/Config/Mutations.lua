@@ -12,6 +12,7 @@ Mutations.List = {
 	{ Id = "Galaxy",  DisplayName = "Galaxy",  Chance = 0.0025, IncomeMult = 12.0, SellMult = 10.0, Color = Color3.fromRGB(150, 80, 255),  Particle = "Stars",     MinEggTier = 4 },
 	{ Id = "Ancient", DisplayName = "Ancient", Chance = 0.0012, IncomeMult = 18.0, SellMult = 15.0, Color = Color3.fromRGB(210, 170, 110), Particle = "Runes",     MinEggTier = 5 },
 	{ Id = "Void",    DisplayName = "Void",    Chance = 0.0005, IncomeMult = 30.0, SellMult = 25.0, Color = Color3.fromRGB(20, 10, 40),    Particle = "VoidSwirl", MinEggTier = 6 },
+	{ Id = "Celestial", DisplayName = "Celestial", Chance = 0.0008, IncomeMult = 24.0, SellMult = 20.0, Color = Color3.fromRGB(200, 240, 255), Particle = "Stars", MinEggTier = 5 },
 }
 
 Mutations.ById = {}

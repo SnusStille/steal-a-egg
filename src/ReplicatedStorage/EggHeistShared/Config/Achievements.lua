@@ -3,7 +3,8 @@
 --
 -- Trigger: server event name that re-evaluates this achievement.
 --   "BuyEgg" | "HatchEgg" | "EquipPet" | "HeistWin" | "LevelUp" |
---   "Prestige" | "QuestClaim" | "UpgradeBuy" | "SecurityBuy"
+--   "Prestige" | "QuestClaim" | "UpgradeBuy" | "SecurityBuy" |
+--   "TradeComplete" | "Scout" | "Defend"
 -- Conditions (ALL must pass; omit for trigger-only achievements):
 --   Stat = { Key = "<stats key>", Value = n }   -- lifetime stat >= n
 --   Level = n                                   -- player level >= n
@@ -38,6 +39,9 @@ Achievements.List = {
 	{ Id = "mutant_master", Name = "Mutant Master", Text = "Hatch 10 mutated pets",
 		Trigger = "HatchEgg", Stat = { Key = "mutatedHatched", Value = 10 },
 		Reward = { Egg = "Golden" } },
+	{ Id = "mutant_25", Name = "Mutation Surge", Text = "Hatch 25 mutated pets",
+		Trigger = "HatchEgg", Stat = { Key = "mutatedHatched", Value = 25 },
+		Reward = { Egg = "Crystal", Gems = 10 } },
 	{ Id = "legendary_pull", Name = "Legendary Pull", Text = "Hatch a Legendary (or better) pet",
 		Trigger = "HatchEgg", Stat = { Key = "legendaryPlusHatched", Value = 1 },
 		Reward = { Cash = 2500, Gems = 5 } },
@@ -83,6 +87,17 @@ Achievements.List = {
 	{ Id = "quester", Name = "Errand Runner", Text = "Claim 10 quest rewards",
 		Trigger = "QuestClaim", Stat = { Key = "questsDone", Value = 10 },
 		Reward = { Cash = 4000 } },
+	{ Id = "first_trade", Name = "Deal Maker", Text = "Complete your first trade",
+		Trigger = "TradeComplete", Stat = { Key = "tradesCompleted", Value = 1 },
+		Reward = { Cash = 1500 } },
+	{ Id = "trader_10", Name = "Broker", Text = "Complete 10 trades",
+		Trigger = "TradeComplete", Stat = { Key = "tradesCompleted", Value = 10 },
+		Reward = { Gems = 15 } },
+	{ Id = "scouted", Name = "Casing the Joint", Text = "Scout an enemy base",
+		Trigger = "Scout", Reward = { Cash = 500 } },
+	{ Id = "untouchable", Name = "Untouchable", Text = "Trigger your defenses 25 times",
+		Trigger = "Defend", Stat = { Key = "defensesTriggered", Value = 25 },
+		Reward = { Cash = 5000 } },
 }
 
 Achievements.ById = {}

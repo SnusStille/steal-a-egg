@@ -337,6 +337,54 @@ function BaseService.RefreshUpgradeVisuals(player)
 			slot.Color = color
 		end
 	end
+	-- Vault beacon: grows + warms with the Vault track (server-owned part,
+	-- so it works in the real world and the fallback alike)
+	local vaultTier = math.min(10, profile.base.upgrades.Vault or 0)
+	local anchor = registry.World.GetVaultAnchor(plotIndex)
+	if anchor and anchor:IsA("BasePart") then
+		local glow = plot:FindFirstChild("VaultGlow")
+		if not glow then
+			glow = Instance.new("Part")
+			glow.Name = "VaultGlow"
+			glow.Shape = Enum.PartType.Ball
+			glow.Anchored = true
+			glow.CanCollide = false
+			glow.CanQuery = false
+			glow.CanTouch = false
+			glow.Material = Enum.Material.Neon
+			glow.Parent = plot
+		end
+		local warmth = math.floor(vaultTier / 10 * 200)
+		glow.Color = Color3.fromRGB(80 + warmth, 220 - math.floor(warmth / 2), 120)
+		local size = 2 + vaultTier * 0.35
+		glow.Size = Vector3.new(size, size, size)
+		glow.CFrame = CFrame.new(anchor.Position + Vector3.new(0, 6, 0))
+		local light = glow:FindFirstChildOfClass("PointLight")
+		if vaultTier >= 4 and not light then
+			light = Instance.new("PointLight")
+			light.Range = 18
+			light.Brightness = 2
+			light.Parent = glow
+		end
+		if light then
+			light.Color = glow.Color
+		end
+	end
+	-- Security trim: boundary walls redden as total security tiers rise
+	local secTotal = 0
+	for _, secTier in pairs(profile.base.security or {}) do
+		secTotal = secTotal + (tonumber(secTier) or 0)
+	end
+	local trim = Color3.fromRGB(
+		110 + math.min(120, secTotal * 8),
+		110 - math.min(50, secTotal * 3),
+		120 - math.min(50, secTotal * 3))
+	for _, name in ipairs({ "BoundaryWall1", "BoundaryWall2", "BoundaryWall3", "BoundaryWall4" }) do
+		local wall = plot:FindFirstChild(name)
+		if wall and wall:IsA("BasePart") then
+			wall.Color = trim
+		end
+	end
 end
 
 --------------------------------------------------------------------------------

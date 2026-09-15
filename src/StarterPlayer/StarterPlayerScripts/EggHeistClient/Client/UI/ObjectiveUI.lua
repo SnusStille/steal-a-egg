@@ -58,8 +58,19 @@ local function computeObjective(snapshot)
 	if level >= 3 and securityTotal(snapshot) == 0 then
 		return { text = "Buy your first security", ui = "BaseUI", tab = "Security" }
 	end
+	for _, state in pairs(snapshot.achievements or {}) do
+		if state.done and not state.claimed then
+			return { text = "Claim achievement rewards", ui = "QuestsUI", tab = "Achievements" }
+		end
+	end
+	if level >= 4 and (stats.gadgetsUsed or 0) == 0 then
+		return { text = "Buy a gadget for your first heist", ui = "ShopUI", tab = "Gadgets" }
+	end
 	if level >= 2 and (stats.heistsWon or 0) == 0 then
-		return { text = "Attempt a heist at an enemy base" }
+		return { text = "Scout an enemy base, then heist it" }
+	end
+	if level >= 5 and (stats.tradesCompleted or 0) == 0 then
+		return { text = "Trade with another player", ui = "TradeUI" }
 	end
 	if level >= 6 and (stats.maxRarityTier or 0) < 3 then
 		return { text = "Hatch stronger eggs", ui = "ShopUI", tab = "Eggs" }

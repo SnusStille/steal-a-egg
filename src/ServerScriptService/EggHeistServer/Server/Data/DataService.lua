@@ -115,10 +115,13 @@ local function defaultProfile(userId)
 			playMinutes = 0,
 			upgradesBought = 0,
 			securityBought = 0,
+			defensesTriggered = 0,
 			questsDone = 0,
 			gadgetsUsed = 0,
+			tradesCompleted = 0,
 		},
 		gamepasses = {},
+		autoHatchUnlock = false, -- permanent gems unlock (alt. to gamepass)
 		lastSeen = os.time(),
 		_uidCounter = 0,
 	}

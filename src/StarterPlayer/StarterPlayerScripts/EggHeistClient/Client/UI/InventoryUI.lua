@@ -177,6 +177,7 @@ local function petCard(pet, isEquipped)
 	local name = UIFactory.Label(title, UDim2.new(1, 0, 0, 30), rarityColor, 12)
 	name.TextWrapped = true
 	name.Parent = card
+	local bonusText = def and Pets.BonusText(def.Id) or nil
 	local info = UIFactory.Label(
 		(def and def.Rarity or "?") .. " Lv" .. tostring(pet.lvl or 1)
 			.. "\n" .. Format.Money(petIncomeDisplay(pet)) .. "/s",
@@ -184,6 +185,13 @@ local function petCard(pet, isEquipped)
 	info.Position = UDim2.new(0, 0, 0, 36)
 	info.Font = Theme.FontRegular
 	info.Parent = card
+	if bonusText then
+		local bonus = UIFactory.Label(bonusText .. " (equipped)",
+			UDim2.new(1, 0, 0, 18), Theme.Accent, 11)
+		bonus.Position = UDim2.new(0, 0, 0, 78)
+		bonus.Font = Theme.FontRegular
+		bonus.Parent = card
+	end
 
 	local equip = UIFactory.Button(isEquipped and "UNEQUIP" or "EQUIP", function()
 		if isEquipped then

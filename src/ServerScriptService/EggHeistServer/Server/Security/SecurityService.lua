@@ -19,6 +19,7 @@ local stunUntil = {} -- [userId] = timestamp (trap stun)
 local trapCooldown = {} -- [trapPart] = timestamp
 local alarmLastPing = {} -- [plotIndex] = timestamp
 local empUntil = {} -- [plotIndex] = os.clock timestamp (EMP suppression)
+local zapNotifyAt = {} -- [userId] = os.clock timestamp (laser attribution throttle)
 
 function SecurityService.Init(_, reg)
 	registry = reg
@@ -89,6 +90,7 @@ function SecurityService.BuySecurity(player, itemId)
 	local plotIndex = registry.Base.GetPlotOf(player)
 	if plotIndex and plotIndex > 0 then
 		SecurityService.RebuildPlotSecurity(plotIndex)
+		registry.Base.RefreshUpgradeVisuals(player)
 	end
 	registry.Data.MarkDirty(player)
 	return true
@@ -385,6 +387,9 @@ function SecurityService.OnTrapTouched(plotIndex, trap, hit)
 		"You triggered a floor trap!", 3)
 	registry.Notify.Send(owner, "warning", "Trap triggered!",
 		player.DisplayName .. " triggered your trap!", 4)
+	if registry.Achievement then
+		registry.Achievement.Check(owner, "Defend")
+	end
 	registry.Net.Fire(player, "Fx", "TrapStun", stun)
 end
 
@@ -451,6 +456,23 @@ local function laserDamageLoop()
 											if humanoid and humanoid.Health > 0 then
 												humanoid:TakeDamage(dps * 0.5)
 												slowUntil[player.UserId] = now + 1.5
+												-- soft-PvP attribution (throttled): both sides learn what happened
+												if (zapNotifyAt[player.UserId] or 0) < now then
+													zapNotifyAt[player.UserId] = now + 8
+													registry.Notify.Send(player, "error", "Zapped!",
+														owner.DisplayName .. "'s lasers are burning you!", 3)
+													registry.Notify.Send(owner, "warning", "Lasers firing!",
+														player.DisplayName .. " is eating your lasers!", 4)
+														if registry.Achievement then
+														registry.Achievement.Check(owner, "Defend")
+													end
+													local ownerProfile = profileOf(owner)
+													if ownerProfile then
+														ownerProfile.stats.defensesTriggered =
+															(ownerProfile.stats.defensesTriggered or 0) + 1
+														registry.Data.MarkDirty(owner)
+													end
+												end
 											end
 										end
 									end

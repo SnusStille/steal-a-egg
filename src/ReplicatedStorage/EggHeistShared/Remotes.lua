@@ -38,6 +38,16 @@ Remotes.C2S = {
 	"UpdateSetting", -- (key, value)
 	"CompleteTutorialStep", -- (stepId)
 	"PromptShop",    -- (kind, id)  kind: "Gamepass"|"Product"
+	"TradeRequest",  -- (targetUserId)
+	"TradeAccept",   -- ()
+	"TradeDecline",  -- ()
+	"TradeOfferAdd", -- (kind, ref, amount?)  kind: "pet"|"egg"|"cash"
+	"TradeOfferRemove", -- (kind, ref)
+	"TradeLock",     -- ()
+	"TradeConfirm",  -- ()
+	"TradeCancel",   -- ()
+	"ScoutBase",     -- (plotIndex)  intel push arrives via S2C ScoutResult
+	"BuyAutoHatch",  -- ()  gems unlock for auto-hatch (no pass needed)
 	"Admin",         -- (command, ...)  (admins only, server re-checks)
 }
 
@@ -52,6 +62,8 @@ Remotes.S2C = {
 	"Leaderboard",   -- (boardName, entries)
 	"Fx",            -- (fxName, ...) lightweight effect triggers
 	"ServerTime",    -- (unixTime) clock sync for daily/weekly logic
+	"TradeUpdate",   -- (tradeTable) phase/offers/partner state
+	"ScoutResult",   -- (scoutTable) target base intel
 }
 
 -- RemoteFunctions (client invokes, server answers)
@@ -86,6 +98,16 @@ Remotes.RateLimits = {
 	UpdateSetting = 10,
 	CompleteTutorialStep = 4,
 	PromptShop = 3,
+	TradeRequest = 2,
+	TradeAccept = 3,
+	TradeDecline = 3,
+	TradeOfferAdd = 8,
+	TradeOfferRemove = 8,
+	TradeLock = 3,
+	TradeConfirm = 3,
+	TradeCancel = 3,
+	ScoutBase = 2,
+	BuyAutoHatch = 2,
 	Admin = 5,
 }
 

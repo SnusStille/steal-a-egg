@@ -10,6 +10,7 @@ local Pets = require(ConfigFolder:WaitForChild("Pets"))
 local Mutations = require(ConfigFolder:WaitForChild("Mutations"))
 local Rarities = require(ConfigFolder:WaitForChild("Rarities"))
 local Economy = require(ConfigFolder:WaitForChild("Economy"))
+local Settings = require(ConfigFolder:WaitForChild("Settings"))
 local Validate = require(Shared:WaitForChild("Utilities"):WaitForChild("Validate"))
 local Types = require(Shared:WaitForChild("Types"))
 
@@ -111,6 +112,14 @@ local function findEgg(profile, eggUid)
 		end
 	end
 	return nil, nil
+end
+
+-- Public lookup for TradeService (server-only, profile already in hand).
+function EggService.FindEgg(profile, eggUid)
+	if type(profile) ~= "table" or type(profile.eggs) ~= "table" then
+		return nil, nil
+	end
+	return findEgg(profile, eggUid)
 end
 
 local function insertPet(player, profile, roll)
@@ -225,8 +234,9 @@ function EggService.BuyEgg(player, eggId)
 		registry.TutorialHook(player, "BuyEgg")
 	end
 
-	-- Auto-hatch gamepass convenience
-	if profile.settings.autoHatch and profile.gamepasses.AutoHatch then
+	-- Auto-hatch: gamepass OR permanent gems unlock
+	if profile.settings.autoHatch
+		and (profile.gamepasses.AutoHatch or profile.autoHatchUnlock) then
 		local result = doHatch(player, egg.uid)
 		if result then
 			registry.Net.Fire(player, "HatchResult", {
@@ -238,6 +248,28 @@ function EggService.BuyEgg(player, eggId)
 		end
 	end
 	return true
+end
+
+-- Permanent auto-hatch unlock for gems (no Robux pass required).
+function EggService.BuyAutoHatch(player)
+	local profile = profileOf(player)
+	if not profile then
+		return
+	end
+	if profile.autoHatchUnlock or profile.gamepasses.AutoHatch then
+		return
+	end
+	local cost = (Settings.AutoHatch or {}).GemsUnlockCost or 299
+	if not registry.Economy.SpendGems(player, cost) then
+		registry.Notify.Send(player, "warning", "Not enough gems",
+			"Auto Hatchery costs " .. tostring(cost) .. " gems.", 4)
+		return
+	end
+	profile.autoHatchUnlock = true
+	profile.settings.autoHatch = true
+	registry.Data.MarkDirty(player)
+	registry.Notify.Send(player, "success", "Auto Hatchery unlocked!",
+		"Eggs you buy will hatch instantly. Toggle it in Settings.", 5)
 end
 
 -- Grants an egg without payment (events, quests, admin, daily rewards)
@@ -260,6 +292,10 @@ end
 function EggService.Start()
 	registry.Net.OnRequest("BuyEgg", function(player, eggId)
 		EggService.BuyEgg(player, eggId)
+	end)
+
+	registry.Net.OnRequest("BuyAutoHatch", function(player)
+		EggService.BuyAutoHatch(player)
 	end)
 
 	registry.Net.OnRequest("HatchEgg", function(player, eggUid)

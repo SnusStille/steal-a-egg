@@ -17,6 +17,7 @@ Quests.DailyPool = {
 	{ Id = "secure_1",    Type = "UpgradeSecurity", Target = 1, Difficulty = 2, Text = "Buy a security upgrade" },
 	{ Id = "vault_10k",   Type = "BankVault",     Target = 10000, Difficulty = 2, Text = "Bank $10,000 into your vault" },
 	{ Id = "play_15m",    Type = "PlayMinutes",   Target = 15,  Difficulty = 1, Text = "Play for 15 minutes" },
+	{ Id = "trade_1",     Type = "CompleteTrades",Target = 1,   Difficulty = 1, Text = "Complete 1 trade" },
 }
 
 -- Weekly pool (2 assigned per week, bigger targets)

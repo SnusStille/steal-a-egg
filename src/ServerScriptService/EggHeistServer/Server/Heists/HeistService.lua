@@ -43,7 +43,10 @@ function HeistService.GetCarrySpeed(player)
 	if registry.Gadget and registry.Gadget.IsSprintActive(player) then
 		mult = mult * registry.Gadget.GetSprintMult()
 	end
-	return math.min(1, mult) -- gadgets can erase the slow, never exceed walk speed
+	if registry.Pet and registry.Pet.GetEquippedBonuses then
+		mult = mult + (registry.Pet.GetEquippedBonuses(player).CarrySpeedPct or 0) / 100
+	end
+	return math.min(1, mult) -- bonuses can erase the slow, never exceed walk speed
 end
 
 -- Notoriety title from reputation (shared table, client mirrors this logic)
@@ -65,6 +68,9 @@ local function addRep(player, delta)
 	profile.stats = profile.stats or {}
 	local before = profile.stats.heistRep or 0
 	profile.stats.heistRep = math.max(0, before + (delta or 0))
+	if registry.Leaderboard and registry.Leaderboard.RefreshTitle then
+		registry.Leaderboard.RefreshTitle(player)
+	end
 	return profile.stats.heistRep, HeistService.GetRepTitle(before)
 end
 
@@ -188,6 +194,29 @@ end
 -- Grab flow
 --------------------------------------------------------------------------------
 
+local scenarioRng = Random.new()
+local scoutCooldownUntil = {} -- [userId] = os.clock
+
+local function rollScenario()
+	local scenarios = (Settings.Heist or {}).Scenarios or {}
+	local total = 0
+	for _, entry in ipairs(scenarios) do
+		total = total + (entry.Weight or 0)
+	end
+	if total <= 0 then
+		return { Id = "Standard", BreachMult = 1, LootMult = 1 }
+	end
+	local roll = scenarioRng:NextNumber(0, total)
+	local acc = 0
+	for _, entry in ipairs(scenarios) do
+		acc = acc + (entry.Weight or 0)
+		if roll <= acc then
+			return entry
+		end
+	end
+	return scenarios[1]
+end
+
 function HeistService.TryGrab(player, plotIndex, target)
 	if not Settings.Features.Heists then
 		return
@@ -255,20 +284,35 @@ function HeistService.TryGrab(player, plotIndex, target)
 		mods = registry.Gadget.ConsumeArmedForBreach(player)
 	end
 	-- begin breach channel: must stay near the vault
+	local scenario = rollScenario()
+	local petBonus = { BreachSpeedPct = 0 }
+	if registry.Pet and registry.Pet.GetEquippedBonuses then
+		petBonus = registry.Pet.GetEquippedBonuses(player)
+	end
 	local breachTime = registry.Security.GetBreachTime(victim)
 		* (isQuick and (Settings.Heist.QuickGrabBreachMult or 0.5) or 1)
 		* (mods.breachMult or 1)
+		* (scenario.BreachMult or 1)
+		* (1 - math.min(0.5, (petBonus.BreachSpeedPct or 0) / 100))
 	breachTime = math.max(0.8, breachTime)
-	channeling[player.UserId] = { plotIndex = plotIndex, endsAt = now + breachTime, target = target }
-	local breachLabel = isQuick and "Quick grab..." or "Breaching..."
+	channeling[player.UserId] = {
+		plotIndex = plotIndex, endsAt = now + breachTime,
+		target = target, scenario = scenario.Id,
+	}
+	local scenarioName = ((Settings.Heist or {}).ScenarioNames or {})[scenario.Id]
+		or "Breaching..."
+	local breachLabel = isQuick and "Quick grab..." or scenarioName
 	registry.Notify.Send(player, "info", breachLabel,
 		"Stay by the vault for " .. string.format("%.1f", breachTime) .. "s!", 4)
-	registry.Net.Fire(player, "HeistUpdate", { channeling = true, duration = breachTime, target = target })
-	if not isQuick and not mods.silent then
+	registry.Net.Fire(player, "HeistUpdate", {
+		channeling = true, duration = breachTime, target = target, scenario = scenario.Id,
+	})
+	local silent = mods.silent or scenario.SilentBreach == true
+	if not isQuick and not silent then
 		registry.Security.AlertOwner(victim, player, "is breaching your vault!")
-	elseif mods.silent then
+	elseif silent then
 		registry.Notify.Send(player, "info", "Silent breach",
-			"Smoke hides you... until the grab.", 3)
+			"Nobody heard that... until the grab.", 3)
 	end
 
 	task.delay(breachTime, function()
@@ -297,11 +341,11 @@ function HeistService.TryGrab(player, plotIndex, target)
 			registry.Notify.Send(player, "warning", "Lockdown!", "Sealed mid-breach!", 3)
 			return
 		end
-		HeistService.CompleteGrab(player, victim2, plotIndex, state.target)
+		HeistService.CompleteGrab(player, victim2, plotIndex, state.target, state.scenario)
 	end)
 end
 
-function HeistService.CompleteGrab(thief, victim, plotIndex, target)
+function HeistService.CompleteGrab(thief, victim, plotIndex, target, scenarioId)
 	local victimProfile = profileOf(victim)
 	local thiefProfile = profileOf(thief)
 	if not victimProfile or not thiefProfile then
@@ -326,7 +370,19 @@ function HeistService.CompleteGrab(thief, victim, plotIndex, target)
 	if registry.Event then
 		payoutMult = registry.Event.GetHeistPayoutMultiplier()
 	end
-	local loot = math.floor(vault * Economy.HeistStealFraction * (1 - protection) * payoutMult)
+	local scenarioLootMult = 1
+	for _, entry in ipairs((Settings.Heist or {}).Scenarios or {}) do
+		if entry.Id == scenarioId then
+			scenarioLootMult = entry.LootMult or 1
+			break
+		end
+	end
+	local petPayoutPct = 0
+	if registry.Pet and registry.Pet.GetEquippedBonuses then
+		petPayoutPct = registry.Pet.GetEquippedBonuses(thief).HeistPayoutPct or 0
+	end
+	local loot = math.floor(vault * Economy.HeistStealFraction * (1 - protection)
+		* payoutMult * scenarioLootMult * (1 + petPayoutPct / 100))
 	if target == "quick" then
 		loot = math.floor(loot * (Settings.Heist.QuickGrabLootFraction or 0.4))
 	end
@@ -336,7 +392,8 @@ function HeistService.CompleteGrab(thief, victim, plotIndex, target)
 		return
 	end
 	-- deduct now (server-authoritative, no duplication possible)
-	local deducted = math.floor(vault * Economy.HeistStealFraction * (1 - protection))
+	local deducted = math.floor(vault * Economy.HeistStealFraction * (1 - protection)
+		* scenarioLootMult)
 	if target == "quick" then
 		deducted = math.floor(deducted * (Settings.Heist.QuickGrabLootFraction or 0.4))
 	end
@@ -495,6 +552,73 @@ function HeistService.AbandonCarry(player)
 	return true
 end
 
+-- Scouting: range- + cooldown-gated intel on an enemy base. Vault is
+-- reported as a BAND (no exact numbers), security as totals.
+function HeistService.ScoutBase(player, plotIndex)
+	if not Settings.Features.Heists then
+		return
+	end
+	plotIndex = math.floor(tonumber(plotIndex) or 0)
+	if plotIndex < 1 or plotIndex > Settings.MaxBasePlots then
+		return
+	end
+	local owner = registry.Base.GetOwnerOfPlot(plotIndex)
+	if not owner or owner == player then
+		return
+	end
+	local now = os.clock()
+	if (scoutCooldownUntil[player.UserId] or 0) > now then
+		return
+	end
+	local character = player.Character
+	local hrp = character and character:FindFirstChild("HumanoidRootPart")
+	local plot = registry.World.GetPlotModel(plotIndex)
+	local foundation = plot and plot:FindFirstChild("Foundation")
+	if not hrp or not foundation or not foundation:IsA("BasePart") then
+		return
+	end
+	if (hrp.Position - foundation.Position).Magnitude > (Settings.Heist.ScoutRange or 60) then
+		registry.Notify.Send(player, "warning", "Too far",
+			"Get closer to scout this base.", 3)
+		return
+	end
+	scoutCooldownUntil[player.UserId] = now + (Settings.Heist.ScoutCooldown or 10)
+	local victimProfile = profileOf(owner)
+	local vault = victimProfile and (victimProfile.base.vault or 0) or 0
+	local band = "Nearly empty"
+	if vault >= 200000 then
+		band = "Overflowing"
+	elseif vault >= 50000 then
+		band = "Loaded"
+	elseif vault >= 10000 then
+		band = "Stocked"
+	elseif vault >= 1000 then
+		band = "Light"
+	end
+	local security = victimProfile and victimProfile.base.security or {}
+	local total, door = 0, 0
+	for itemId, tier in pairs(security) do
+		total = total + (tonumber(tier) or 0)
+		if itemId == "Door" then
+			door = tonumber(tier) or 0
+		end
+	end
+	registry.Net.Fire(player, "ScoutResult", {
+		plotIndex = plotIndex,
+		owner = owner.DisplayName,
+		ownerLevel = victimProfile and (victimProfile.level or 1) or 1,
+		vaultBand = band,
+		securityTiers = total,
+		doorTier = door,
+		hasAlarm = (security.Alarm or 0) > 0,
+		hasCamera = (security.Camera or 0) > 0,
+		lockdown = registry.Security.IsLockedDown(owner),
+	})
+	if registry.Achievement then
+		registry.Achievement.Check(player, "Scout")
+	end
+end
+
 function HeistService.HandlePlayerLeaving(player)
 	channeling[player.UserId] = nil
 	extracting[player.UserId] = nil
@@ -529,6 +653,10 @@ function HeistService.Start()
 
 	registry.Net.OnRequest("AbandonLoot", function(player)
 		HeistService.AbandonCarry(player)
+	end)
+
+	registry.Net.OnRequest("ScoutBase", function(player, plotIndex)
+		HeistService.ScoutBase(player, plotIndex)
 	end)
 
 	task.spawn(extractionLoop)

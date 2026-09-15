@@ -161,6 +161,60 @@ local function buildPhysicalBoard()
 	return list
 end
 
+-- Overhead social tag: display name + heist rep title + level.
+-- Rebuilt idempotently (respawns, rep-ups). Purely cosmetic.
+function LeaderboardService.RefreshTitle(player)
+	local character = player and player.Character
+	local head = character and character:FindFirstChild("Head")
+	if not head then
+		return
+	end
+	local profile = registry.Data and registry.Data.GetProfile(player) or nil
+	local rep = profile and (profile.stats.heistRep or 0) or 0
+	local title = "Pickpocket"
+	if registry.Heist and registry.Heist.GetRepTitle then
+		title = registry.Heist.GetRepTitle(rep)
+	end
+	local level = profile and (profile.level or 1) or 1
+	local tag = head:FindFirstChild("HeistTitle")
+	if not tag then
+		tag = Instance.new("BillboardGui")
+		tag.Name = "HeistTitle"
+		tag.Size = UDim2.new(0, 200, 0, 40)
+		tag.StudsOffset = Vector3.new(0, 2.6, 0)
+		tag.AlwaysOnTop = false
+		tag.MaxDistance = 80
+		tag.Parent = head
+		local text = Instance.new("TextLabel")
+		text.Name = "Text"
+		text.Size = UDim2.fromScale(1, 1)
+		text.BackgroundTransparency = 1
+		text.Font = Enum.Font.GothamBold
+		text.TextSize = 14
+		text.TextColor3 = Color3.fromRGB(255, 220, 130)
+		text.TextStrokeTransparency = 0.4
+		text.Parent = tag
+	end
+	tag.Text.Text = player.DisplayName .. "  ·  " .. title .. "  ·  Lv" .. tostring(level)
+end
+
+local function hookTitles(player)
+	player.CharacterAdded:Connect(function()
+		task.delay(1, function()
+			if player.Parent then
+				LeaderboardService.RefreshTitle(player)
+			end
+		end)
+	end)
+	if player.Character then
+		task.delay(1, function()
+			if player.Parent then
+				LeaderboardService.RefreshTitle(player)
+			end
+		end)
+	end
+end
+
 function LeaderboardService.Start()
 	local boardLabel = nil
 	pcall(function()
@@ -203,6 +257,11 @@ function LeaderboardService.Start()
 			submitScore(player, board)
 		end
 	end)
+
+	for _, player in ipairs(Players:GetPlayers()) do
+		hookTitles(player)
+	end
+	Players.PlayerAdded:Connect(hookTitles)
 end
 
 return LeaderboardService

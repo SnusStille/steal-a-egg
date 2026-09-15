@@ -26,6 +26,9 @@ local repChip = nil
 local carryAmount = 0
 local carryTarget = "Vault"
 local carryEndsAt = 0
+local intelFrame = nil
+local intelLabel = nil
+local intelHideToken = 0
 
 local Theme = UIFactory.Theme
 
@@ -113,6 +116,38 @@ function HeistUI.Init(context)
 		end)
 	end
 
+	-- scout button (bottom-right): intel on the nearest enemy base
+	local scoutButton = UIFactory.Button("SCOUT", function()
+		if ctx.Controllers and ctx.Controllers.HeistController then
+			ctx.Controllers.HeistController.Scout()
+		end
+	end)
+	scoutButton.AnchorPoint = Vector2.new(1, 1)
+	scoutButton.Position = UDim2.new(1, -12, 1, -150)
+	scoutButton.Size = UDim2.new(0, 120, 0, 44)
+	scoutButton.Parent = gui
+
+	-- intel panel (center-right card, auto-hides)
+	intelFrame = Instance.new("Frame")
+	intelFrame.AnchorPoint = Vector2.new(1, 0.5)
+	intelFrame.Position = UDim2.new(1, -12, 0.45, 0)
+	intelFrame.Size = UDim2.new(0, 250, 0, 170)
+	intelFrame.BackgroundColor3 = Theme.Panel
+	intelFrame.BorderSizePixel = 0
+	intelFrame.Visible = false
+	UIFactory.Corner(intelFrame, 10)
+	UIFactory.Stroke(intelFrame, Theme.Accent, 2)
+	intelFrame.Parent = gui
+	local intelTitle = UIFactory.Label("BASE INTEL", UDim2.new(1, 0, 0, 26), Theme.Accent, 14)
+	intelTitle.Parent = intelFrame
+	intelLabel = UIFactory.Label("", UDim2.new(1, -16, 1, -34), Theme.Text, 13)
+	intelLabel.Position = UDim2.new(0, 8, 0, 28)
+	intelLabel.TextXAlignment = Enum.TextXAlignment.Left
+	intelLabel.TextYAlignment = Enum.TextYAlignment.Top
+	intelLabel.Font = Theme.FontRegular
+	intelLabel.TextWrapped = true
+	intelLabel.Parent = intelFrame
+
 	-- channel + carry tickers
 	task.spawn(function()
 		while true do
@@ -179,7 +214,11 @@ function HeistUI.OnState(state)
 	end
 	if state.channeling == true then
 		channelFrame.Visible = true
-		if state.target then
+		local scenarioName = state.scenario
+			and ((Settings.Heist or {}).ScenarioNames or {})[state.scenario]
+		if scenarioName then
+			channelLabel.Text = string.upper(tostring(scenarioName)) .. "! STAY CLOSE!"
+		elseif state.target then
 			channelLabel.Text = "BREACHING " .. string.upper(tostring(state.target)) .. "... STAY CLOSE!"
 		else
 			channelLabel.Text = "BREACHING... STAY CLOSE!"
@@ -207,6 +246,29 @@ function HeistUI.OnState(state)
 			end)
 		end
 	end
+end
+
+function HeistUI.OnScout(intel)
+	local lines = {
+		"Owner: " .. tostring(intel.owner or "?")
+			.. " (Lv " .. tostring(intel.ownerLevel or 1) .. ")",
+		"Vault: " .. tostring(intel.vaultBand or "?"),
+		"Security: " .. tostring(intel.securityTiers or 0) .. " tiers"
+			.. " (Door " .. tostring(intel.doorTier or 0) .. ")",
+		((intel.hasAlarm and "ALARM " or "") .. (intel.hasCamera and "CAMERAS" or "")):gsub("^$", "No alarm/cameras"),
+		intel.lockdown and "STATUS: LOCKDOWN (sealed!)" or "Status: approachable",
+	}
+	intelLabel.Text = table.concat(lines, "\n")
+	intelFrame.Visible = true
+	Effects.Pop(intelFrame, 1.03)
+	SoundManager.Play("Notify", 0.6, 1.2)
+	intelHideToken = intelHideToken + 1
+	local token = intelHideToken
+	task.delay(12, function()
+		if token == intelHideToken then
+			intelFrame.Visible = false
+		end
+	end)
 end
 
 return HeistUI

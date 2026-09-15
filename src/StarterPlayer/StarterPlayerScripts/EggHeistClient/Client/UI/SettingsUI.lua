@@ -24,7 +24,7 @@ local SETTING_DEFS = {
 	{ Key = "sfx", Label = "Sound effects" },
 	{ Key = "notifications", Label = "Notifications" },
 	{ Key = "showPets", Label = "Show my pets" },
-	{ Key = "autoHatch", Label = "Auto-hatch (needs gamepass)" },
+	{ Key = "autoHatch", Label = "Auto-hatch hatched-on-buy" },
 	{ Key = "cameraShake", Label = "Camera shake" },
 	{ Key = "reducedEffects", Label = "Reduced effects" },
 	{ Key = "performanceMode", Label = "Performance mode" },
@@ -61,21 +61,32 @@ function SettingsUI.Refresh()
 	local settingsHeader = UIFactory.Label("SETTINGS", UDim2.new(1, 0, 0, 26), Theme.Accent, 15)
 	settingsHeader.TextXAlignment = Enum.TextXAlignment.Left
 	settingsHeader.Parent = list
+	local autoHatchOwned = snapshot.autoHatchUnlock == true
+		or (snapshot.gamepasses and snapshot.gamepasses.AutoHatch == true)
 	for _, def in ipairs(SETTING_DEFS) do
 		local card = UIFactory.Card(52)
 		local label = UIFactory.Label(def.Label, UDim2.new(1, -80, 1, 0), Theme.Text, 14)
 		label.TextXAlignment = Enum.TextXAlignment.Left
 		label.Parent = card
-		local toggle = UIFactory.Toggle(settings[def.Key] ~= false, function(state)
-			ctx.Net.Fire("UpdateSetting", def.Key, state)
-			-- optimistic local update
-			local data = ctx.Data.Get()
-			if data and data.settings then
-				data.settings[def.Key] = state
-			end
-		end)
-		toggle.Position = UDim2.new(1, -64, 0.5, -15)
-		toggle.Parent = card
+		if def.Key == "autoHatch" and not autoHatchOwned then
+			local unlock = UIFactory.PrimaryButton("UNLOCK 299 G", function()
+				ctx.Net.Fire("BuyAutoHatch")
+			end)
+			unlock.Size = UDim2.new(0, 140, 0, 36)
+			unlock.Position = UDim2.new(1, -148, 0.5, -18)
+			unlock.Parent = card
+		else
+			local toggle = UIFactory.Toggle(settings[def.Key] ~= false, function(state)
+				ctx.Net.Fire("UpdateSetting", def.Key, state)
+				-- optimistic local update
+				local data = ctx.Data.Get()
+				if data and data.settings then
+					data.settings[def.Key] = state
+				end
+			end)
+			toggle.Position = UDim2.new(1, -64, 0.5, -15)
+			toggle.Parent = card
+		end
 		card.Parent = list
 	end
 

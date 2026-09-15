@@ -47,6 +47,39 @@ function PetService.IsEquipped(profile, petUid)
 	return false
 end
 
+-- Sums Bonus { Stat, Pct } over EQUIPPED pets (caps prevent runaway stacking).
+-- Consumed by Economy (income) and Heist (breach/carry/payout) services.
+local BONUS_CAPS = {
+	IncomePct = 40,
+	BreachSpeedPct = 25,
+	CarrySpeedPct = 25,
+	HeistPayoutPct = 40,
+}
+
+function PetService.GetEquippedBonuses(player)
+	local totals = { IncomePct = 0, BreachSpeedPct = 0, CarrySpeedPct = 0, HeistPayoutPct = 0 }
+	local profile = profileOf(player)
+	if not profile then
+		return totals
+	end
+	for _, uid in ipairs(profile.equipped or {}) do
+		local pet = PetService.FindPet(profile, uid)
+		local def = pet and Pets.ById[pet.id] or nil
+		if def and def.Bonus then
+			local stat, pct = def.Bonus[1], tonumber(def.Bonus[2]) or 0
+			if totals[stat] ~= nil and pct > 0 then
+				totals[stat] = totals[stat] + pct
+			end
+		end
+	end
+	for stat, cap in pairs(BONUS_CAPS) do
+		if totals[stat] > cap then
+			totals[stat] = cap
+		end
+	end
+	return totals
+end
+
 function PetService.MaxSlots(player)
 	local profile = profileOf(player)
 	local slots = Economy.BasePetSlots

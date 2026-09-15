@@ -20,6 +20,12 @@ local grid = nil
 local progressLabel = nil
 local milestoneBox = nil
 local gridHolder = nil
+local rarityButton = nil
+local mutButton = nil
+local searchBox = nil
+local rarityFilter = nil -- nil = all rarities
+local mutOnly = false
+local searchText = ''
 
 local Theme = UIFactory.Theme
 
@@ -29,7 +35,7 @@ function CollectionUI.Init(context)
 	local gui = UIFactory.ScreenGui("EggHeistCollection", 20)
 	gui.Parent = playerGui
 
-	window = UIFactory.Window(gui, "Collection", UDim2.new(0, 560, 0, 520))
+	window = UIFactory.Window(gui, "Collection", UDim2.new(0, 560, 0, 560))
 	progressLabel = UIFactory.Label("", UDim2.new(1, 0, 0, 24), Theme.Accent, 14)
 	progressLabel.Parent = window.Content
 	local milestoneHeight = 30 + #Collection.Milestones * 28 + 8
@@ -47,9 +53,68 @@ function CollectionUI.Init(context)
 	milestonePad.PaddingLeft = UDim.new(0, 10)
 	milestonePad.PaddingRight = UDim.new(0, 10)
 	milestonePad.Parent = milestoneBox
+	local filterTop = 28 + milestoneHeight + 6
+	local filterBar = Instance.new("Frame")
+	filterBar.Position = UDim2.new(0, 0, 0, filterTop)
+	filterBar.Size = UDim2.new(1, 0, 0, 34)
+	filterBar.BackgroundTransparency = 1
+	filterBar.Parent = window.Content
+	rarityButton = UIFactory.Button("Rarity: All", function()
+		local order = {}
+		for _, rarity in ipairs(Rarities.List) do
+			order[#order + 1] = rarity.Id
+		end
+		if rarityFilter == nil then
+			rarityFilter = order[1]
+		else
+			local nextIndex = nil
+			for i, id in ipairs(order) do
+				if id == rarityFilter then
+					nextIndex = i + 1
+					break
+				end
+			end
+			if nextIndex and order[nextIndex] then
+				rarityFilter = order[nextIndex]
+			else
+				rarityFilter = nil
+			end
+		end
+		rarityButton.Text = "Rarity: " .. tostring(rarityFilter or "All")
+		CollectionUI.Refresh()
+	end)
+	rarityButton.Size = UDim2.new(0, 130, 0, 30)
+	rarityButton.Position = UDim2.new(0, 0, 0, 2)
+	rarityButton.Parent = filterBar
+	mutButton = UIFactory.Button("Mutated: Off", function()
+		mutOnly = not mutOnly
+		mutButton.Text = mutOnly and "Mutated: ON" or "Mutated: Off"
+		mutButton.BackgroundColor3 = mutOnly and Theme.Accent or Theme.Button
+		CollectionUI.Refresh()
+	end)
+	mutButton.Size = UDim2.new(0, 130, 0, 30)
+	mutButton.Position = UDim2.new(0, 136, 0, 2)
+	mutButton.Parent = filterBar
+	searchBox = Instance.new("TextBox")
+	searchBox.PlaceholderText = "Search..."
+	searchBox.Text = ""
+	searchBox.ClearTextOnFocus = false
+	searchBox.Size = UDim2.new(1, -272, 0, 30)
+	searchBox.Position = UDim2.new(0, 272, 0, 2)
+	searchBox.BackgroundColor3 = Theme.Button
+	searchBox.TextColor3 = Theme.Text
+	searchBox.PlaceholderColor3 = Theme.TextDim
+	searchBox.Font = Theme.FontRegular
+	searchBox.TextSize = 13
+	UIFactory.Corner(searchBox, 8)
+	searchBox.Parent = filterBar
+	searchBox:GetPropertyChangedSignal("Text"):Connect(function()
+		searchText = string.lower(searchBox.Text or "")
+		CollectionUI.Refresh()
+	end)
 	gridHolder = Instance.new("Frame")
-	gridHolder.Position = UDim2.new(0, 0, 0, 28 + milestoneHeight + 6)
-	gridHolder.Size = UDim2.new(1, 0, 1, -(28 + milestoneHeight + 6))
+	gridHolder.Position = UDim2.new(0, 0, 0, filterTop + 38)
+	gridHolder.Size = UDim2.new(1, 0, 1, -(filterTop + 38))
 	gridHolder.BackgroundTransparency = 1
 	gridHolder.Parent = window.Content
 	grid = UIFactory.Grid(gridHolder, UDim2.new(0, 158, 0, 120), 8)
@@ -109,45 +174,98 @@ function CollectionUI.Refresh()
 		end
 	end
 	total = #entries
+	-- Showcase: 3 rarest OWNED entries (gold frames, spoiler-free)
+	local owned = {}
+	for _, entry in ipairs(entries) do
+		local key = entry.pet.Id .. ":" .. (entry.mut or "Normal")
+		if (collection[key] or 0) > 0 then
+			owned[#owned + 1] = entry
+		end
+	end
+	table.sort(owned, function(a, b)
+		local tierA = Rarities.GetTier(a.pet.Rarity)
+		local tierB = Rarities.GetTier(b.pet.Rarity)
+		if tierA ~= tierB then
+			return tierA > tierB
+		end
+		if (a.mut ~= nil) ~= (b.mut ~= nil) then
+			return a.mut ~= nil
+		end
+		return (a.pet.BaseIncome or 0) > (b.pet.BaseIncome or 0)
+	end)
+	for i = 1, math.min(3, #owned) do
+		local entry = owned[i]
+		local showcase = Instance.new("Frame")
+		showcase.Size = UDim2.new(0, 158, 0, 44)
+		showcase.BackgroundColor3 = Theme.Card
+		showcase.BorderSizePixel = 0
+		UIFactory.Corner(showcase, 8)
+		UIFactory.Stroke(showcase, Color3.fromRGB(255, 205, 60), 2)
+		UIFactory.Padding(showcase, 6)
+		local title = (entry.mut and (entry.mut .. " ") or "") .. entry.pet.DisplayName
+		local star = UIFactory.Label("SHOWCASE: " .. title, UDim2.new(1, 0, 1, 0),
+			Color3.fromRGB(255, 220, 120), 11)
+		star.TextWrapped = true
+		star.Font = Theme.FontRegular
+		star.Parent = showcase
+		showcase.Parent = grid
+		showcase.LayoutOrder = -10 + i
+	end
 	for _, entry in ipairs(entries) do
 		local key = entry.pet.Id .. ":" .. (entry.mut or "Normal")
 		local count = collection[key] or 0
+		-- filters (spoiler-safe: search only matches discovered names)
+		local show = true
+		if rarityFilter and entry.pet.Rarity ~= rarityFilter then
+			show = false
+		end
+		if mutOnly and entry.mut == nil then
+			show = false
+		end
+		if searchText ~= "" then
+			if count == 0 or not string.find(string.lower(entry.pet.DisplayName), searchText, 1, true) then
+				show = false
+			end
+		end
 		if count > 0 then
 			found = found + 1
 		end
-		local rarityColor = Rarities.GetColor(entry.pet.Rarity)
-		local card = Instance.new("Frame")
-		card.Size = UDim2.new(0, 158, 0, 120)
-		card.BackgroundColor3 = Theme.Card
-		card.BorderSizePixel = 0
-		UIFactory.Corner(card, 8)
-		if count > 0 then
-			UIFactory.Stroke(card, entry.mut and Mutations.GetColor(entry.mut) or rarityColor, 2)
-		else
-			UIFactory.Stroke(card, Color3.fromRGB(50, 54, 75), 1)
+		if show then
+			local rarityColor = Rarities.GetColor(entry.pet.Rarity)
+			local card = Instance.new("Frame")
+			card.Size = UDim2.new(0, 158, 0, 120)
+			card.BackgroundColor3 = Theme.Card
+			card.BorderSizePixel = 0
+			UIFactory.Corner(card, 8)
+			if count > 0 then
+				UIFactory.Stroke(card, entry.mut and Mutations.GetColor(entry.mut) or rarityColor, 2)
+			else
+				UIFactory.Stroke(card, Color3.fromRGB(50, 54, 75), 1)
+			end
+			UIFactory.Padding(card, 6)
+			local title = (entry.mut and (entry.mut .. " ") or "") .. entry.pet.DisplayName
+			if count == 0 then
+				title = "???"
+			end
+			local name = UIFactory.Label(title, UDim2.new(1, 0, 0, 34),
+				count > 0 and Theme.Text or Theme.TextDim, 12)
+			name.TextWrapped = true
+			name.Parent = card
+			local sub = UIFactory.Label(
+				count > 0 and (entry.pet.Rarity .. "  x" .. tostring(count)) or entry.pet.Rarity,
+				UDim2.new(1, 0, 0, 20), rarityColor, 11)
+			sub.Position = UDim2.new(0, 0, 0, 40)
+			sub.Font = Theme.FontRegular
+			sub.Parent = card
+			local desc = UIFactory.Label(count > 0 and entry.pet.Description or "Not discovered",
+				UDim2.new(1, 0, 0, 44), Theme.TextDim, 10)
+			desc.Position = UDim2.new(0, 0, 0, 62)
+			desc.TextWrapped = true
+			desc.Font = Theme.FontRegular
+			desc.Parent = card
+			card.Parent = grid
 		end
-		UIFactory.Padding(card, 6)
-		local title = (entry.mut and (entry.mut .. " ") or "") .. entry.pet.DisplayName
-		if count == 0 then
-			title = "???"
-		end
-		local name = UIFactory.Label(title, UDim2.new(1, 0, 0, 34),
-			count > 0 and Theme.Text or Theme.TextDim, 12)
-		name.TextWrapped = true
-		name.Parent = card
-		local sub = UIFactory.Label(
-			count > 0 and (entry.pet.Rarity .. "  x" .. tostring(count)) or entry.pet.Rarity,
-			UDim2.new(1, 0, 0, 20), rarityColor, 11)
-		sub.Position = UDim2.new(0, 0, 0, 40)
-		sub.Font = Theme.FontRegular
-		sub.Parent = card
-		local desc = UIFactory.Label(count > 0 and entry.pet.Description or "Not discovered",
-			UDim2.new(1, 0, 0, 44), Theme.TextDim, 10)
-		desc.Position = UDim2.new(0, 0, 0, 62)
-		desc.TextWrapped = true
-		desc.Font = Theme.FontRegular
-		desc.Parent = card
-		card.Parent = grid
+		::skipEntry::
 	end
 	progressLabel.Text = "Discovered " .. tostring(found) .. " / " .. tostring(total)
 		.. "  (" .. tostring(math.floor(found / math.max(1, total) * 100)) .. "%)"

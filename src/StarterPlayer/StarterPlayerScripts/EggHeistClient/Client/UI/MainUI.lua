@@ -39,6 +39,7 @@ local NAV = {
 	{ Id = "Base", Label = "Base", UI = "BaseUI" },
 	{ Id = "Quests", Label = "Quests", UI = "QuestsUI", Badge = "quests" },
 	{ Id = "Daily", Label = "Daily", UI = "DailyUI", Badge = "daily" },
+	{ Id = "Trade", Label = "Trade", UI = "TradeUI" },
 	{ Id = "Ranks", Label = "Ranks", UI = "Ranks" },
 	{ Id = "Settings", Label = "Settings", UI = "SettingsUI" },
 }

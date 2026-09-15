@@ -49,6 +49,35 @@ Events.List = {
 		},
 		Lighting = { ClockTime = 0.0, Brightness = 1.2, Ambient = Color3.fromRGB(120, 20, 30) },
 	},
+	HeistNight = {
+		DisplayName = "Heist Night",
+		Description = "Heists pay +75%. Locks are looser under cover of dark!",
+		Color = Color3.fromRGB(90, 90, 200),
+		Duration = 300,
+		MinCooldown = 2400,
+		Weight = 22,
+		MinPlayers = 2,
+		Modifiers = {
+			HeistPayoutMult = 1.75,
+			MutationChanceMult = { Shadow = 2.0 },
+		},
+		Lighting = { ClockTime = 0.5, Brightness = 1.4, Ambient = Color3.fromRGB(40, 40, 90) },
+	},
+	LuckyDay = {
+		DisplayName = "Lucky Day",
+		Description = "Secrets are 3x luckier. Everything sparkles a little more!",
+		Color = Color3.fromRGB(120, 255, 170),
+		Duration = 300,
+		MinCooldown = 3000,
+		Weight = 18,
+		MinPlayers = 1,
+		Modifiers = {
+			IncomeMult = 1.25,
+			SecretLuckMult = 3.0,
+			MutationChanceMult = { Golden = 2.0, Crystal = 2.0, Neon = 2.0 },
+		},
+		Lighting = { ClockTime = 14.0, Brightness = 2.8, Ambient = Color3.fromRGB(160, 170, 160) },
+	},
 	VoidEvent = {
 		DisplayName = "Void Rift",
 		Description = "The void opens. Void mutations possible. Triple income!",
@@ -66,7 +95,7 @@ Events.List = {
 	},
 }
 
-Events.Order = { "GoldenHour", "MeteorShower", "BloodMoon", "VoidEvent" }
+Events.Order = { "GoldenHour", "MeteorShower", "BloodMoon", "VoidEvent", "HeistNight", "LuckyDay" }
 
 -- Time between event rolls when no event is active
 Events.IdleRollInterval = 120

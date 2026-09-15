@@ -31,6 +31,7 @@ local LOAD_ORDER = {
 	"Events/EventService",
 	"Monetization/ShopService",
 	"Social/LeaderboardService",
+	"Social/TradeService",
 	"Admin/AdminService",
 }
 

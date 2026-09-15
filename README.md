@@ -15,16 +15,16 @@ steal loot and extract it — while defending your own fortune.
 
 Full instructions: [`SETUP.md`](SETUP.md).
 
-> **Download:** grab **`Egg-Heist-v3.zip`** from the repo root — it contains
+> **Download:** grab **`Egg-Heist-v4.zip`** from the repo root — it contains
 > the place file, the world model, all source, tools, and docs.
-> (Older `Egg-Heist-v2.zip` / `Egg-Heist-Final.zip` packages are kept in releases for reference.)
+> (Older `Egg-Heist-v3.zip` / `-v2` / `-Final` packages are kept in releases for reference.)
 
 ## Project structure
 
 ```
 Egg heist.rbxm                 # Original world model (preserved, byte-identical)
 build/Egg-Heist.rbxlx          # Generated Studio-ready place (scripts embedded)
-Egg-Heist-v3.zip               # Complete downloadable package (place + world + src + docs)
+Egg-Heist-v4.zip               # Complete downloadable package (place + world + src + docs)
 src/
   ServerScriptService/EggHeistServer/
     ServerMain.server.lua      # BOOTSTRAP: loads domains in dependency order
@@ -46,6 +46,7 @@ src/
       Events/         EventService (scheduler, modifiers, pickups)
       Monetization/   ShopService (gamepasses/products, ProcessReceipt)
       Social/         LeaderboardService (OrderedDataStores + boards)
+                      TradeService (safe trade sessions)
       World/          WorldService (world discovery + fallback builder)
                       NpcService (world guides + tips)
       Admin/          AdminService (allow-listed commands)
@@ -59,9 +60,9 @@ src/
     ClientMain.client.lua      # BOOTSTRAP: net -> controllers -> UI -> Start
     Client/
       ClientNet.lua            # Remote access (Fire/On/Invoke)
-      Controllers/             # 13 thin intents/caches (Data, Egg, Pet, Base, Gadget, ...)
+      Controllers/             # 14 thin intents/caches (Data, Egg, Pet, Base, Trade, ...)
       Input/          InputController (PC keybinds: B/Q/H/Esc)
-      UI/                      # 15 modules (Main/HUD + 14 windows, UIFactory theme)
+      UI/                      # 16 modules (Main/HUD + 15 windows, UIFactory theme)
       Effects/                 # Effects (tweens/confetti/shake) + SoundManager
 tools/                         # build_place.py, validate_lua.py, check_refs.py, inspect_rbxm.py
 docs/                          # Architecture, economy, security, testing, monetization...
@@ -80,8 +81,8 @@ default.project.json           # Rojo project (optional professional workflow)
 
 | System | Loop |
 |---|---|
-| Eggs (10) | Buy in shop → hatch (weighted rarity → species → mutation) → ceremony |
-| Pets (27) | Equip (slots unlock by level) → earn cash every 5 s → level up → follow you in 3D |
+| Eggs (12) | Buy in shop → hatch (weighted rarity → species → mutation) → ceremony |
+| Pets (33) | Equip (slots unlock by level) → earn cash every 5 s → level up → follow you in 3D |
 | Mutations (8) | Golden → Void; roll on hatch, multiply income/value, tint visuals |
 | Bases (8 plots) | Claim a plot → upgrades (5 tracks) → vault banks 15% of earnings |
 | Heists | Breach enemy vault (channel) → grab → slowed carry → extraction pad |
