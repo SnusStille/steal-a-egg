@@ -9856,8 +9856,11 @@
 							local ReplicatedStorage = game:GetService("ReplicatedStorage")
 							local Players = game:GetService("Players")
 							
-							local Shared = ReplicatedStorage:WaitForChild("EggHeistShared")
-							local Remotes = require(Shared:WaitForChild("Remotes"))
+							local Shared = ReplicatedStorage:WaitForChild("EggHeistShared", 30)
+							assert(Shared, "[EggHeist] FATAL: EggHeistShared missing in ReplicatedStorage - install broken?")
+							local RemotesModule = Shared:WaitForChild("Remotes", 30)
+							assert(RemotesModule, "[EggHeist] FATAL: Remotes module missing - install broken?")
+							local Remotes = require(RemotesModule)
 							
 							local ClientNet = {}
 							local folder = nil
@@ -11661,6 +11664,7 @@
 								}
 								
 								local entries = {}
+								local orderCounter = 0
 								
 								function FeedUI.Init(ctx)
 								local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
@@ -11696,7 +11700,8 @@
 								body.TextXAlignment = Enum.TextXAlignment.Left
 								body.TextTruncate = Enum.TextTruncate.AtEnd
 								body.Parent = row
-								row.LayoutOrder = os.clock()
+								orderCounter = orderCounter + 1
+								row.LayoutOrder = orderCounter
 								row.Parent = list
 								entries[#entries + 1] = row
 								while #entries &gt; MAX_ENTRIES do

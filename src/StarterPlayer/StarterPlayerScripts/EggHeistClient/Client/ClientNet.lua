@@ -4,8 +4,11 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 
-local Shared = ReplicatedStorage:WaitForChild("EggHeistShared")
-local Remotes = require(Shared:WaitForChild("Remotes"))
+local Shared = ReplicatedStorage:WaitForChild("EggHeistShared", 30)
+assert(Shared, "[EggHeist] FATAL: EggHeistShared missing in ReplicatedStorage - install broken?")
+local RemotesModule = Shared:WaitForChild("Remotes", 30)
+assert(RemotesModule, "[EggHeist] FATAL: Remotes module missing - install broken?")
+local Remotes = require(RemotesModule)
 
 local ClientNet = {}
 local folder = nil

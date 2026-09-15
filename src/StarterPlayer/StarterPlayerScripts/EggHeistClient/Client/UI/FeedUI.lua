@@ -16,6 +16,7 @@ local ICON_COLORS = {
 }
 
 local entries = {}
+local orderCounter = 0
 
 function FeedUI.Init(ctx)
 	local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
@@ -51,7 +52,8 @@ function FeedUI.Init(ctx)
 		body.TextXAlignment = Enum.TextXAlignment.Left
 		body.TextTruncate = Enum.TextTruncate.AtEnd
 		body.Parent = row
-		row.LayoutOrder = os.clock()
+		orderCounter = orderCounter + 1
+		row.LayoutOrder = orderCounter
 		row.Parent = list
 		entries[#entries + 1] = row
 		while #entries > MAX_ENTRIES do
