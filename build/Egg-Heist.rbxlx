@@ -5257,7 +5257,7 @@
 							local Remotes = require(Shared:WaitForChild("Remotes"))
 							local Validate = require(Shared:WaitForChild("Utilities"):WaitForChild("Validate"))
 							
-							local RateLimiter = require(script.Parent.Parent:WaitForChild("Utilities"):WaitForChild("RateLimiter"))
+							local RateLimiter = require(script.Parent.Parent:WaitForChild("Util"):WaitForChild("RateLimiter"))
 							
 							local NetService = {}
 							NetService.Name = "NetService"
@@ -8936,7 +8936,10 @@
 					-- Registry key = module name minus the "Service" suffix (e.g. DataService -&gt; Data).
 					
 					local ROOT = script.Parent
-					local ServerFolder = ROOT:WaitForChild("Server")
+					-- Timeouts + asserts: a missing folder must ERROR LOUDLY, never hang the
+					-- whole bootstrap in an infinite WaitForChild yield (pcall can't save you).
+					local ServerFolder = ROOT:WaitForChild("Server", 30)
+					assert(ServerFolder, "[EggHeist] FATAL: Server folder missing next to ServerMain")
 					
 					-- "Domain/Module" paths, in load order. Order matters for Init wiring;
 					-- runtime cross-service calls resolve through the shared registry.
@@ -8975,8 +8978,10 @@
 					local function loadService(path)
 					local domain, moduleName = string.match(path, "^([^/]+)/([^/]+)$")
 					assert(domain and moduleName, "Bad LOAD_ORDER entry: " .. tostring(path))
-					local domainFolder = ServerFolder:WaitForChild(domain)
-					local moduleScript = domainFolder:WaitForChild(moduleName)
+					local domainFolder = ServerFolder:WaitForChild(domain, 30)
+					assert(domainFolder, "[EggHeist] FATAL: domain folder missing: " .. domain)
+					local moduleScript = domainFolder:WaitForChild(moduleName, 30)
+					assert(moduleScript, "[EggHeist] FATAL: service module missing: " .. path)
 					return serviceKey(moduleName), require(moduleScript)
 					end
 					
@@ -13902,8 +13907,13 @@
 						-- Controller contract: optional Init(ctx) then Start().
 						-- UI contract: optional Init(ctx). Windows expose SetVisible/Toggle.
 						
-						local ClientFolder = script.Parent:WaitForChild("Client")
-						local ClientNet = require(ClientFolder:WaitForChild("ClientNet"))
+						-- Timeouts + asserts: boot-critical waits must ERROR LOUDLY, never hang
+						-- the client forever (an infinite yield here = zero UI with zero errors).
+						local ClientFolder = script.Parent:WaitForChild("Client", 30)
+						assert(ClientFolder, "[EggHeist] FATAL: Client folder missing next to ClientMain")
+						local ClientNetModule = ClientFolder:WaitForChild("ClientNet", 30)
+						assert(ClientNetModule, "[EggHeist] FATAL: ClientNet module missing")
+						local ClientNet = require(ClientNetModule)
 						
 						local CONTROLLERS = {
 						"DataController", -- profile cache first (others read through ctx.Data)
@@ -13947,8 +13957,10 @@
 						
 						ClientNet.Init()
 						
-						local controllersFolder = ClientFolder:WaitForChild("Controllers")
-						local inputFolder = ClientFolder:WaitForChild("Input")
+						local controllersFolder = ClientFolder:WaitForChild("Controllers", 30)
+						assert(controllersFolder, "[EggHeist] FATAL: Controllers folder missing")
+						local inputFolder = ClientFolder:WaitForChild("Input", 30)
+						assert(inputFolder, "[EggHeist] FATAL: Input folder missing")
 						
 						local function loadController(name)
 						-- Controllers live in Controllers/; input handling lives in Input/.
@@ -13979,7 +13991,8 @@
 						-- shared ctx shortcuts
 						ctx.Data = ctx.Controllers.DataController
 						
-						local uiFolder = ClientFolder:WaitForChild("UI")
+						local uiFolder = ClientFolder:WaitForChild("UI", 30)
+						assert(uiFolder, "[EggHeist] FATAL: UI folder missing")
 						for _, name in ipairs(UI_MODULES) do
 						local moduleScript = uiFolder:FindFirstChild(name)
 						if moduleScript then

@@ -5,8 +5,13 @@
 -- Controller contract: optional Init(ctx) then Start().
 -- UI contract: optional Init(ctx). Windows expose SetVisible/Toggle.
 
-local ClientFolder = script.Parent:WaitForChild("Client")
-local ClientNet = require(ClientFolder:WaitForChild("ClientNet"))
+-- Timeouts + asserts: boot-critical waits must ERROR LOUDLY, never hang
+-- the client forever (an infinite yield here = zero UI with zero errors).
+local ClientFolder = script.Parent:WaitForChild("Client", 30)
+assert(ClientFolder, "[EggHeist] FATAL: Client folder missing next to ClientMain")
+local ClientNetModule = ClientFolder:WaitForChild("ClientNet", 30)
+assert(ClientNetModule, "[EggHeist] FATAL: ClientNet module missing")
+local ClientNet = require(ClientNetModule)
 
 local CONTROLLERS = {
 	"DataController", -- profile cache first (others read through ctx.Data)
@@ -50,8 +55,10 @@ ctx.UI = {}
 
 ClientNet.Init()
 
-local controllersFolder = ClientFolder:WaitForChild("Controllers")
-local inputFolder = ClientFolder:WaitForChild("Input")
+local controllersFolder = ClientFolder:WaitForChild("Controllers", 30)
+assert(controllersFolder, "[EggHeist] FATAL: Controllers folder missing")
+local inputFolder = ClientFolder:WaitForChild("Input", 30)
+assert(inputFolder, "[EggHeist] FATAL: Input folder missing")
 
 local function loadController(name)
 	-- Controllers live in Controllers/; input handling lives in Input/.
@@ -82,7 +89,8 @@ end
 -- shared ctx shortcuts
 ctx.Data = ctx.Controllers.DataController
 
-local uiFolder = ClientFolder:WaitForChild("UI")
+local uiFolder = ClientFolder:WaitForChild("UI", 30)
+assert(uiFolder, "[EggHeist] FATAL: UI folder missing")
 for _, name in ipairs(UI_MODULES) do
 	local moduleScript = uiFolder:FindFirstChild(name)
 	if moduleScript then

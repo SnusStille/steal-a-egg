@@ -9,7 +9,7 @@ local Shared = ReplicatedStorage:WaitForChild("EggHeistShared")
 local Remotes = require(Shared:WaitForChild("Remotes"))
 local Validate = require(Shared:WaitForChild("Utilities"):WaitForChild("Validate"))
 
-local RateLimiter = require(script.Parent.Parent:WaitForChild("Utilities"):WaitForChild("RateLimiter"))
+local RateLimiter = require(script.Parent.Parent:WaitForChild("Util"):WaitForChild("RateLimiter"))
 
 local NetService = {}
 NetService.Name = "NetService"

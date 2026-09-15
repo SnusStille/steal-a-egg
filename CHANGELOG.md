@@ -1,5 +1,21 @@
 # Changelog
 
+## v4.0.1 — Boot hotfix (2026-09-15)
+
+**Critical fix:** the game hung on boot with zero errors. `NetService`
+(required FIRST by the server bootstrap) waited forever on
+`Server/Utilities`, but the folder is named `Server/Util` (leftover from
+the v2 restructure). One infinite `WaitForChild` froze the entire server
+before any service or remote was created, which also froze the client in
+`ClientNet.Init` — no UI, no functions, nothing at all.
+
+- Fixed the `Util` path in `NetService`.
+- Hardened both bootstraps: boot-critical waits now use 30 s timeouts +
+  asserts, so a missing folder ERRORS LOUDLY instead of hanging silently.
+- New permanent guard: `tools/check_waits.py` resolves every static
+  `WaitForChild` in `src/` against the built place (208 targets, all
+  green) and fails the build on any missing target.
+
 ## v4.0.0 — Depth (2026-09-15)
 
 Lead-dev pass: full audit, bug fixes, and the missing depth systems.

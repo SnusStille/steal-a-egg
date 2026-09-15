@@ -6,7 +6,10 @@
 -- Registry key = module name minus the "Service" suffix (e.g. DataService -> Data).
 
 local ROOT = script.Parent
-local ServerFolder = ROOT:WaitForChild("Server")
+-- Timeouts + asserts: a missing folder must ERROR LOUDLY, never hang the
+-- whole bootstrap in an infinite WaitForChild yield (pcall can't save you).
+local ServerFolder = ROOT:WaitForChild("Server", 30)
+assert(ServerFolder, "[EggHeist] FATAL: Server folder missing next to ServerMain")
 
 -- "Domain/Module" paths, in load order. Order matters for Init wiring;
 -- runtime cross-service calls resolve through the shared registry.
@@ -45,8 +48,10 @@ end
 local function loadService(path)
 	local domain, moduleName = string.match(path, "^([^/]+)/([^/]+)$")
 	assert(domain and moduleName, "Bad LOAD_ORDER entry: " .. tostring(path))
-	local domainFolder = ServerFolder:WaitForChild(domain)
-	local moduleScript = domainFolder:WaitForChild(moduleName)
+	local domainFolder = ServerFolder:WaitForChild(domain, 30)
+	assert(domainFolder, "[EggHeist] FATAL: domain folder missing: " .. domain)
+	local moduleScript = domainFolder:WaitForChild(moduleName, 30)
+	assert(moduleScript, "[EggHeist] FATAL: service module missing: " .. path)
 	return serviceKey(moduleName), require(moduleScript)
 end
 

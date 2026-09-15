@@ -15,16 +15,16 @@ steal loot and extract it — while defending your own fortune.
 
 Full instructions: [`SETUP.md`](SETUP.md).
 
-> **Download:** grab **`Egg-Heist-v4.zip`** from the repo root — it contains
+> **Download:** grab **`Egg-Heist-v4.0.1.zip`** from the repo root — it contains
 > the place file, the world model, all source, tools, and docs.
-> (Older `Egg-Heist-v3.zip` / `-v2` / `-Final` packages are kept in releases for reference.)
+> (Older `-v4`, `-v3`, `-v2`, `-Final` packages are kept in releases for reference.)
 
 ## Project structure
 
 ```
 Egg heist.rbxm                 # Original world model (preserved, byte-identical)
 build/Egg-Heist.rbxlx          # Generated Studio-ready place (scripts embedded)
-Egg-Heist-v4.zip               # Complete downloadable package (place + world + src + docs)
+Egg-Heist-v4.0.1.zip           # Complete downloadable package (place + world + src + docs)
 src/
   ServerScriptService/EggHeistServer/
     ServerMain.server.lua      # BOOTSTRAP: loads domains in dependency order
