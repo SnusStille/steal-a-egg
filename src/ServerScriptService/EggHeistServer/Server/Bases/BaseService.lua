@@ -146,6 +146,54 @@ local function ensureVaultPrompt(plotIndex)
 	end
 end
 
+local claimConnections = {}
+
+-- Physical "Claim Base" prompt on every free plot (works in both worlds).
+-- Called at boot for all plots, after claims, and after releases.
+local function ensureClaimPrompt(index)
+	local plot = registry.World.GetPlotModel(index)
+	if not plot then
+		return
+	end
+	local existing = plot:FindFirstChild("ClaimPrompt", true)
+	if plotOwner[index] then
+		if existing then
+			existing:Destroy()
+		end
+		return
+	end
+	if existing then
+		return
+	end
+	local anchor = plot:FindFirstChild("ClaimTotem") or plot:FindFirstChild("Foundation")
+	if not anchor or not anchor:IsA("BasePart") then
+		return
+	end
+	local prompt = Instance.new("ProximityPrompt")
+	prompt.Name = "ClaimPrompt"
+	prompt.ActionText = "Claim Base"
+	prompt.ObjectText = "Plot " .. tostring(index)
+	prompt.KeyboardKeyCode = Enum.KeyCode.E
+	prompt.HoldDuration = 0.5
+	prompt.MaxActivationDistance = 16
+	prompt.RequiresLineOfSight = false
+	prompt.Parent = anchor
+	if claimConnections[index] then
+		claimConnections[index]:Disconnect()
+	end
+	claimConnections[index] = prompt.Triggered:Connect(function(triggerPlayer)
+		if plotOwner[index] or userPlot[triggerPlayer.UserId] then
+			return
+		end
+		local character = triggerPlayer.Character
+		local hrp = character and character:FindFirstChild("HumanoidRootPart")
+		if hrp and (hrp.Position - anchor.Position).Magnitude <= 40 then
+			BaseService.AssignPlot(triggerPlayer, index)
+			BaseService.RestoreDecorations(triggerPlayer)
+		end
+	end)
+end
+
 function BaseService.AssignPlot(player, preferredIndex)
 	if userPlot[player.UserId] then
 		return userPlot[player.UserId]
@@ -180,7 +228,14 @@ function BaseService.AssignPlot(player, preferredIndex)
 	if registry.Security then
 		registry.Security.RebuildPlotSecurity(index)
 	end
+	ensureClaimPrompt(index) -- owned now: removes the claim prompt
 	registry.World.SetPlotLabel(index, player.DisplayName .. "'s Base")
+	-- one-time starter vault so the first CollectVault feels rewarding
+	if profile and not profile.base.vaultSeeded then
+		profile.base.vaultSeeded = true
+		profile.base.vault = (profile.base.vault or 0) + (Settings.Tutorial.StarterVault or 500)
+		registry.Data.MarkDirty(player)
+	end
 	registry.Notify.Send(player, "success", "Base claimed!",
 		"This plot is yours. Upgrade it and fill the vault!", 5)
 	if registry.TutorialHook then
@@ -202,6 +257,7 @@ function BaseService.ReleasePlot(player)
 		registry.Security.ClearPlotSecurity(index)
 	end
 	registry.World.SetPlotLabel(index, "Empty Plot")
+	ensureClaimPrompt(index) -- free again: restore the claim prompt
 end
 
 --------------------------------------------------------------------------------
@@ -504,6 +560,9 @@ end
 --------------------------------------------------------------------------------
 
 function BaseService.Start()
+	for i = 1, Settings.MaxBasePlots do
+		ensureClaimPrompt(i)
+	end
 	registry.Net.OnRequest("ClaimBase", function(player)
 		local profile = profileOf(player)
 		if not profile then

@@ -1,5 +1,31 @@
 # Changelog
 
+## v5.0.0 — Rebuild: map, claim prompts, boot probes (2026-09-15)
+
+**Boot probes (client can never die silently again).** After an exhaustive
+static audit found the entire client boot path sound, both bootstraps now
+self-report: the client shows a dependency-free status label through every
+boot phase and a red error panel with the exact failure if it dies;
+the server prints a boot summary and sets a `Workspace/EggHeistServerOK`
+marker. Any future failure now points at itself in-game.
+
+**Fallback map rebuilt.** The built-in map (used when the hand-built world
+model is absent) is now a complete little world: spawn plaza with directory
+boards, tutorial signs, fountain and flags; market with one stall per
+purchasable egg (3D egg display + live price/level sign); plots with
+boundary walls and glowing claim totems; a vault house (walls, roof, safe,
+upgrade pads) built on claim; heist cover crates, searchlights and hazard
+strips; event seating, banners and a live event board; roads, lamps, pond,
+trees, rocks, clouds, boundary fence and warm afternoon lighting.
+
+**Physical claim prompts.** Every free plot has an E-hold "Claim Base"
+prompt (works in both worlds), removed on claim, restored on release.
+
+**Also:** HelpUI "?" guide popup (17 UIs); one-time 500 starter vault on
+first claim (`Settings.Tutorial.StarterVault`, `vaultSeeded` flag);
+live event board text on event start/end. All validators green
+(81 Lua files parse, 210 waits resolved, refs clean).
+
 ## v4.0.1 — Boot hotfix (2026-09-15)
 
 **Critical fix:** the game hung on boot with zero errors. `NetService`

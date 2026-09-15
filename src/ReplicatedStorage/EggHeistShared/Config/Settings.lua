@@ -87,6 +87,7 @@ Settings.Tutorial = {
 	Enabled = true,
 	StarterEgg = "Basic",
 	StarterCashBonus = 100,
+	StarterVault = 500, -- one-time vault seeding on first base claim
 }
 
 -- Feature flags (kill-switch systems without redeploying code)

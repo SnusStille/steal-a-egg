@@ -10,6 +10,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("EggHeistShared")
 local Settings = require(Shared:WaitForChild("Config"):WaitForChild("Settings"))
+local Eggs = require(Shared:WaitForChild("Config"):WaitForChild("Eggs"))
 
 local WorldService = {}
 WorldService.Name = "WorldService"
@@ -81,6 +82,14 @@ local function mkSign(parent, name, cframe, text, textColor, size)
 	return board
 end
 
+local ASSET_COLORS = {
+	BasicEgg = Color3.fromRGB(240, 230, 200), StoneEgg = Color3.fromRGB(130, 130, 130),
+	GoldenEgg = Color3.fromRGB(255, 200, 60), CrystalEgg = Color3.fromRGB(150, 220, 255),
+	LavaEgg = Color3.fromRGB(255, 100, 40), ToxicEgg = Color3.fromRGB(120, 255, 60),
+	ShadowEgg = Color3.fromRGB(70, 50, 120), GalaxyEgg = Color3.fromRGB(150, 80, 255),
+	AncientEgg = Color3.fromRGB(200, 170, 120), VoidEgg = Color3.fromRGB(25, 15, 45),
+}
+
 local function mkEggModel(parent, name, color, glow)
 	local model = Instance.new("Model")
 	model.Name = name
@@ -127,6 +136,39 @@ local function buildFallbackWorld()
 	mkPart(spawn, "PlazaBase", Vector3.new(40, 2, 40), CFrame.new(0, 0, 0), FALLBACK_COLORS.Floor)
 	mkPart(spawn, "PlazaInnerFloor", Vector3.new(24, 2.2, 24), CFrame.new(0, 0.1, 0), FALLBACK_COLORS.Accent)
 	mkSign(spawn, "SignBoard", CFrame.new(0, 8, -18), "EGG HEIST", Color3.fromRGB(255, 220, 100))
+	-- Directory: where is everything?
+	mkSign(spawn, "DirectoryBoard", CFrame.new(-14, 6, 14), "MARKET -> EAST   BASES -> NORTH",
+		Color3.fromRGB(160, 220, 255), Vector3.new(16, 3, 1))
+	mkSign(spawn, "DirectoryBoard2", CFrame.new(14, 6, 14), "HEIST v SOUTH   EVENTS <- WEST",
+		Color3.fromRGB(255, 200, 160), Vector3.new(16, 3, 1))
+	-- Tutorial totems: the first 10 minutes, on signs
+	local guides = {
+		{ "Guide1", "1 CLAIM A BASE: walk north, touch a green plot, press CLAIM" },
+		{ "Guide2", "2 BUY AN EGG: open SHOP (top buttons)" },
+		{ "Guide3", "3 HATCH + EQUIP: open BACKPACK, hatch, then EQUIP" },
+		{ "Guide4", "4 HEIST!: breach enemy vaults, escape SOUTH to EXTRACTION" },
+	}
+	for i, guide in ipairs(guides) do
+		local gx = -15 + (i - 1) * 10
+		mkPart(spawn, guide[1] .. "Post", Vector3.new(1, 5, 1), CFrame.new(gx, 3, -8),
+			Color3.fromRGB(90, 70, 50))
+		mkSign(spawn, guide[1], CFrame.new(gx, 6.5, -8), guide[2],
+			Color3.fromRGB(255, 255, 255), Vector3.new(9, 3, 1))
+	end
+	-- Fountain centerpiece
+	mkPart(spawn, "FountainBasin", Vector3.new(8, 1.2, 8), CFrame.new(0, 1.8, 4),
+		Color3.fromRGB(120, 120, 140))
+	mkPart(spawn, "FountainWater", Vector3.new(7, 0.5, 7), CFrame.new(0, 2.4, 4),
+		Color3.fromRGB(80, 170, 255), Enum.Material.Glass)
+	mkPart(spawn, "FountainSpout", Vector3.new(1, 3, 1), CFrame.new(0, 3.4, 4),
+		Color3.fromRGB(120, 120, 140))
+	-- Flag poles
+	for _, fx in ipairs({ -17, 17 }) do
+		mkPart(spawn, "FlagPole" .. tostring(fx), Vector3.new(0.6, 12, 0.6), CFrame.new(fx, 7, 17),
+			Color3.fromRGB(80, 80, 90))
+		mkPart(spawn, "Flag" .. tostring(fx), Vector3.new(4, 2.5, 0.3), CFrame.new(fx + 2, 11, 17),
+			FALLBACK_COLORS.Accent)
+	end
 
 	-- Market (6 stalls)
 	local market = Instance.new("Folder")
@@ -134,13 +176,31 @@ local function buildFallbackWorld()
 	market.Parent = mapFolder
 	mkPart(market, "MarketFloor", Vector3.new(60, 2, 30), CFrame.new(90, 0, 0), FALLBACK_COLORS.Market)
 	mkSign(market, "MarketArchLabel", CFrame.new(90, 9, -13), "EGG MARKET", Color3.fromRGB(255, 255, 255))
-	local stalls = { "Common", "Rare", "Epic", "Legendary", "Mythic", "Secret" }
-	for i, stall in ipairs(stalls) do
-		local x = 90 - 25 + (i - 1) * 10
-		mkPart(market, stall .. "_Platform", Vector3.new(8, 2, 8), CFrame.new(x, 1, 0), FALLBACK_COLORS.Accent)
-		mkPart(market, stall .. "_Pedestal", Vector3.new(3, 3, 3), CFrame.new(x, 3.5, 0), FALLBACK_COLORS.Floor)
-		mkSign(market, stall .. "_Label", CFrame.new(x, 8, -8), string.upper(stall),
-			Color3.fromRGB(255, 255, 255), Vector3.new(8, 3, 1))
+	-- Arch pillars under the label
+	mkPart(market, "ArchPillarL", Vector3.new(2, 8, 2), CFrame.new(78, 4, -13), FALLBACK_COLORS.Floor)
+	mkPart(market, "ArchPillarR", Vector3.new(2, 8, 2), CFrame.new(102, 4, -13), FALLBACK_COLORS.Floor)
+	mkPart(market, "ArchBeam", Vector3.new(26, 2, 2), CFrame.new(90, 8.6, -13), FALLBACK_COLORS.Accent)
+	-- One stall per purchasable egg: platform + pedestal + egg display + price sign
+	local shopEggs = Eggs.GetShopEggs and Eggs.GetShopEggs() or {}
+	for i, def in ipairs(shopEggs) do
+		local col = (i - 1) % 4
+		local row = math.floor((i - 1) / 4)
+		local x = 67.5 + col * 15
+		local z = -6 + row * 12
+		mkPart(market, def.Id .. "_Platform", Vector3.new(12, 1, 9), CFrame.new(x, 1.2, z),
+			FALLBACK_COLORS.Accent)
+		mkPart(market, def.Id .. "_Pedestal", Vector3.new(3, 2.5, 3), CFrame.new(x, 2.8, z),
+			FALLBACK_COLORS.Floor)
+		local display = mkEggModel(market, def.Id .. "_Display",
+			ASSET_COLORS[def.AssetModel or ""] or Color3.fromRGB(240, 230, 200), false)
+		local body = display:FindFirstChild("Body")
+		if body then
+			body.CFrame = CFrame.new(x, 5.5, z)
+		end
+		local priceText = string.upper(def.DisplayName or def.Id)
+			.. " $" .. tostring(def.Price or 0) .. " Lv" .. tostring(def.RequiredLevel or 1)
+		mkSign(market, def.Id .. "_PriceLabel", CFrame.new(x, 8.5, z - 3.4), priceText,
+			Color3.fromRGB(255, 255, 255), Vector3.new(13, 2.5, 1))
 	end
 
 	-- Heist vault area
@@ -154,6 +214,23 @@ local function buildFallbackWorld()
 	mkPart(heist, "SecurityGateTop", Vector3.new(16, 2, 2), CFrame.new(0, 8, 100), FALLBACK_COLORS.Accent)
 	mkPart(heist, "SecurityGateL", Vector3.new(2, 8, 2), CFrame.new(-7, 4, 100), FALLBACK_COLORS.Floor)
 	mkPart(heist, "SecurityGateR", Vector3.new(2, 8, 2), CFrame.new(7, 4, 100), FALLBACK_COLORS.Floor)
+	-- Cover crates (thieves sneak between these)
+	local crates = { { -14, 110, 4 }, { 14, 110, 4 }, { -18, 124, 5 }, { 18, 124, 5 }, { -8, 134, 3 }, { 8, 134, 3 } }
+	for i, crate in ipairs(crates) do
+		mkPart(heist, "Crate" .. tostring(i), Vector3.new(crate[3], crate[3], crate[3]),
+			CFrame.new(crate[1], 1 + crate[3] / 2, crate[2]), Color3.fromRGB(120, 95, 60))
+	end
+	-- Searchlight poles + hazard strips
+	for _, sx in ipairs({ -22, 22 }) do
+		mkPart(heist, "LightPole" .. tostring(sx), Vector3.new(1, 12, 1), CFrame.new(sx, 7, 120),
+			Color3.fromRGB(60, 60, 70))
+		mkPart(heist, "LightHead" .. tostring(sx), Vector3.new(3, 1.5, 3), CFrame.new(sx, 13, 120),
+			Color3.fromRGB(255, 240, 200), Enum.Material.Neon)
+	end
+	mkPart(heist, "HazardStripW", Vector3.new(1, 2.2, 50), CFrame.new(-24, 0.1, 120),
+		Color3.fromRGB(255, 220, 60), Enum.Material.Neon)
+	mkPart(heist, "HazardStripE", Vector3.new(1, 2.2, 50), CFrame.new(24, 0.1, 120),
+		Color3.fromRGB(255, 220, 60), Enum.Material.Neon)
 
 	-- Event stage
 	local eventArea = Instance.new("Folder")
@@ -162,6 +239,24 @@ local function buildFallbackWorld()
 	mkPart(eventArea, "EventFloor", Vector3.new(44, 2, 44), CFrame.new(-90, 0, 0), FALLBACK_COLORS.Event)
 	mkPart(eventArea, "EventStage", Vector3.new(16, 3, 16), CFrame.new(-90, 1.5, 0), FALLBACK_COLORS.Accent)
 	mkSign(eventArea, "EventAreaLabel", CFrame.new(-90, 10, -18), "EVENT GROUNDS", Color3.fromRGB(220, 180, 255))
+	-- Seating steps facing the stage
+	for i = 1, 3 do
+		mkPart(eventArea, "SeatStep" .. tostring(i), Vector3.new(24, 1, 3),
+			CFrame.new(-90, 1 + i * 0.5, 12 + i * 3), FALLBACK_COLORS.Floor)
+	end
+	-- Banner poles
+	local bannerColors = { Color3.fromRGB(255, 200, 80), Color3.fromRGB(150, 120, 255),
+		Color3.fromRGB(200, 60, 60), Color3.fromRGB(80, 220, 120) }
+	local bannerPos = { { -108, -16 }, { -72, -16 }, { -108, 16 }, { -72, 16 } }
+	for i, pos in ipairs(bannerPos) do
+		mkPart(eventArea, "BannerPole" .. tostring(i), Vector3.new(0.8, 10, 0.8),
+			CFrame.new(pos[1], 6, pos[2]), Color3.fromRGB(70, 70, 80))
+		mkPart(eventArea, "Banner" .. tostring(i), Vector3.new(4, 2.5, 0.3),
+			CFrame.new(pos[1] + 2, 9.5, pos[2]), bannerColors[i])
+	end
+	-- Event board: EventService writes the live event name here
+	mkSign(eventArea, "EventBoard", CFrame.new(-90, 7, -14), "NEXT EVENT: soon...",
+		Color3.fromRGB(220, 200, 255), Vector3.new(18, 4, 1))
 
 	-- Bases
 	local bases = Instance.new("Folder")
@@ -171,6 +266,26 @@ local function buildFallbackWorld()
 	template.Name = "BaseTemplate"
 	template.Parent = bases
 	mkPart(template, "Foundation", Vector3.new(36, 2, 36), CFrame.new(0, -30, -160), FALLBACK_COLORS.Plot)
+	-- Vault house, built on claim: 3 walls + roof + safe + trigger floor + upgrade pads.
+	-- Template coords map to plot-relative: (dx, 30 + dy, -160 + dz).
+	mkPart(template, "VaultAreaFloor", Vector3.new(10, 2, 10), CFrame.new(8, 31, -165),
+		Color3.fromRGB(150, 60, 60))
+	mkPart(template, "VaultSafe", Vector3.new(4, 5, 4), CFrame.new(8, 34.5, -165),
+		Color3.fromRGB(45, 45, 55))
+	mkPart(template, "VaultTrim", Vector3.new(4.6, 0.6, 4.6), CFrame.new(8, 37.2, -165),
+		Color3.fromRGB(255, 200, 80), Enum.Material.Neon)
+	mkPart(template, "HouseBack", Vector3.new(14, 8, 1), CFrame.new(8, 35, -171),
+		Color3.fromRGB(190, 160, 130))
+	mkPart(template, "HouseLeft", Vector3.new(1, 8, 9), CFrame.new(1, 35, -167),
+		Color3.fromRGB(190, 160, 130))
+	mkPart(template, "HouseRight", Vector3.new(1, 8, 9), CFrame.new(15, 35, -167),
+		Color3.fromRGB(190, 160, 130))
+	mkPart(template, "HouseRoof", Vector3.new(16, 1, 11), CFrame.new(8, 39.5, -167),
+		Color3.fromRGB(140, 60, 60))
+	for slot = 1, 3 do
+		mkPart(template, "UpgradeSlot" .. tostring(slot), Vector3.new(4, 0.6, 4),
+			CFrame.new(-15 + slot * 5, 31.3, -154), FALLBACK_COLORS.Accent).CanCollide = false
+	end
 	for i = 1, Settings.MaxBasePlots do
 		local plot = Instance.new("Model")
 		plot.Name = string.format("Plot%02d", i)
@@ -180,7 +295,18 @@ local function buildFallbackWorld()
 		mkSign(plot, "PlotLabel", CFrame.new(x, 8, -106), string.format("Plot%02d", i),
 			Color3.fromRGB(200, 255, 200), Vector3.new(10, 3, 1))
 		mkPart(plot, "EggPedestal1", Vector3.new(3, 3, 3), CFrame.new(x - 8, 2.5, -90), FALLBACK_COLORS.Accent)
-		mkPart(plot, "VaultAreaFloor", Vector3.new(10, 2, 10), CFrame.new(x + 8, 1, -95), FALLBACK_COLORS.Heist)
+		-- Low boundary walls (jumpable; tinted by security purchases)
+		mkPart(plot, "BoundaryWall1", Vector3.new(36, 3, 1), CFrame.new(x, 1.5, -108),
+			FALLBACK_COLORS.Plot)
+		mkPart(plot, "BoundaryWall2", Vector3.new(1, 3, 36), CFrame.new(x + 18, 1.5, -90),
+			FALLBACK_COLORS.Plot)
+		mkPart(plot, "BoundaryWall3", Vector3.new(1, 3, 36), CFrame.new(x - 18, 1.5, -90),
+			FALLBACK_COLORS.Plot)
+		mkPart(plot, "BoundaryWall4", Vector3.new(36, 3, 1), CFrame.new(x, 1.5, -72),
+			FALLBACK_COLORS.Plot)
+		-- Claim totem: BaseService attaches the "Claim Base" prompt here
+		mkPart(plot, "ClaimTotem", Vector3.new(2, 5, 2), CFrame.new(x - 14, 2.5, -76),
+			Color3.fromRGB(90, 200, 120), Enum.Material.Neon)
 	end
 
 	-- Runtime + decor + interactables shells
@@ -195,19 +321,93 @@ local function buildFallbackWorld()
 	decorations.Parent = root
 	mkPart(decorations, "PathToMarket", Vector3.new(50, 1, 6), CFrame.new(45, -0.5, 0), FALLBACK_COLORS.Path)
 	mkPart(decorations, "PathToHeist", Vector3.new(6, 1, 80), CFrame.new(0, -0.5, 60), FALLBACK_COLORS.Path)
+	mkPart(decorations, "PathToEvent", Vector3.new(50, 1, 6), CFrame.new(-45, -0.5, 0), FALLBACK_COLORS.Path)
+	mkPart(decorations, "PathToBases", Vector3.new(6, 1, 52), CFrame.new(0, -0.5, -46), FALLBACK_COLORS.Path)
+	mkPart(decorations, "BaseRowRoad", Vector3.new(300, 1, 8), CFrame.new(0, -0.5, -70), FALLBACK_COLORS.Path)
+	-- World boundary fence (keeps players inside the map)
+	mkPart(decorations, "BoundaryN", Vector3.new(364, 12, 4), CFrame.new(0, 6, -140),
+		Color3.fromRGB(90, 140, 90))
+	mkPart(decorations, "BoundaryS", Vector3.new(364, 12, 4), CFrame.new(0, 6, 180),
+		Color3.fromRGB(90, 140, 90))
+	mkPart(decorations, "BoundaryW", Vector3.new(4, 12, 324), CFrame.new(-182, 6, 20),
+		Color3.fromRGB(90, 140, 90))
+	mkPart(decorations, "BoundaryE", Vector3.new(4, 12, 324), CFrame.new(182, 6, 20),
+		Color3.fromRGB(90, 140, 90))
+	-- Pond between plaza and market
+	mkPart(decorations, "PondRim", Vector3.new(16, 1, 16), CFrame.new(48, -0.4, 52),
+		Color3.fromRGB(210, 190, 140))
+	mkPart(decorations, "PondWater", Vector3.new(14, 0.6, 14), CFrame.new(48, 0.1, 52),
+		Color3.fromRGB(70, 160, 255), Enum.Material.Glass)
+	-- Trees + rocks scattered on the grass (kept clear of districts and roads)
+	local treeSpots = {
+		{ -40, -30 }, { -60, 40 }, { -30, 70 }, { 40, -35 }, { 60, 45 }, { 30, 80 },
+		{ -120, 50 }, { 130, 60 }, { -150, -30 }, { 150, -30 }, { -60, -60 }, { 60, -60 },
+		{ -100, 100 }, { 100, 100 }, { -40, 150 }, { 40, 150 }, { -160, 90 }, { 160, 90 },
+		{ -100, -50 }, { 100, -50 },
+	}
+	for i, spot in ipairs(treeSpots) do
+		mkPart(decorations, "TreeTrunk" .. tostring(i), Vector3.new(1.5, 5, 1.5),
+			CFrame.new(spot[1], 2.5, spot[2]), Color3.fromRGB(110, 80, 55))
+		mkPart(decorations, "TreeLeaves" .. tostring(i), Vector3.new(5, 5, 5),
+			CFrame.new(spot[1], 7, spot[2]), Color3.fromRGB(60, 160, 70), Enum.Material.Grass).Shape = Enum.PartType.Ball
+	end
+	local rockSpots = { { -25, 45 }, { 25, -55 }, { -75, 75 }, { 75, 30 }, { -130, 10 }, { 140, 90 }, { 55, 140 }, { -55, -110 } }
+	for i, spot in ipairs(rockSpots) do
+		mkPart(decorations, "Rock" .. tostring(i), Vector3.new(3, 2.5, 3),
+			CFrame.new(spot[1], 1, spot[2]), Color3.fromRGB(140, 140, 150), Enum.Material.Slate).Shape = Enum.PartType.Ball
+	end
+	-- Clouds
+	local cloudSpots = { { -60, 70, 60 }, { 60, 80, 40 }, { 0, 75, -60 }, { -120, 70, 90 }, { 120, 72, 100 } }
+	for i, spot in ipairs(cloudSpots) do
+		local cloud = mkPart(decorations, "Cloud" .. tostring(i), Vector3.new(22, 6, 14),
+			CFrame.new(spot[1], spot[2], spot[3]), Color3.fromRGB(255, 255, 255), Enum.Material.SmoothPlastic)
+		cloud.Shape = Enum.PartType.Ball
+		cloud.CanCollide = false
+		cloud.Anchored = true
+		cloud.Transparency = 0.35
+	end
+	-- Lamp posts along the roads (every 3rd one glows, to save performance)
+	local lampSpots = { { 20, 8 }, { 45, -8 }, { 70, 8 }, { 8, 35 }, { -8, 80 }, { -20, -8 }, { -45, 8 }, { -70, -8 }, { 8, -40 }, { -60, -66 }, { 60, -66 } }
+	for i, spot in ipairs(lampSpots) do
+		mkPart(decorations, "LampPost" .. tostring(i), Vector3.new(0.8, 8, 0.8),
+			CFrame.new(spot[1], 4, spot[2]), Color3.fromRGB(50, 50, 60))
+		local head = mkPart(decorations, "LampHead" .. tostring(i), Vector3.new(2, 1.5, 2),
+			CFrame.new(spot[1], 8.7, spot[2]), Color3.fromRGB(255, 235, 180), Enum.Material.Neon)
+		if i % 3 == 1 then
+			local light = Instance.new("PointLight")
+			light.Color = Color3.fromRGB(255, 230, 170)
+			light.Range = 22
+			light.Brightness = 1.5
+			light.Parent = head
+		end
+	end
+	-- Welcome rugs where the NPCs stand
+	mkPart(decorations, "NpcRugMarket", Vector3.new(7, 0.3, 7), CFrame.new(90, 1.15, 12),
+		Color3.fromRGB(180, 60, 60)).CanCollide = false
+	mkPart(decorations, "NpcRugHeist", Vector3.new(7, 0.3, 7), CFrame.new(-14, 1.15, 108),
+		Color3.fromRGB(60, 60, 180)).CanCollide = false
+	mkPart(decorations, "NpcRugEvent", Vector3.new(7, 0.3, 7), CFrame.new(-90, 1.15, 12),
+		Color3.fromRGB(120, 60, 180)).CanCollide = false
+	-- Warm afternoon lighting for the fallback map
+	pcall(function()
+		local Lighting = game:GetService("Lighting")
+		Lighting.ClockTime = 14.5
+		Lighting.Brightness = 2.2
+		Lighting.Ambient = Color3.fromRGB(120, 120, 130)
+		if not Lighting:FindFirstChild("EggHeistAtmosphere") then
+			local atmosphere = Instance.new("Atmosphere")
+			atmosphere.Name = "EggHeistAtmosphere"
+			atmosphere.Density = 0.25
+			atmosphere.Haze = 4
+			atmosphere.Parent = Lighting
+		end
+	end)
 
 	-- Egg assets
 	local assets = Instance.new("Folder")
 	assets.Name = "EggAssets"
 	assets.Parent = root
-	local eggColors = {
-		BasicEgg = Color3.fromRGB(240, 230, 200), StoneEgg = Color3.fromRGB(130, 130, 130),
-		GoldenEgg = Color3.fromRGB(255, 200, 60), CrystalEgg = Color3.fromRGB(150, 220, 255),
-		LavaEgg = Color3.fromRGB(255, 100, 40), ToxicEgg = Color3.fromRGB(120, 255, 60),
-		ShadowEgg = Color3.fromRGB(70, 50, 120), GalaxyEgg = Color3.fromRGB(150, 80, 255),
-		AncientEgg = Color3.fromRGB(200, 170, 120), VoidEgg = Color3.fromRGB(25, 15, 45),
-	}
-	for name, color in pairs(eggColors) do
+	for name, color in pairs(ASSET_COLORS) do
 		local model = mkEggModel(assets, name, color, true)
 		local body = model:FindFirstChild("Body")
 		if body then
@@ -461,6 +661,24 @@ function WorldService.CloneEggAsset(assetName)
 	mesh.Scale = Vector3.new(2.4, 3.2, 2.4)
 	mesh.Parent = body
 	return model
+end
+
+--- Writes a line of text on the event board (Map/EventArea/EventBoard).
+function WorldService.SetEventBoard(text)
+	local root = Workspace:FindFirstChild("EggHeist")
+	if not root then
+		return false
+	end
+	local eventArea = root:FindFirstChild("Map")
+	eventArea = eventArea and eventArea:FindFirstChild("EventArea")
+	local board = eventArea and eventArea:FindFirstChild("EventBoard")
+	local gui = board and board:FindFirstChild("SignGui")
+	local label = gui and gui:FindFirstChild("SignText")
+	if label and label:IsA("TextLabel") then
+		label.Text = tostring(text)
+		return true
+	end
+	return false
 end
 
 function WorldService.SetPlotLabel(plotIndex, text)

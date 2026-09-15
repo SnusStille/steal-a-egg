@@ -177,6 +177,9 @@ function EventService.StartEvent(eventId, forced)
 		serverNow = os.time(),
 	})
 	registry.Net.FireAll("Fx", "EventStart", eventId)
+	if registry.World.SetEventBoard then
+		registry.World.SetEventBoard("LIVE NOW: " .. def.DisplayName)
+	end
 
 	if eventId == "MeteorShower" then
 		local count = math.min(def.MeteorCount or 10, Settings.Performance.MaxMeteors)
@@ -226,6 +229,9 @@ function EventService.EndEvent()
 	registry.Notify.Broadcast("info", "Event over",
 		def.DisplayName .. " has ended.", 5)
 	registry.Net.FireAll("EventUpdate", { active = false, serverNow = os.time() })
+	if registry.World.SetEventBoard then
+		registry.World.SetEventBoard("NEXT EVENT: soon...")
+	end
 	print("[EggHeist] Event ended: " .. def.DisplayName)
 end
 

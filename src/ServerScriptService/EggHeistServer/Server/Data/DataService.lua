@@ -73,6 +73,7 @@ local function defaultProfile(userId)
 			upgrades = defaultUpgrades(),
 			security = defaultSecurity(),
 			vault = 0,
+			vaultSeeded = false,
 			decorations = {},
 			lockdownUntil = 0,
 			lockdownCooldownUntil = 0,
@@ -192,6 +193,7 @@ local function sanitizeProfile(p)
 	if type(p.base) ~= "table" then p.base = {} end
 	p.base.plot = sanitizeNumber(p.base.plot, 0, 0, Settings.MaxBasePlots)
 	p.base.vault = sanitizeNumber(p.base.vault, 0, 0, 1e12)
+	if type(p.base.vaultSeeded) ~= "boolean" then p.base.vaultSeeded = false end
 	if type(p.base.upgrades) ~= "table" then p.base.upgrades = defaultUpgrades() end
 	if type(p.base.security) ~= "table" then p.base.security = defaultSecurity() end
 	if type(p.base.decorations) ~= "table" then p.base.decorations = {} end

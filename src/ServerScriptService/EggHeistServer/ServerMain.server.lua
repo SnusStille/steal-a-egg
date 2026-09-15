@@ -57,6 +57,8 @@ end
 
 print("[EggHeist] Starting server...")
 
+local bootStats = { loaded = 0, loadFail = 0, initOk = 0, initFail = 0, startOk = 0, startFail = 0 }
+
 -- Phase 1: require all services
 for _, path in ipairs(LOAD_ORDER) do
 	local ok, keyOrErr, service = pcall(function()
@@ -64,8 +66,10 @@ for _, path in ipairs(LOAD_ORDER) do
 		return key, svc
 	end)
 	if not ok then
+		bootStats.loadFail = bootStats.loadFail + 1
 		warn("[EggHeist] FAILED to require " .. path .. ": " .. tostring(keyOrErr))
 	else
+		bootStats.loaded = bootStats.loaded + 1
 		registry[keyOrErr] = service
 		print("[EggHeist] Loaded " .. path)
 	end
@@ -84,7 +88,10 @@ for _, path in ipairs(LOAD_ORDER) do
 	if service and type(service.Init) == "function" then
 		local ok, err = pcall(service.Init, service, registry)
 		if not ok then
+			bootStats.initFail = bootStats.initFail + 1
 			warn("[EggHeist] " .. moduleName .. ".Init failed: " .. tostring(err))
+		else
+			bootStats.initOk = bootStats.initOk + 1
 		end
 	end
 end
@@ -96,9 +103,35 @@ for _, path in ipairs(LOAD_ORDER) do
 	if service and type(service.Start) == "function" then
 		local ok, err = pcall(service.Start, service)
 		if not ok then
+			bootStats.startFail = bootStats.startFail + 1
 			warn("[EggHeist] " .. moduleName .. ".Start failed: " .. tostring(err))
+		else
+			bootStats.startOk = bootStats.startOk + 1
 		end
 	end
 end
 
-print("[EggHeist] Server started. Have fun!")
+print(string.format("[EggHeist] Boot summary: %d loaded (%d failed), %d init ok (%d failed), %d start ok (%d failed)",
+	bootStats.loaded, bootStats.loadFail, bootStats.initOk, bootStats.initFail,
+	bootStats.startOk, bootStats.startFail))
+
+-- READY marker: visible in Explorer + detectable by diagnostics.
+-- ALSO a loud final check that the remotes folder exists (no remotes =
+-- no game, same class of failure as the v4.0.1 boot hang).
+pcall(function()
+	local Workspace = game:GetService("Workspace")
+	local ReplicatedStorage = game:GetService("ReplicatedStorage")
+	local okValue = Workspace:FindFirstChild("EggHeistServerOK")
+	if not okValue then
+		okValue = Instance.new("BoolValue")
+		okValue.Name = "EggHeistServerOK"
+		okValue.Parent = Workspace
+	end
+	local remotesOk = ReplicatedStorage:FindFirstChild("EggHeistRemotes") ~= nil
+	okValue.Value = remotesOk and bootStats.loadFail == 0
+	if remotesOk then
+		print("[EggHeist] Server READY. Have fun!")
+	else
+		warn("[EggHeist] FATAL: remotes folder missing after boot - clients cannot connect!")
+	end
+end)

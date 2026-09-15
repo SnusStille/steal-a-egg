@@ -1206,6 +1206,7 @@
 						Enabled = true,
 						StarterEgg = "Basic",
 						StarterCashBonus = 100,
+						StarterVault = 500, -- one-time vault seeding on first base claim
 						}
 						
 						-- Feature flags (kill-switch systems without redeploying code)
@@ -2248,6 +2249,54 @@
 							end
 							end
 							
+							local claimConnections = {}
+							
+							-- Physical "Claim Base" prompt on every free plot (works in both worlds).
+							-- Called at boot for all plots, after claims, and after releases.
+							local function ensureClaimPrompt(index)
+							local plot = registry.World.GetPlotModel(index)
+							if not plot then
+							return
+							end
+							local existing = plot:FindFirstChild("ClaimPrompt", true)
+							if plotOwner[index] then
+							if existing then
+							existing:Destroy()
+							end
+							return
+							end
+							if existing then
+							return
+							end
+							local anchor = plot:FindFirstChild("ClaimTotem") or plot:FindFirstChild("Foundation")
+							if not anchor or not anchor:IsA("BasePart") then
+							return
+							end
+							local prompt = Instance.new("ProximityPrompt")
+							prompt.Name = "ClaimPrompt"
+							prompt.ActionText = "Claim Base"
+							prompt.ObjectText = "Plot " .. tostring(index)
+							prompt.KeyboardKeyCode = Enum.KeyCode.E
+							prompt.HoldDuration = 0.5
+							prompt.MaxActivationDistance = 16
+							prompt.RequiresLineOfSight = false
+							prompt.Parent = anchor
+							if claimConnections[index] then
+							claimConnections[index]:Disconnect()
+							end
+							claimConnections[index] = prompt.Triggered:Connect(function(triggerPlayer)
+							if plotOwner[index] or userPlot[triggerPlayer.UserId] then
+							return
+							end
+							local character = triggerPlayer.Character
+							local hrp = character and character:FindFirstChild("HumanoidRootPart")
+							if hrp and (hrp.Position - anchor.Position).Magnitude &lt;= 40 then
+							BaseService.AssignPlot(triggerPlayer, index)
+							BaseService.RestoreDecorations(triggerPlayer)
+							end
+							end)
+							end
+							
 							function BaseService.AssignPlot(player, preferredIndex)
 							if userPlot[player.UserId] then
 							return userPlot[player.UserId]
@@ -2282,7 +2331,14 @@
 							if registry.Security then
 							registry.Security.RebuildPlotSecurity(index)
 							end
+							ensureClaimPrompt(index) -- owned now: removes the claim prompt
 							registry.World.SetPlotLabel(index, player.DisplayName .. "'s Base")
+							-- one-time starter vault so the first CollectVault feels rewarding
+							if profile and not profile.base.vaultSeeded then
+							profile.base.vaultSeeded = true
+							profile.base.vault = (profile.base.vault or 0) + (Settings.Tutorial.StarterVault or 500)
+							registry.Data.MarkDirty(player)
+							end
 							registry.Notify.Send(player, "success", "Base claimed!",
 							"This plot is yours. Upgrade it and fill the vault!", 5)
 							if registry.TutorialHook then
@@ -2304,6 +2360,7 @@
 							registry.Security.ClearPlotSecurity(index)
 							end
 							registry.World.SetPlotLabel(index, "Empty Plot")
+							ensureClaimPrompt(index) -- free again: restore the claim prompt
 							end
 							
 							--------------------------------------------------------------------------------
@@ -2606,6 +2663,9 @@
 							--------------------------------------------------------------------------------
 							
 							function BaseService.Start()
+							for i = 1, Settings.MaxBasePlots do
+							ensureClaimPrompt(i)
+							end
 							registry.Net.OnRequest("ClaimBase", function(player)
 							local profile = profileOf(player)
 							if not profile then
@@ -2760,6 +2820,7 @@
 							upgrades = defaultUpgrades(),
 							security = defaultSecurity(),
 							vault = 0,
+							vaultSeeded = false,
 							decorations = {},
 							lockdownUntil = 0,
 							lockdownCooldownUntil = 0,
@@ -2879,6 +2940,7 @@
 							if type(p.base) ~= "table" then p.base = {} end
 							p.base.plot = sanitizeNumber(p.base.plot, 0, 0, Settings.MaxBasePlots)
 							p.base.vault = sanitizeNumber(p.base.vault, 0, 0, 1e12)
+							if type(p.base.vaultSeeded) ~= "boolean" then p.base.vaultSeeded = false end
 							if type(p.base.upgrades) ~= "table" then p.base.upgrades = defaultUpgrades() end
 							if type(p.base.security) ~= "table" then p.base.security = defaultSecurity() end
 							if type(p.base.decorations) ~= "table" then p.base.decorations = {} end
@@ -4010,6 +4072,9 @@
 							serverNow = os.time(),
 							})
 							registry.Net.FireAll("Fx", "EventStart", eventId)
+							if registry.World.SetEventBoard then
+							registry.World.SetEventBoard("LIVE NOW: " .. def.DisplayName)
+							end
 							
 							if eventId == "MeteorShower" then
 							local count = math.min(def.MeteorCount or 10, Settings.Performance.MaxMeteors)
@@ -4059,6 +4124,9 @@
 							registry.Notify.Broadcast("info", "Event over",
 							def.DisplayName .. " has ended.", 5)
 							registry.Net.FireAll("EventUpdate", { active = false, serverNow = os.time() })
+							if registry.World.SetEventBoard then
+							registry.World.SetEventBoard("NEXT EVENT: soon...")
+							end
 							print("[EggHeist] Event ended: " .. def.DisplayName)
 							end
 							
@@ -8381,6 +8449,7 @@
 							
 							local Shared = ReplicatedStorage:WaitForChild("EggHeistShared")
 							local Settings = require(Shared:WaitForChild("Config"):WaitForChild("Settings"))
+							local Eggs = require(Shared:WaitForChild("Config"):WaitForChild("Eggs"))
 							
 							local WorldService = {}
 							WorldService.Name = "WorldService"
@@ -8452,6 +8521,14 @@
 							return board
 							end
 							
+							local ASSET_COLORS = {
+							BasicEgg = Color3.fromRGB(240, 230, 200), StoneEgg = Color3.fromRGB(130, 130, 130),
+							GoldenEgg = Color3.fromRGB(255, 200, 60), CrystalEgg = Color3.fromRGB(150, 220, 255),
+							LavaEgg = Color3.fromRGB(255, 100, 40), ToxicEgg = Color3.fromRGB(120, 255, 60),
+							ShadowEgg = Color3.fromRGB(70, 50, 120), GalaxyEgg = Color3.fromRGB(150, 80, 255),
+							AncientEgg = Color3.fromRGB(200, 170, 120), VoidEgg = Color3.fromRGB(25, 15, 45),
+							}
+							
 							local function mkEggModel(parent, name, color, glow)
 							local model = Instance.new("Model")
 							model.Name = name
@@ -8498,6 +8575,39 @@
 							mkPart(spawn, "PlazaBase", Vector3.new(40, 2, 40), CFrame.new(0, 0, 0), FALLBACK_COLORS.Floor)
 							mkPart(spawn, "PlazaInnerFloor", Vector3.new(24, 2.2, 24), CFrame.new(0, 0.1, 0), FALLBACK_COLORS.Accent)
 							mkSign(spawn, "SignBoard", CFrame.new(0, 8, -18), "EGG HEIST", Color3.fromRGB(255, 220, 100))
+							-- Directory: where is everything?
+							mkSign(spawn, "DirectoryBoard", CFrame.new(-14, 6, 14), "MARKET -&gt; EAST   BASES -&gt; NORTH",
+							Color3.fromRGB(160, 220, 255), Vector3.new(16, 3, 1))
+							mkSign(spawn, "DirectoryBoard2", CFrame.new(14, 6, 14), "HEIST v SOUTH   EVENTS &lt;- WEST",
+							Color3.fromRGB(255, 200, 160), Vector3.new(16, 3, 1))
+							-- Tutorial totems: the first 10 minutes, on signs
+							local guides = {
+							{ "Guide1", "1 CLAIM A BASE: walk north, touch a green plot, press CLAIM" },
+							{ "Guide2", "2 BUY AN EGG: open SHOP (top buttons)" },
+							{ "Guide3", "3 HATCH + EQUIP: open BACKPACK, hatch, then EQUIP" },
+							{ "Guide4", "4 HEIST!: breach enemy vaults, escape SOUTH to EXTRACTION" },
+							}
+							for i, guide in ipairs(guides) do
+							local gx = -15 + (i - 1) * 10
+							mkPart(spawn, guide[1] .. "Post", Vector3.new(1, 5, 1), CFrame.new(gx, 3, -8),
+							Color3.fromRGB(90, 70, 50))
+							mkSign(spawn, guide[1], CFrame.new(gx, 6.5, -8), guide[2],
+							Color3.fromRGB(255, 255, 255), Vector3.new(9, 3, 1))
+							end
+							-- Fountain centerpiece
+							mkPart(spawn, "FountainBasin", Vector3.new(8, 1.2, 8), CFrame.new(0, 1.8, 4),
+							Color3.fromRGB(120, 120, 140))
+							mkPart(spawn, "FountainWater", Vector3.new(7, 0.5, 7), CFrame.new(0, 2.4, 4),
+							Color3.fromRGB(80, 170, 255), Enum.Material.Glass)
+							mkPart(spawn, "FountainSpout", Vector3.new(1, 3, 1), CFrame.new(0, 3.4, 4),
+							Color3.fromRGB(120, 120, 140))
+							-- Flag poles
+							for _, fx in ipairs({ -17, 17 }) do
+							mkPart(spawn, "FlagPole" .. tostring(fx), Vector3.new(0.6, 12, 0.6), CFrame.new(fx, 7, 17),
+							Color3.fromRGB(80, 80, 90))
+							mkPart(spawn, "Flag" .. tostring(fx), Vector3.new(4, 2.5, 0.3), CFrame.new(fx + 2, 11, 17),
+							FALLBACK_COLORS.Accent)
+							end
 							
 							-- Market (6 stalls)
 							local market = Instance.new("Folder")
@@ -8505,13 +8615,31 @@
 							market.Parent = mapFolder
 							mkPart(market, "MarketFloor", Vector3.new(60, 2, 30), CFrame.new(90, 0, 0), FALLBACK_COLORS.Market)
 							mkSign(market, "MarketArchLabel", CFrame.new(90, 9, -13), "EGG MARKET", Color3.fromRGB(255, 255, 255))
-							local stalls = { "Common", "Rare", "Epic", "Legendary", "Mythic", "Secret" }
-							for i, stall in ipairs(stalls) do
-							local x = 90 - 25 + (i - 1) * 10
-							mkPart(market, stall .. "_Platform", Vector3.new(8, 2, 8), CFrame.new(x, 1, 0), FALLBACK_COLORS.Accent)
-							mkPart(market, stall .. "_Pedestal", Vector3.new(3, 3, 3), CFrame.new(x, 3.5, 0), FALLBACK_COLORS.Floor)
-							mkSign(market, stall .. "_Label", CFrame.new(x, 8, -8), string.upper(stall),
-							Color3.fromRGB(255, 255, 255), Vector3.new(8, 3, 1))
+							-- Arch pillars under the label
+							mkPart(market, "ArchPillarL", Vector3.new(2, 8, 2), CFrame.new(78, 4, -13), FALLBACK_COLORS.Floor)
+							mkPart(market, "ArchPillarR", Vector3.new(2, 8, 2), CFrame.new(102, 4, -13), FALLBACK_COLORS.Floor)
+							mkPart(market, "ArchBeam", Vector3.new(26, 2, 2), CFrame.new(90, 8.6, -13), FALLBACK_COLORS.Accent)
+							-- One stall per purchasable egg: platform + pedestal + egg display + price sign
+							local shopEggs = Eggs.GetShopEggs and Eggs.GetShopEggs() or {}
+							for i, def in ipairs(shopEggs) do
+							local col = (i - 1) % 4
+							local row = math.floor((i - 1) / 4)
+							local x = 67.5 + col * 15
+							local z = -6 + row * 12
+							mkPart(market, def.Id .. "_Platform", Vector3.new(12, 1, 9), CFrame.new(x, 1.2, z),
+							FALLBACK_COLORS.Accent)
+							mkPart(market, def.Id .. "_Pedestal", Vector3.new(3, 2.5, 3), CFrame.new(x, 2.8, z),
+							FALLBACK_COLORS.Floor)
+							local display = mkEggModel(market, def.Id .. "_Display",
+							ASSET_COLORS[def.AssetModel or ""] or Color3.fromRGB(240, 230, 200), false)
+							local body = display:FindFirstChild("Body")
+							if body then
+							body.CFrame = CFrame.new(x, 5.5, z)
+							end
+							local priceText = string.upper(def.DisplayName or def.Id)
+							.. " $" .. tostring(def.Price or 0) .. " Lv" .. tostring(def.RequiredLevel or 1)
+							mkSign(market, def.Id .. "_PriceLabel", CFrame.new(x, 8.5, z - 3.4), priceText,
+							Color3.fromRGB(255, 255, 255), Vector3.new(13, 2.5, 1))
 							end
 							
 							-- Heist vault area
@@ -8525,6 +8653,23 @@
 							mkPart(heist, "SecurityGateTop", Vector3.new(16, 2, 2), CFrame.new(0, 8, 100), FALLBACK_COLORS.Accent)
 							mkPart(heist, "SecurityGateL", Vector3.new(2, 8, 2), CFrame.new(-7, 4, 100), FALLBACK_COLORS.Floor)
 							mkPart(heist, "SecurityGateR", Vector3.new(2, 8, 2), CFrame.new(7, 4, 100), FALLBACK_COLORS.Floor)
+							-- Cover crates (thieves sneak between these)
+							local crates = { { -14, 110, 4 }, { 14, 110, 4 }, { -18, 124, 5 }, { 18, 124, 5 }, { -8, 134, 3 }, { 8, 134, 3 } }
+							for i, crate in ipairs(crates) do
+							mkPart(heist, "Crate" .. tostring(i), Vector3.new(crate[3], crate[3], crate[3]),
+							CFrame.new(crate[1], 1 + crate[3] / 2, crate[2]), Color3.fromRGB(120, 95, 60))
+							end
+							-- Searchlight poles + hazard strips
+							for _, sx in ipairs({ -22, 22 }) do
+							mkPart(heist, "LightPole" .. tostring(sx), Vector3.new(1, 12, 1), CFrame.new(sx, 7, 120),
+							Color3.fromRGB(60, 60, 70))
+							mkPart(heist, "LightHead" .. tostring(sx), Vector3.new(3, 1.5, 3), CFrame.new(sx, 13, 120),
+							Color3.fromRGB(255, 240, 200), Enum.Material.Neon)
+							end
+							mkPart(heist, "HazardStripW", Vector3.new(1, 2.2, 50), CFrame.new(-24, 0.1, 120),
+							Color3.fromRGB(255, 220, 60), Enum.Material.Neon)
+							mkPart(heist, "HazardStripE", Vector3.new(1, 2.2, 50), CFrame.new(24, 0.1, 120),
+							Color3.fromRGB(255, 220, 60), Enum.Material.Neon)
 							
 							-- Event stage
 							local eventArea = Instance.new("Folder")
@@ -8533,6 +8678,24 @@
 							mkPart(eventArea, "EventFloor", Vector3.new(44, 2, 44), CFrame.new(-90, 0, 0), FALLBACK_COLORS.Event)
 							mkPart(eventArea, "EventStage", Vector3.new(16, 3, 16), CFrame.new(-90, 1.5, 0), FALLBACK_COLORS.Accent)
 							mkSign(eventArea, "EventAreaLabel", CFrame.new(-90, 10, -18), "EVENT GROUNDS", Color3.fromRGB(220, 180, 255))
+							-- Seating steps facing the stage
+							for i = 1, 3 do
+							mkPart(eventArea, "SeatStep" .. tostring(i), Vector3.new(24, 1, 3),
+							CFrame.new(-90, 1 + i * 0.5, 12 + i * 3), FALLBACK_COLORS.Floor)
+							end
+							-- Banner poles
+							local bannerColors = { Color3.fromRGB(255, 200, 80), Color3.fromRGB(150, 120, 255),
+							Color3.fromRGB(200, 60, 60), Color3.fromRGB(80, 220, 120) }
+							local bannerPos = { { -108, -16 }, { -72, -16 }, { -108, 16 }, { -72, 16 } }
+							for i, pos in ipairs(bannerPos) do
+							mkPart(eventArea, "BannerPole" .. tostring(i), Vector3.new(0.8, 10, 0.8),
+							CFrame.new(pos[1], 6, pos[2]), Color3.fromRGB(70, 70, 80))
+							mkPart(eventArea, "Banner" .. tostring(i), Vector3.new(4, 2.5, 0.3),
+							CFrame.new(pos[1] + 2, 9.5, pos[2]), bannerColors[i])
+							end
+							-- Event board: EventService writes the live event name here
+							mkSign(eventArea, "EventBoard", CFrame.new(-90, 7, -14), "NEXT EVENT: soon...",
+							Color3.fromRGB(220, 200, 255), Vector3.new(18, 4, 1))
 							
 							-- Bases
 							local bases = Instance.new("Folder")
@@ -8542,6 +8705,26 @@
 							template.Name = "BaseTemplate"
 							template.Parent = bases
 							mkPart(template, "Foundation", Vector3.new(36, 2, 36), CFrame.new(0, -30, -160), FALLBACK_COLORS.Plot)
+							-- Vault house, built on claim: 3 walls + roof + safe + trigger floor + upgrade pads.
+							-- Template coords map to plot-relative: (dx, 30 + dy, -160 + dz).
+							mkPart(template, "VaultAreaFloor", Vector3.new(10, 2, 10), CFrame.new(8, 31, -165),
+							Color3.fromRGB(150, 60, 60))
+							mkPart(template, "VaultSafe", Vector3.new(4, 5, 4), CFrame.new(8, 34.5, -165),
+							Color3.fromRGB(45, 45, 55))
+							mkPart(template, "VaultTrim", Vector3.new(4.6, 0.6, 4.6), CFrame.new(8, 37.2, -165),
+							Color3.fromRGB(255, 200, 80), Enum.Material.Neon)
+							mkPart(template, "HouseBack", Vector3.new(14, 8, 1), CFrame.new(8, 35, -171),
+							Color3.fromRGB(190, 160, 130))
+							mkPart(template, "HouseLeft", Vector3.new(1, 8, 9), CFrame.new(1, 35, -167),
+							Color3.fromRGB(190, 160, 130))
+							mkPart(template, "HouseRight", Vector3.new(1, 8, 9), CFrame.new(15, 35, -167),
+							Color3.fromRGB(190, 160, 130))
+							mkPart(template, "HouseRoof", Vector3.new(16, 1, 11), CFrame.new(8, 39.5, -167),
+							Color3.fromRGB(140, 60, 60))
+							for slot = 1, 3 do
+							mkPart(template, "UpgradeSlot" .. tostring(slot), Vector3.new(4, 0.6, 4),
+							CFrame.new(-15 + slot * 5, 31.3, -154), FALLBACK_COLORS.Accent).CanCollide = false
+							end
 							for i = 1, Settings.MaxBasePlots do
 							local plot = Instance.new("Model")
 							plot.Name = string.format("Plot%02d", i)
@@ -8551,7 +8734,18 @@
 							mkSign(plot, "PlotLabel", CFrame.new(x, 8, -106), string.format("Plot%02d", i),
 							Color3.fromRGB(200, 255, 200), Vector3.new(10, 3, 1))
 							mkPart(plot, "EggPedestal1", Vector3.new(3, 3, 3), CFrame.new(x - 8, 2.5, -90), FALLBACK_COLORS.Accent)
-							mkPart(plot, "VaultAreaFloor", Vector3.new(10, 2, 10), CFrame.new(x + 8, 1, -95), FALLBACK_COLORS.Heist)
+							-- Low boundary walls (jumpable; tinted by security purchases)
+							mkPart(plot, "BoundaryWall1", Vector3.new(36, 3, 1), CFrame.new(x, 1.5, -108),
+							FALLBACK_COLORS.Plot)
+							mkPart(plot, "BoundaryWall2", Vector3.new(1, 3, 36), CFrame.new(x + 18, 1.5, -90),
+							FALLBACK_COLORS.Plot)
+							mkPart(plot, "BoundaryWall3", Vector3.new(1, 3, 36), CFrame.new(x - 18, 1.5, -90),
+							FALLBACK_COLORS.Plot)
+							mkPart(plot, "BoundaryWall4", Vector3.new(36, 3, 1), CFrame.new(x, 1.5, -72),
+							FALLBACK_COLORS.Plot)
+							-- Claim totem: BaseService attaches the "Claim Base" prompt here
+							mkPart(plot, "ClaimTotem", Vector3.new(2, 5, 2), CFrame.new(x - 14, 2.5, -76),
+							Color3.fromRGB(90, 200, 120), Enum.Material.Neon)
 							end
 							
 							-- Runtime + decor + interactables shells
@@ -8566,19 +8760,93 @@
 							decorations.Parent = root
 							mkPart(decorations, "PathToMarket", Vector3.new(50, 1, 6), CFrame.new(45, -0.5, 0), FALLBACK_COLORS.Path)
 							mkPart(decorations, "PathToHeist", Vector3.new(6, 1, 80), CFrame.new(0, -0.5, 60), FALLBACK_COLORS.Path)
+							mkPart(decorations, "PathToEvent", Vector3.new(50, 1, 6), CFrame.new(-45, -0.5, 0), FALLBACK_COLORS.Path)
+							mkPart(decorations, "PathToBases", Vector3.new(6, 1, 52), CFrame.new(0, -0.5, -46), FALLBACK_COLORS.Path)
+							mkPart(decorations, "BaseRowRoad", Vector3.new(300, 1, 8), CFrame.new(0, -0.5, -70), FALLBACK_COLORS.Path)
+							-- World boundary fence (keeps players inside the map)
+							mkPart(decorations, "BoundaryN", Vector3.new(364, 12, 4), CFrame.new(0, 6, -140),
+							Color3.fromRGB(90, 140, 90))
+							mkPart(decorations, "BoundaryS", Vector3.new(364, 12, 4), CFrame.new(0, 6, 180),
+							Color3.fromRGB(90, 140, 90))
+							mkPart(decorations, "BoundaryW", Vector3.new(4, 12, 324), CFrame.new(-182, 6, 20),
+							Color3.fromRGB(90, 140, 90))
+							mkPart(decorations, "BoundaryE", Vector3.new(4, 12, 324), CFrame.new(182, 6, 20),
+							Color3.fromRGB(90, 140, 90))
+							-- Pond between plaza and market
+							mkPart(decorations, "PondRim", Vector3.new(16, 1, 16), CFrame.new(48, -0.4, 52),
+							Color3.fromRGB(210, 190, 140))
+							mkPart(decorations, "PondWater", Vector3.new(14, 0.6, 14), CFrame.new(48, 0.1, 52),
+							Color3.fromRGB(70, 160, 255), Enum.Material.Glass)
+							-- Trees + rocks scattered on the grass (kept clear of districts and roads)
+							local treeSpots = {
+							{ -40, -30 }, { -60, 40 }, { -30, 70 }, { 40, -35 }, { 60, 45 }, { 30, 80 },
+							{ -120, 50 }, { 130, 60 }, { -150, -30 }, { 150, -30 }, { -60, -60 }, { 60, -60 },
+							{ -100, 100 }, { 100, 100 }, { -40, 150 }, { 40, 150 }, { -160, 90 }, { 160, 90 },
+							{ -100, -50 }, { 100, -50 },
+							}
+							for i, spot in ipairs(treeSpots) do
+							mkPart(decorations, "TreeTrunk" .. tostring(i), Vector3.new(1.5, 5, 1.5),
+							CFrame.new(spot[1], 2.5, spot[2]), Color3.fromRGB(110, 80, 55))
+							mkPart(decorations, "TreeLeaves" .. tostring(i), Vector3.new(5, 5, 5),
+							CFrame.new(spot[1], 7, spot[2]), Color3.fromRGB(60, 160, 70), Enum.Material.Grass).Shape = Enum.PartType.Ball
+							end
+							local rockSpots = { { -25, 45 }, { 25, -55 }, { -75, 75 }, { 75, 30 }, { -130, 10 }, { 140, 90 }, { 55, 140 }, { -55, -110 } }
+							for i, spot in ipairs(rockSpots) do
+							mkPart(decorations, "Rock" .. tostring(i), Vector3.new(3, 2.5, 3),
+							CFrame.new(spot[1], 1, spot[2]), Color3.fromRGB(140, 140, 150), Enum.Material.Slate).Shape = Enum.PartType.Ball
+							end
+							-- Clouds
+							local cloudSpots = { { -60, 70, 60 }, { 60, 80, 40 }, { 0, 75, -60 }, { -120, 70, 90 }, { 120, 72, 100 } }
+							for i, spot in ipairs(cloudSpots) do
+							local cloud = mkPart(decorations, "Cloud" .. tostring(i), Vector3.new(22, 6, 14),
+							CFrame.new(spot[1], spot[2], spot[3]), Color3.fromRGB(255, 255, 255), Enum.Material.SmoothPlastic)
+							cloud.Shape = Enum.PartType.Ball
+							cloud.CanCollide = false
+							cloud.Anchored = true
+							cloud.Transparency = 0.35
+							end
+							-- Lamp posts along the roads (every 3rd one glows, to save performance)
+							local lampSpots = { { 20, 8 }, { 45, -8 }, { 70, 8 }, { 8, 35 }, { -8, 80 }, { -20, -8 }, { -45, 8 }, { -70, -8 }, { 8, -40 }, { -60, -66 }, { 60, -66 } }
+							for i, spot in ipairs(lampSpots) do
+							mkPart(decorations, "LampPost" .. tostring(i), Vector3.new(0.8, 8, 0.8),
+							CFrame.new(spot[1], 4, spot[2]), Color3.fromRGB(50, 50, 60))
+							local head = mkPart(decorations, "LampHead" .. tostring(i), Vector3.new(2, 1.5, 2),
+							CFrame.new(spot[1], 8.7, spot[2]), Color3.fromRGB(255, 235, 180), Enum.Material.Neon)
+							if i % 3 == 1 then
+							local light = Instance.new("PointLight")
+							light.Color = Color3.fromRGB(255, 230, 170)
+							light.Range = 22
+							light.Brightness = 1.5
+							light.Parent = head
+							end
+							end
+							-- Welcome rugs where the NPCs stand
+							mkPart(decorations, "NpcRugMarket", Vector3.new(7, 0.3, 7), CFrame.new(90, 1.15, 12),
+							Color3.fromRGB(180, 60, 60)).CanCollide = false
+							mkPart(decorations, "NpcRugHeist", Vector3.new(7, 0.3, 7), CFrame.new(-14, 1.15, 108),
+							Color3.fromRGB(60, 60, 180)).CanCollide = false
+							mkPart(decorations, "NpcRugEvent", Vector3.new(7, 0.3, 7), CFrame.new(-90, 1.15, 12),
+							Color3.fromRGB(120, 60, 180)).CanCollide = false
+							-- Warm afternoon lighting for the fallback map
+							pcall(function()
+							local Lighting = game:GetService("Lighting")
+							Lighting.ClockTime = 14.5
+							Lighting.Brightness = 2.2
+							Lighting.Ambient = Color3.fromRGB(120, 120, 130)
+							if not Lighting:FindFirstChild("EggHeistAtmosphere") then
+							local atmosphere = Instance.new("Atmosphere")
+							atmosphere.Name = "EggHeistAtmosphere"
+							atmosphere.Density = 0.25
+							atmosphere.Haze = 4
+							atmosphere.Parent = Lighting
+							end
+							end)
 							
 							-- Egg assets
 							local assets = Instance.new("Folder")
 							assets.Name = "EggAssets"
 							assets.Parent = root
-							local eggColors = {
-							BasicEgg = Color3.fromRGB(240, 230, 200), StoneEgg = Color3.fromRGB(130, 130, 130),
-							GoldenEgg = Color3.fromRGB(255, 200, 60), CrystalEgg = Color3.fromRGB(150, 220, 255),
-							LavaEgg = Color3.fromRGB(255, 100, 40), ToxicEgg = Color3.fromRGB(120, 255, 60),
-							ShadowEgg = Color3.fromRGB(70, 50, 120), GalaxyEgg = Color3.fromRGB(150, 80, 255),
-							AncientEgg = Color3.fromRGB(200, 170, 120), VoidEgg = Color3.fromRGB(25, 15, 45),
-							}
-							for name, color in pairs(eggColors) do
+							for name, color in pairs(ASSET_COLORS) do
 							local model = mkEggModel(assets, name, color, true)
 							local body = model:FindFirstChild("Body")
 							if body then
@@ -8834,6 +9102,24 @@
 							return model
 							end
 							
+							--- Writes a line of text on the event board (Map/EventArea/EventBoard).
+							function WorldService.SetEventBoard(text)
+							local root = Workspace:FindFirstChild("EggHeist")
+							if not root then
+							return false
+							end
+							local eventArea = root:FindFirstChild("Map")
+							eventArea = eventArea and eventArea:FindFirstChild("EventArea")
+							local board = eventArea and eventArea:FindFirstChild("EventBoard")
+							local gui = board and board:FindFirstChild("SignGui")
+							local label = gui and gui:FindFirstChild("SignText")
+							if label and label:IsA("TextLabel") then
+							label.Text = tostring(text)
+							return true
+							end
+							return false
+							end
+							
 							function WorldService.SetPlotLabel(plotIndex, text)
 							local plot = WorldService.GetPlotModel(plotIndex)
 							if not plot then
@@ -8987,6 +9273,8 @@
 					
 					print("[EggHeist] Starting server...")
 					
+					local bootStats = { loaded = 0, loadFail = 0, initOk = 0, initFail = 0, startOk = 0, startFail = 0 }
+					
 					-- Phase 1: require all services
 					for _, path in ipairs(LOAD_ORDER) do
 					local ok, keyOrErr, service = pcall(function()
@@ -8994,8 +9282,10 @@
 					return key, svc
 					end)
 					if not ok then
+					bootStats.loadFail = bootStats.loadFail + 1
 					warn("[EggHeist] FAILED to require " .. path .. ": " .. tostring(keyOrErr))
 					else
+					bootStats.loaded = bootStats.loaded + 1
 					registry[keyOrErr] = service
 					print("[EggHeist] Loaded " .. path)
 					end
@@ -9014,7 +9304,10 @@
 					if service and type(service.Init) == "function" then
 					local ok, err = pcall(service.Init, service, registry)
 					if not ok then
+					bootStats.initFail = bootStats.initFail + 1
 					warn("[EggHeist] " .. moduleName .. ".Init failed: " .. tostring(err))
+					else
+					bootStats.initOk = bootStats.initOk + 1
 					end
 					end
 					end
@@ -9026,30 +9319,56 @@
 					if service and type(service.Start) == "function" then
 					local ok, err = pcall(service.Start, service)
 					if not ok then
+					bootStats.startFail = bootStats.startFail + 1
 					warn("[EggHeist] " .. moduleName .. ".Start failed: " .. tostring(err))
+					else
+					bootStats.startOk = bootStats.startOk + 1
 					end
 					end
 					end
 					
-					print("[EggHeist] Server started. Have fun!")
+					print(string.format("[EggHeist] Boot summary: %d loaded (%d failed), %d init ok (%d failed), %d start ok (%d failed)",
+					bootStats.loaded, bootStats.loadFail, bootStats.initOk, bootStats.initFail,
+					bootStats.startOk, bootStats.startFail))
+					
+					-- READY marker: visible in Explorer + detectable by diagnostics.
+					-- ALSO a loud final check that the remotes folder exists (no remotes =
+					-- no game, same class of failure as the v4.0.1 boot hang).
+					pcall(function()
+					local Workspace = game:GetService("Workspace")
+					local ReplicatedStorage = game:GetService("ReplicatedStorage")
+					local okValue = Workspace:FindFirstChild("EggHeistServerOK")
+					if not okValue then
+					okValue = Instance.new("BoolValue")
+					okValue.Name = "EggHeistServerOK"
+					okValue.Parent = Workspace
+					end
+					local remotesOk = ReplicatedStorage:FindFirstChild("EggHeistRemotes") ~= nil
+					okValue.Value = remotesOk and bootStats.loadFail == 0
+					if remotesOk then
+					print("[EggHeist] Server READY. Have fun!")
+					else
+					warn("[EggHeist] FATAL: remotes folder missing after boot - clients cannot connect!")
+					end
+					end)
 					</ProtectedString>
 				</Properties>
 			</Item>
 		</Item>
 	</Item>
-	<Item class="StarterPlayer" referent="RBX115">
+	<Item class="StarterPlayer" referent="RBX116">
 		<Properties>
 			<string name="Name">StarterPlayer</string>
 		</Properties>
-		<Item class="StarterPlayerScripts" referent="RBX114">
+		<Item class="StarterPlayerScripts" referent="RBX115">
 			<Properties>
 				<string name="Name">StarterPlayerScripts</string>
 			</Properties>
-			<Item class="Folder" referent="RBX113">
+			<Item class="Folder" referent="RBX114">
 				<Properties>
 					<string name="Name">EggHeistClient</string>
 				</Properties>
-				<Item class="Folder" referent="RBX111">
+				<Item class="Folder" referent="RBX112">
 					<Properties>
 						<string name="Name">Client</string>
 					</Properties>
@@ -10088,7 +10407,7 @@
 							</Properties>
 						</Item>
 					</Item>
-					<Item class="Folder" referent="RBX110">
+					<Item class="Folder" referent="RBX111">
 						<Properties>
 							<string name="Name">UI</string>
 						</Properties>
@@ -11300,6 +11619,74 @@
 						</Item>
 						<Item class="ModuleScript" referent="RBX100">
 							<Properties>
+								<string name="Name">HelpUI</string>
+								<ProtectedString name="Source">-- HelpUI: "?" button + quick-start guide popup. Zero dependencies besides UIFactory.
+								local UIFactory = require(script.Parent:WaitForChild("UIFactory"))
+								
+								local HelpUI = {}
+								
+								local HELP_TOPICS = {
+								{ "QUICK START", "1. Walk NORTH to the green plots and CLAIM a base (press E at the glowing totem).\n2. Open SHOP and buy your first egg.\n3. Open BACKPACK, HATCH the egg, then EQUIP the pet.\n4. Earn cash, upgrade your base, and HEIST other players' vaults!" },
+								{ "CONTROLS", "Move: WASD / left stick\nJump: Space\nInteract: E (claim plots, vaults, pickups)\nHeist tools: Q (smoke), F (full heist), X (phase)\nLockdown: L (protects your vault)" },
+								{ "YOUR BASE", "Your vault fills up over time from pet income. Walk to the golden VAULT and press E to COLLECT. Buy INCOME, VAULT and SECURITY upgrades in the BASE panel. Security slows thieves down!" },
+								{ "HEISTS", "Walk onto another player's plot and press E at their vault to grab eggs and cash. Watch out for traps and lasers! Escape SOUTH to the green EXTRACTION pad to bank your loot. Getting caught sends you home empty-handed." },
+								{ "PETS &amp; EGGS", "Eggs hatch into pets with rarities from Common to SECRET. Better eggs cost more and need higher levels. Equip up to 3 pets (unlock more slots with prestige). Pets boost income and heist power. Fuse duplicates in the FUSION panel!" },
+								{ "EVENTS &amp; QUESTS", "World events (Meteor Shower, Blood Moon...) drop rare eggs - check the EVENT board. Daily quests and achievements give gems and rewards. Come back every day for the login streak!" },
+								{ "STUCK?", "Green signs at spawn point to every district. If windows ever stop opening, rejoin the server - your base, pets and cash are saved automatically." },
+								}
+								
+								function HelpUI.Init()
+								local gui = UIFactory.ScreenGui("EggHeistHelp", 30)
+								
+								local helpButton = UIFactory.Button("?", function()
+								if HelpUI.window then
+								HelpUI.window.Toggle()
+								end
+								end)
+								helpButton.Name = "HelpButton"
+								helpButton.AnchorPoint = Vector2.new(1, 1)
+								helpButton.Position = UDim2.new(1, -14, 1, -14)
+								helpButton.Size = UDim2.new(0, 44, 0, 44)
+								helpButton.TextSize = 22
+								helpButton.Parent = gui
+								UIFactory.Corner(helpButton, 22)
+								
+								local window = UIFactory.Window(gui, "HELP &amp; GUIDE", UDim2.new(0, 520, 0, 460))
+								HelpUI.window = window
+								
+								local scroll = UIFactory.ScrollingList(window.Content)
+								for i, topic in ipairs(HELP_TOPICS) do
+								local card = UIFactory.Card(0)
+								card.LayoutOrder = i
+								card.AutomaticSize = Enum.AutomaticSize.Y
+								card.Parent = scroll
+								local cardLayout = Instance.new("UIListLayout")
+								cardLayout.SortOrder = Enum.SortOrder.LayoutOrder
+								cardLayout.Padding = UDim.new(0, 4)
+								cardLayout.Parent = card
+								local title = UIFactory.Label(topic[1], UDim2.new(1, 0, 0, 24), UIFactory.Theme.Accent, 15)
+								title.LayoutOrder = 1
+								title.Font = Enum.Font.GothamBold
+								title.TextXAlignment = Enum.TextXAlignment.Left
+								title.Parent = card
+								local body = UIFactory.Label(topic[2], UDim2.new(1, 0, 0, 0), UIFactory.Theme.Text, 13)
+								body.LayoutOrder = 2
+								body.TextXAlignment = Enum.TextXAlignment.Left
+								body.TextYAlignment = Enum.TextYAlignment.Top
+								body.TextWrapped = true
+								body.AutomaticSize = Enum.AutomaticSize.Y
+								body.Parent = card
+								end
+								
+								print("[EggHeist] HelpUI ready")
+								end
+								
+								return HelpUI
+								</ProtectedString>
+							</Properties>
+						</Item>
+						<Item class="ModuleScript" referent="RBX101">
+							<Properties>
 								<string name="Name">InventoryUI</string>
 								<ProtectedString name="Source">-- EggHeist | Client/UI/InventoryUI.lua
 								-- Backpack: unhatched eggs + pet inventory management.
@@ -11592,7 +11979,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX101">
+						<Item class="ModuleScript" referent="RBX102">
 							<Properties>
 								<string name="Name">MainUI</string>
 								<ProtectedString name="Source">-- EggHeist | Client/UI/MainUI.lua
@@ -11985,7 +12372,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX102">
+						<Item class="ModuleScript" referent="RBX103">
 							<Properties>
 								<string name="Name">NotificationsUI</string>
 								<ProtectedString name="Source">-- EggHeist | Client/UI/NotificationsUI.lua
@@ -12134,7 +12521,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX103">
+						<Item class="ModuleScript" referent="RBX104">
 							<Properties>
 								<string name="Name">ObjectiveUI</string>
 								<ProtectedString name="Source">-- EggHeist | Client/UI/ObjectiveUI.lua
@@ -12295,7 +12682,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX104">
+						<Item class="ModuleScript" referent="RBX105">
 							<Properties>
 								<string name="Name">QuestsUI</string>
 								<ProtectedString name="Source">-- EggHeist | Client/UI/QuestsUI.lua
@@ -12550,7 +12937,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX105">
+						<Item class="ModuleScript" referent="RBX106">
 							<Properties>
 								<string name="Name">SettingsUI</string>
 								<ProtectedString name="Source">-- EggHeist | Client/UI/SettingsUI.lua
@@ -12734,7 +13121,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX106">
+						<Item class="ModuleScript" referent="RBX107">
 							<Properties>
 								<string name="Name">ShopUI</string>
 								<ProtectedString name="Source">-- EggHeist | Client/UI/ShopUI.lua
@@ -13031,7 +13418,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX107">
+						<Item class="ModuleScript" referent="RBX108">
 							<Properties>
 								<string name="Name">TradeUI</string>
 								<ProtectedString name="Source">-- EggHeist | Client/UI/TradeUI.lua
@@ -13466,7 +13853,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX108">
+						<Item class="ModuleScript" referent="RBX109">
 							<Properties>
 								<string name="Name">TutorialUI</string>
 								<ProtectedString name="Source">-- EggHeist | Client/UI/TutorialUI.lua
@@ -13560,7 +13947,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX109">
+						<Item class="ModuleScript" referent="RBX110">
 							<Properties>
 								<string name="Name">UIFactory</string>
 								<ProtectedString name="Source">-- EggHeist | Client/UI/UIFactory.lua
@@ -13896,7 +14283,7 @@
 						</Item>
 					</Item>
 				</Item>
-				<Item class="LocalScript" referent="RBX112">
+				<Item class="LocalScript" referent="RBX113">
 					<Properties>
 						<string name="Name">ClientMain</string>
 						<bool name="Disabled">false</bool>
@@ -13909,11 +14296,78 @@
 						
 						-- Timeouts + asserts: boot-critical waits must ERROR LOUDLY, never hang
 						-- the client forever (an infinite yield here = zero UI with zero errors).
+						--------------------------------------------------------------------------------
+						-- BOOT PROBE (dependency-free, runs FIRST). A tiny status label is created
+						-- before anything else can fail, updated through each boot phase, and
+						-- hidden on success. If the client ever dies again, the label stays on
+						-- screen showing EXACTLY where (+ the error), instead of silent nothing.
+						--------------------------------------------------------------------------------
+						local bootGui = nil
+						local bootLabel = nil
+						pcall(function()
+						local playersSvc = game:GetService("Players")
+						local player = playersSvc and playersSvc.LocalPlayer
+						local playerGui = player and player:WaitForChild("PlayerGui")
+						if not playerGui then
+						return
+						end
+						bootGui = Instance.new("ScreenGui")
+						bootGui.Name = "EggHeistBoot"
+						bootGui.DisplayOrder = 1000
+						bootGui.ResetOnSpawn = false
+						bootGui.IgnoreGuiInset = true
+						bootGui.Parent = playerGui
+						bootLabel = Instance.new("TextLabel")
+						bootLabel.AnchorPoint = Vector2.new(0.5, 1)
+						bootLabel.Position = UDim2.new(0.5, 0, 1, -8)
+						bootLabel.Size = UDim2.new(0, 360, 0, 30)
+						bootLabel.BackgroundColor3 = Color3.fromRGB(20, 22, 34)
+						bootLabel.BackgroundTransparency = 0.25
+						bootLabel.TextColor3 = Color3.fromRGB(255, 220, 130)
+						bootLabel.Font = Enum.Font.GothamBold
+						bootLabel.TextSize = 13
+						bootLabel.Text = "EGG HEIST: booting..."
+						bootLabel.Parent = bootGui
+						local corner = Instance.new("UICorner")
+						corner.CornerRadius = UDim.new(0, 8)
+						corner.Parent = bootLabel
+						end)
+						
+						local function bootStatus(text)
+						print("[EggHeist] boot: " .. tostring(text))
+						pcall(function()
+						if bootLabel then
+						bootLabel.Text = "EGG HEIST: " .. tostring(text)
+						end
+						end)
+						end
+						
+						local function bootFatal(context, err)
+						local message = tostring(context) .. ": " .. tostring(err)
+						warn("[EggHeist] CLIENT FATAL - " .. message)
+						pcall(function()
+						if bootLabel then
+						bootLabel.Size = UDim2.new(0, 460, 0, 60)
+						bootLabel.BackgroundColor3 = Color3.fromRGB(120, 25, 25)
+						bootLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+						bootLabel.TextWrapped = true
+						bootLabel.Text = "EGG HEIST ERROR\n" .. message
+						.. "\n(Open View &gt; Output and send the red text to the dev!)"
+						end
+						end)
+						end
+						
 						local ClientFolder = script.Parent:WaitForChild("Client", 30)
 						assert(ClientFolder, "[EggHeist] FATAL: Client folder missing next to ClientMain")
 						local ClientNetModule = ClientFolder:WaitForChild("ClientNet", 30)
 						assert(ClientNetModule, "[EggHeist] FATAL: ClientNet module missing")
-						local ClientNet = require(ClientNetModule)
+						bootStatus("loading network...")
+						local netOk, ClientNetOrErr = pcall(require, ClientNetModule)
+						if not netOk then
+						bootFatal("ClientNet require failed", ClientNetOrErr)
+						return
+						end
+						local ClientNet = ClientNetOrErr
 						
 						local CONTROLLERS = {
 						"DataController", -- profile cache first (others read through ctx.Data)
@@ -13948,6 +14402,7 @@
 						"TutorialUI",
 						"ObjectiveUI",
 						"TradeUI",
+						"HelpUI",
 						}
 						
 						local ctx = {}
@@ -13955,7 +14410,12 @@
 						ctx.Controllers = {}
 						ctx.UI = {}
 						
-						ClientNet.Init()
+						bootStatus("waiting for server remotes...")
+						local initOk, initErr = pcall(ClientNet.Init)
+						if not initOk then
+						bootFatal("ClientNet.Init failed (is the server running?)", initErr)
+						return
+						end
 						
 						local controllersFolder = ClientFolder:WaitForChild("Controllers", 30)
 						assert(controllersFolder, "[EggHeist] FATAL: Controllers folder missing")
@@ -13984,6 +14444,7 @@
 						end
 						end
 						
+						bootStatus("loading controllers...")
 						for _, name in ipairs(CONTROLLERS) do
 						loadController(name)
 						end
@@ -13991,13 +14452,16 @@
 						-- shared ctx shortcuts
 						ctx.Data = ctx.Controllers.DataController
 						
+						bootStatus("loading interface...")
 						local uiFolder = ClientFolder:WaitForChild("UI", 30)
 						assert(uiFolder, "[EggHeist] FATAL: UI folder missing")
 						for _, name in ipairs(UI_MODULES) do
 						local moduleScript = uiFolder:FindFirstChild(name)
 						if moduleScript then
 						local ok, ui = pcall(require, moduleScript)
-						if ok and ui then
+						if not ok then
+						warn("[EggHeist] UI require failed: " .. name .. ": " .. tostring(ui))
+						elseif ok and ui then
 						ctx.UI[name] = ui
 						if type(ui.Init) == "function" then
 						local ok2, err = pcall(ui.Init, ui, ctx)
@@ -14011,6 +14475,7 @@
 						end
 						end
 						
+						bootStatus("starting controllers...")
 						for _, name in ipairs(CONTROLLERS) do
 						local controller = ctx.Controllers[name]
 						if controller and type(controller.Start) == "function" then
@@ -14019,28 +14484,33 @@
 						end
 						
 						print("[EggHeist] Client started.")
+						pcall(function()
+						if bootGui then
+						bootGui:Destroy()
+						end
+						end)
 						</ProtectedString>
 					</Properties>
 				</Item>
 			</Item>
 		</Item>
 	</Item>
-	<Item class="StarterGui" referent="RBX116">
+	<Item class="StarterGui" referent="RBX117">
 		<Properties>
 			<string name="Name">StarterGui</string>
 		</Properties>
 	</Item>
-	<Item class="ServerStorage" referent="RBX117">
+	<Item class="ServerStorage" referent="RBX118">
 		<Properties>
 			<string name="Name">ServerStorage</string>
 		</Properties>
 	</Item>
-	<Item class="SoundService" referent="RBX118">
+	<Item class="SoundService" referent="RBX119">
 		<Properties>
 			<string name="Name">SoundService</string>
 		</Properties>
 	</Item>
-	<Item class="Teams" referent="RBX119">
+	<Item class="Teams" referent="RBX120">
 		<Properties>
 			<string name="Name">Teams</string>
 		</Properties>

@@ -7,11 +7,78 @@
 
 -- Timeouts + asserts: boot-critical waits must ERROR LOUDLY, never hang
 -- the client forever (an infinite yield here = zero UI with zero errors).
+--------------------------------------------------------------------------------
+-- BOOT PROBE (dependency-free, runs FIRST). A tiny status label is created
+-- before anything else can fail, updated through each boot phase, and
+-- hidden on success. If the client ever dies again, the label stays on
+-- screen showing EXACTLY where (+ the error), instead of silent nothing.
+--------------------------------------------------------------------------------
+local bootGui = nil
+local bootLabel = nil
+pcall(function()
+	local playersSvc = game:GetService("Players")
+	local player = playersSvc and playersSvc.LocalPlayer
+	local playerGui = player and player:WaitForChild("PlayerGui")
+	if not playerGui then
+		return
+	end
+	bootGui = Instance.new("ScreenGui")
+	bootGui.Name = "EggHeistBoot"
+	bootGui.DisplayOrder = 1000
+	bootGui.ResetOnSpawn = false
+	bootGui.IgnoreGuiInset = true
+	bootGui.Parent = playerGui
+	bootLabel = Instance.new("TextLabel")
+	bootLabel.AnchorPoint = Vector2.new(0.5, 1)
+	bootLabel.Position = UDim2.new(0.5, 0, 1, -8)
+	bootLabel.Size = UDim2.new(0, 360, 0, 30)
+	bootLabel.BackgroundColor3 = Color3.fromRGB(20, 22, 34)
+	bootLabel.BackgroundTransparency = 0.25
+	bootLabel.TextColor3 = Color3.fromRGB(255, 220, 130)
+	bootLabel.Font = Enum.Font.GothamBold
+	bootLabel.TextSize = 13
+	bootLabel.Text = "EGG HEIST: booting..."
+	bootLabel.Parent = bootGui
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 8)
+	corner.Parent = bootLabel
+end)
+
+local function bootStatus(text)
+	print("[EggHeist] boot: " .. tostring(text))
+	pcall(function()
+		if bootLabel then
+			bootLabel.Text = "EGG HEIST: " .. tostring(text)
+		end
+	end)
+end
+
+local function bootFatal(context, err)
+	local message = tostring(context) .. ": " .. tostring(err)
+	warn("[EggHeist] CLIENT FATAL - " .. message)
+	pcall(function()
+		if bootLabel then
+			bootLabel.Size = UDim2.new(0, 460, 0, 60)
+			bootLabel.BackgroundColor3 = Color3.fromRGB(120, 25, 25)
+			bootLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+			bootLabel.TextWrapped = true
+			bootLabel.Text = "EGG HEIST ERROR\n" .. message
+				.. "\n(Open View > Output and send the red text to the dev!)"
+		end
+	end)
+end
+
 local ClientFolder = script.Parent:WaitForChild("Client", 30)
 assert(ClientFolder, "[EggHeist] FATAL: Client folder missing next to ClientMain")
 local ClientNetModule = ClientFolder:WaitForChild("ClientNet", 30)
 assert(ClientNetModule, "[EggHeist] FATAL: ClientNet module missing")
-local ClientNet = require(ClientNetModule)
+bootStatus("loading network...")
+local netOk, ClientNetOrErr = pcall(require, ClientNetModule)
+if not netOk then
+	bootFatal("ClientNet require failed", ClientNetOrErr)
+	return
+end
+local ClientNet = ClientNetOrErr
 
 local CONTROLLERS = {
 	"DataController", -- profile cache first (others read through ctx.Data)
@@ -46,6 +113,7 @@ local UI_MODULES = {
 	"TutorialUI",
 	"ObjectiveUI",
 	"TradeUI",
+	"HelpUI",
 }
 
 local ctx = {}
@@ -53,7 +121,12 @@ ctx.Net = ClientNet
 ctx.Controllers = {}
 ctx.UI = {}
 
-ClientNet.Init()
+bootStatus("waiting for server remotes...")
+local initOk, initErr = pcall(ClientNet.Init)
+if not initOk then
+	bootFatal("ClientNet.Init failed (is the server running?)", initErr)
+	return
+end
 
 local controllersFolder = ClientFolder:WaitForChild("Controllers", 30)
 assert(controllersFolder, "[EggHeist] FATAL: Controllers folder missing")
@@ -82,6 +155,7 @@ local function loadController(name)
 	end
 end
 
+bootStatus("loading controllers...")
 for _, name in ipairs(CONTROLLERS) do
 	loadController(name)
 end
@@ -89,13 +163,16 @@ end
 -- shared ctx shortcuts
 ctx.Data = ctx.Controllers.DataController
 
+bootStatus("loading interface...")
 local uiFolder = ClientFolder:WaitForChild("UI", 30)
 assert(uiFolder, "[EggHeist] FATAL: UI folder missing")
 for _, name in ipairs(UI_MODULES) do
 	local moduleScript = uiFolder:FindFirstChild(name)
 	if moduleScript then
 		local ok, ui = pcall(require, moduleScript)
-		if ok and ui then
+		if not ok then
+			warn("[EggHeist] UI require failed: " .. name .. ": " .. tostring(ui))
+		elseif ok and ui then
 			ctx.UI[name] = ui
 			if type(ui.Init) == "function" then
 				local ok2, err = pcall(ui.Init, ui, ctx)
@@ -109,6 +186,7 @@ for _, name in ipairs(UI_MODULES) do
 	end
 end
 
+bootStatus("starting controllers...")
 for _, name in ipairs(CONTROLLERS) do
 	local controller = ctx.Controllers[name]
 	if controller and type(controller.Start) == "function" then
@@ -117,3 +195,8 @@ for _, name in ipairs(CONTROLLERS) do
 end
 
 print("[EggHeist] Client started.")
+pcall(function()
+	if bootGui then
+		bootGui:Destroy()
+	end
+end)
