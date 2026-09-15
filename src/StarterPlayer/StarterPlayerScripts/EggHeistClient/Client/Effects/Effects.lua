@@ -7,6 +7,36 @@ local Players = game:GetService("Players")
 
 local Effects = {}
 
+-- Settings-aware gates, refreshed by MainUI from the player snapshot.
+local gates = {
+	cameraShake = true,
+	reducedEffects = false,
+	performanceMode = false,
+}
+
+function Effects.Configure(settings)
+	if type(settings) ~= "table" then
+		return
+	end
+	if settings.cameraShake ~= nil then
+		gates.cameraShake = settings.cameraShake ~= false
+	end
+	if settings.reducedEffects ~= nil then
+		gates.reducedEffects = settings.reducedEffects == true
+	end
+	if settings.performanceMode ~= nil then
+		gates.performanceMode = settings.performanceMode == true
+	end
+end
+
+local function effectsMuted()
+	return gates.performanceMode
+end
+
+local function effectsReduced()
+	return gates.performanceMode or gates.reducedEffects
+end
+
 function Effects.Tween(instance, info, goals, callback)
 	local tween = TweenService:Create(instance, info, goals)
 	if callback then
@@ -33,6 +63,9 @@ function Effects.Pop(instance, amount)
 end
 
 function Effects.Flash(parent, color, duration)
+	if effectsMuted() then
+		return
+	end
 	local flash = Instance.new("Frame")
 	flash.Size = UDim2.fromScale(1, 1)
 	flash.BackgroundColor3 = color or Color3.fromRGB(255, 255, 255)
@@ -47,6 +80,11 @@ end
 
 -- Simple UI confetti burst inside a container (anchored center-ish)
 function Effects.Confetti(parent, count, colors)
+	if effectsMuted() then
+		return
+	elseif effectsReduced() then
+		count = math.min(count or 0, 12)
+	end
 	count = count or 40
 	colors = colors or {
 		Color3.fromRGB(255, 200, 80), Color3.fromRGB(120, 220, 255),
@@ -76,9 +114,12 @@ function Effects.Confetti(parent, count, colors)
 end
 
 function Effects.ShakeCamera(intensity, duration)
+	if not gates.cameraShake or effectsMuted() then
+		return
+	end
 	intensity = intensity or 0.5
 	duration = duration or 0.3
-	local camera = workspace.CurrentCamera
+	local camera = Workspace.CurrentCamera
 	if not camera then
 		return
 	end

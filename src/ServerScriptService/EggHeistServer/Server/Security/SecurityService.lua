@@ -18,6 +18,7 @@ local slowUntil = {} -- [userId] = timestamp (laser slow)
 local stunUntil = {} -- [userId] = timestamp (trap stun)
 local trapCooldown = {} -- [trapPart] = timestamp
 local alarmLastPing = {} -- [plotIndex] = timestamp
+local empUntil = {} -- [plotIndex] = os.clock timestamp (EMP suppression)
 
 function SecurityService.Init(_, reg)
 	registry = reg
@@ -80,6 +81,9 @@ function SecurityService.BuySecurity(player, itemId)
 	profile.stats.securityBought = (profile.stats.securityBought or 0) + 1
 	registry.Economy.AddXp(player, 20 * nextTier)
 	registry.Quest.AddProgress(player, "UpgradeSecurity", 1)
+	if registry.Achievement then
+		registry.Achievement.Check(player, "SecurityBuy")
+	end
 	registry.Notify.Send(player, "success", "Security upgraded!",
 		item.DisplayName .. " tier " .. tostring(nextTier) .. ".", 4)
 	local plotIndex = registry.Base.GetPlotOf(player)
@@ -218,6 +222,43 @@ function SecurityService.RebuildPlotSecurity(plotIndex)
 end
 
 --------------------------------------------------------------------------------
+-- EMP suppression (gadget counter-play)
+--------------------------------------------------------------------------------
+
+function SecurityService.IsEmpDisabled(plotIndex)
+	return (empUntil[plotIndex] or 0) > os.clock()
+end
+
+function SecurityService.SetEmpDisabled(plotIndex, seconds)
+	local untilAt = os.clock() + math.max(1, seconds or 30)
+	empUntil[plotIndex] = untilAt
+	-- visual: dim the beams while fried
+	local state = plotSecurity[plotIndex]
+	if state and state.lasers then
+		for _, beam in ipairs(state.lasers) do
+			if beam and beam.Parent then
+				beam.Color = Color3.fromRGB(90, 90, 100)
+				beam.Transparency = 0.7
+			end
+		end
+	end
+	task.delay(math.max(1, seconds or 30) + 0.1, function()
+		if empUntil[plotIndex] == untilAt then
+			empUntil[plotIndex] = nil
+			local current = plotSecurity[plotIndex]
+			if current and current.lasers then
+				for _, beam in ipairs(current.lasers) do
+					if beam and beam.Parent then
+						beam.Color = Color3.fromRGB(255, 40, 40)
+						beam.Transparency = 0
+					end
+				end
+			end
+		end
+	end)
+end
+
+--------------------------------------------------------------------------------
 -- Queries used by HeistService
 --------------------------------------------------------------------------------
 
@@ -332,6 +373,9 @@ function SecurityService.OnTrapTouched(plotIndex, trap, hit)
 	if SecurityService.IsLockedDown(owner) then
 		return -- sealed base: traps dormant (intruders already ejected)
 	end
+	if SecurityService.IsEmpDisabled(plotIndex) then
+		return -- fried by EMP
+	end
 	trapCooldown[trap] = now + 6
 	local stun = Security.Items.Trap.StunDuration(securityTier(owner, "Trap"))
 	stunUntil[player.UserId] = now + stun
@@ -389,7 +433,8 @@ local function laserDamageLoop()
 		task.wait(0.5)
 		local now = os.clock()
 		for plotIndex, state in pairs(plotSecurity) do
-			if state.lasers and #state.lasers > 0 then
+			if state.lasers and #state.lasers > 0
+				and not SecurityService.IsEmpDisabled(plotIndex) then
 				local owner = ownerOfPlot(plotIndex)
 				if owner and not SecurityService.IsLockedDown(owner) then
 					local tier = securityTier(owner, "Laser")

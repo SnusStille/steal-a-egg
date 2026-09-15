@@ -17,6 +17,10 @@ SoundManager.Sounds = {
 	Rare = "rbxasset://sounds/unsheath.wav",
 	Coins = "rbxasset://sounds/coins.wav",
 	Alarm = "rbxasset://sounds/alarm.wav",
+	HeistAlert = "rbxasset://sounds/alarm.wav",
+	Achievement = "rbxasset://sounds/electronicping.wav",
+	Gadget = "rbxasset://sounds/swordslash.wav",
+	Extract = "rbxasset://sounds/coins.wav",
 }
 
 function SoundManager.Init(ctx)
@@ -32,7 +36,8 @@ local function sfxEnabled()
 	return true
 end
 
-function SoundManager.Play(soundName, volume)
+-- pitch shifts PlaybackSpeed (1 = normal). Pass 1 +/- small random for variety.
+function SoundManager.Play(soundName, volume, pitch)
 	if not sfxEnabled() then
 		return
 	end
@@ -43,6 +48,7 @@ function SoundManager.Play(soundName, volume)
 	local sound = Instance.new("Sound")
 	sound.SoundId = assetId
 	sound.Volume = volume or 0.6
+	sound.PlaybackSpeed = tonumber(pitch) or 1
 	sound.Parent = SoundService
 	sound.Ended:Connect(function()
 		sound:Destroy()

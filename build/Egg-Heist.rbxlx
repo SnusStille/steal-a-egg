@@ -45,19 +45,144 @@
 			<Color3 name="OutdoorAmbient"><R>0.47058823529411764</R><G>0.47058823529411764</G><B>0.47058823529411764</B></Color3>
 		</Properties>
 	</Item>
-	<Item class="ReplicatedStorage" referent="RBX25">
+	<Item class="ReplicatedStorage" referent="RBX29">
 		<Properties>
 			<string name="Name">ReplicatedStorage</string>
 		</Properties>
-		<Item class="Folder" referent="RBX24">
+		<Item class="Folder" referent="RBX28">
 			<Properties>
 				<string name="Name">EggHeistShared</string>
 			</Properties>
-			<Item class="Folder" referent="RBX16">
+			<Item class="Folder" referent="RBX20">
 				<Properties>
 					<string name="Name">Config</string>
 				</Properties>
 				<Item class="ModuleScript" referent="RBX4">
+					<Properties>
+						<string name="Name">Achievements</string>
+						<ProtectedString name="Source">-- EggHeist | Shared/Config/Achievements.lua
+						-- One-time achievements. Fully data-driven: add a row, no code changes.
+						--
+						-- Trigger: server event name that re-evaluates this achievement.
+						--   "BuyEgg" | "HatchEgg" | "EquipPet" | "HeistWin" | "LevelUp" |
+						--   "Prestige" | "QuestClaim" | "UpgradeBuy" | "SecurityBuy"
+						-- Conditions (ALL must pass; omit for trigger-only achievements):
+						--   Stat = { Key = "&lt;stats key&gt;", Value = n }   -- lifetime stat &gt;= n
+						--   Level = n                                   -- player level &gt;= n
+						--   Collection = n                              -- unique discoveries &gt;= n
+						--   Prestige = n                                -- prestige count &gt;= n
+						--   Equipped = n                                -- currently equipped &gt;= n
+						--   UpgradeTotal = n                            -- sum of base upgrade tiers &gt;= n
+						--   SecurityTotal = n                           -- sum of security tiers &gt;= n
+						-- Reward: { Cash, Gems, Xp, Egg = "&lt;eggId&gt;", Gadget = "&lt;gadgetId&gt;", GadgetCount }
+						
+						local Achievements = {}
+						
+						Achievements.List = {
+						{ Id = "first_egg", Name = "First Egg", Text = "Buy your first egg",
+						Trigger = "BuyEgg", Stat = { Key = "eggsBought", Value = 1 },
+						Reward = { Cash = 250 } },
+						{ Id = "egg_hoarder", Name = "Egg Hoarder", Text = "Buy 25 eggs",
+						Trigger = "BuyEgg", Stat = { Key = "eggsBought", Value = 25 },
+						Reward = { Cash = 2000 } },
+						{ Id = "first_hatch", Name = "It Hatches!", Text = "Hatch your first egg",
+						Trigger = "HatchEgg", Stat = { Key = "totalHatched", Value = 1 },
+						Reward = { Cash = 250 } },
+						{ Id = "hatch_25", Name = "Hatchling", Text = "Hatch 25 eggs",
+						Trigger = "HatchEgg", Stat = { Key = "totalHatched", Value = 25 },
+						Reward = { Cash = 3000 } },
+						{ Id = "hatch_100", Name = "Hatch Master", Text = "Hatch 100 eggs",
+						Trigger = "HatchEgg", Stat = { Key = "totalHatched", Value = 100 },
+						Reward = { Cash = 15000, Gems = 10 } },
+						{ Id = "first_mutation", Name = "Shiny!", Text = "Hatch a mutated pet",
+						Trigger = "HatchEgg", Stat = { Key = "mutatedHatched", Value = 1 },
+						Reward = { Cash = 1000 } },
+						{ Id = "mutant_master", Name = "Mutant Master", Text = "Hatch 10 mutated pets",
+						Trigger = "HatchEgg", Stat = { Key = "mutatedHatched", Value = 10 },
+						Reward = { Egg = "Golden" } },
+						{ Id = "legendary_pull", Name = "Legendary Pull", Text = "Hatch a Legendary (or better) pet",
+						Trigger = "HatchEgg", Stat = { Key = "legendaryPlusHatched", Value = 1 },
+						Reward = { Cash = 2500, Gems = 5 } },
+						{ Id = "secret_pull", Name = "Impossible Odds", Text = "Hatch a Secret pet",
+						Trigger = "HatchEgg", Stat = { Key = "secretsHatched", Value = 1 },
+						Reward = { Cash = 25000, Gems = 25 } },
+						{ Id = "first_friend", Name = "First Friend", Text = "Equip your first pet",
+						Trigger = "EquipPet",
+						Reward = { Cash = 250 } },
+						{ Id = "full_squad", Name = "Full Squad", Text = "Have 5 pets equipped at once",
+						Trigger = "EquipPet", Equipped = 5,
+						Reward = { Cash = 2000 } },
+						{ Id = "first_heist", Name = "Sticky Fingers", Text = "Complete your first heist",
+						Trigger = "HeistWin", Stat = { Key = "heistsWon", Value = 1 },
+						Reward = { Cash = 1000, Gadget = "Smoke" } },
+						{ Id = "heist_10", Name = "Professional", Text = "Complete 10 heists",
+						Trigger = "HeistWin", Stat = { Key = "heistsWon", Value = 10 },
+						Reward = { Cash = 10000, Gadget = "EMP" } },
+						{ Id = "ghost", Name = "Ghost", Text = "Reach 30 heist reputation",
+						Trigger = "HeistWin", Stat = { Key = "heistRep", Value = 30 },
+						Reward = { Cash = 25000, Gems = 25 } },
+						{ Id = "level_10", Name = "Rising Star", Text = "Reach level 10",
+						Trigger = "LevelUp", Level = 10,
+						Reward = { Cash = 2000 } },
+						{ Id = "level_25", Name = "Big Shot", Text = "Reach level 25",
+						Trigger = "LevelUp", Level = 25,
+						Reward = { Egg = "Crystal" } },
+						{ Id = "collector_10", Name = "Collector", Text = "Discover 10 collection entries",
+						Trigger = "HatchEgg", Collection = 10,
+						Reward = { Cash = 1500 } },
+						{ Id = "collector_50", Name = "Curator", Text = "Discover 50 collection entries",
+						Trigger = "HatchEgg", Collection = 50,
+						Reward = { Cash = 12000, Gems = 12 } },
+						{ Id = "fortress", Name = "Fort Knox", Text = "Own 8 total security tiers",
+						Trigger = "SecurityBuy", SecurityTotal = 8,
+						Reward = { Cash = 5000 } },
+						{ Id = "mogul", Name = "Mogul", Text = "Own 10 total base upgrade tiers",
+						Trigger = "UpgradeBuy", UpgradeTotal = 10,
+						Reward = { Cash = 5000 } },
+						{ Id = "reborn", Name = "Reborn", Text = "Prestige for the first time",
+						Trigger = "Prestige", Prestige = 1,
+						Reward = { Gems = 50 } },
+						{ Id = "quester", Name = "Errand Runner", Text = "Claim 10 quest rewards",
+						Trigger = "QuestClaim", Stat = { Key = "questsDone", Value = 10 },
+						Reward = { Cash = 4000 } },
+						}
+						
+						Achievements.ById = {}
+						for _, def in ipairs(Achievements.List) do
+						Achievements.ById[def.Id] = def
+						end
+						
+						function Achievements.IsValid(achievementId)
+						return Achievements.ById[achievementId] ~= nil
+						end
+						
+						return Achievements
+						</ProtectedString>
+					</Properties>
+				</Item>
+				<Item class="ModuleScript" referent="RBX5">
+					<Properties>
+						<string name="Name">Collection</string>
+						<ProtectedString name="Source">-- EggHeist | Shared/Config/Collection.lua
+						-- Collection milestones: rewards for unique discoveries (pet x mutation).
+						-- Total possible = #pets x (1 + #mutations). Each milestone claims once.
+						
+						local Collection = {}
+						
+						Collection.Milestones = {
+						{ Count = 10, Reward = { Cash = 2000 } },
+						{ Count = 25, Reward = { Cash = 6000, Gems = 5 } },
+						{ Count = 50, Reward = { Cash = 10000, Egg = "Golden" } },
+						{ Count = 100, Reward = { Cash = 30000, Gems = 20 } },
+						{ Count = 150, Reward = { Egg = "Void", Gems = 30 } },
+						{ Count = 200, Reward = { Gems = 100, Egg = "Ancient" } },
+						}
+						
+						return Collection
+						</ProtectedString>
+					</Properties>
+				</Item>
+				<Item class="ModuleScript" referent="RBX6">
 					<Properties>
 						<string name="Name">Economy</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Config/Economy.lua
@@ -133,10 +258,10 @@
 						{ Cash = 500, Gems = 0, Egg = nil },
 						{ Cash = 1200, Gems = 3, Egg = nil },
 						{ Cash = 0, Gems = 0, Egg = "Stone" },
-						{ Cash = 5000, Gems = 5, Egg = nil },
+						{ Cash = 5000, Gems = 5, Egg = nil, Gadget = "Lockpick" },
 						{ Cash = 12000, Gems = 8, Egg = nil },
-						{ Cash = 0, Gems = 0, Egg = "Golden" },
-						{ Cash = 30000, Gems = 20, Egg = "Crystal" },
+						{ Cash = 0, Gems = 0, Egg = "Golden", Gadget = "Smoke" },
+						{ Cash = 30000, Gems = 20, Egg = "Crystal", Gadget = "Sprint" },
 						}
 						
 						-- Quest rewards (scaled by difficulty 1-3)
@@ -152,7 +277,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX5">
+				<Item class="ModuleScript" referent="RBX7">
 					<Properties>
 						<string name="Name">Eggs</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Config/Eggs.lua
@@ -317,7 +442,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX6">
+				<Item class="ModuleScript" referent="RBX8">
 					<Properties>
 						<string name="Name">Events</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Config/Events.lua
@@ -397,7 +522,81 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX7">
+				<Item class="ModuleScript" referent="RBX9">
+					<Properties>
+						<string name="Name">Gadgets</string>
+						<ProtectedString name="Source">-- EggHeist | Shared/Config/Gadgets.lua
+						-- Heist gadgets: consumable tools that create real tactical choices.
+						-- Bought with cash in the shop, earned from achievements/dailies.
+						--
+						-- Behaviors (implemented in Heists/GadgetService.lua):
+						--   Lockpick: armed; next breach channel is BreachMult x as long.
+						--   Smoke:    armed; next breach does NOT alert the owner until the grab.
+						--   EMP:      instant; disables the nearest enemy base's lasers+traps for
+						--             DisableSeconds (must be near an enemy base to use).
+						--   Sprint:   instant; SprintMult move speed for SprintSeconds (stacks with
+						--             carry slow, capped at normal walk speed).
+						
+						local Gadgets = {}
+						
+						Gadgets.List = {
+						{
+						Id = "Lockpick",
+						DisplayName = "Lockpick Set",
+						Description = "Next breach takes half as long. Used when a breach starts.",
+						Price = 1500,
+						MaxHeld = 5,
+						Kind = "Armed",
+						BreachMult = 0.5,
+						ArmExpirySeconds = 120,
+						},
+						{
+						Id = "Smoke",
+						DisplayName = "Smoke Capsule",
+						Description = "Next breach stays silent until the grab. Used when a breach starts.",
+						Price = 2500,
+						MaxHeld = 5,
+						Kind = "Armed",
+						ArmExpirySeconds = 120,
+						},
+						{
+						Id = "EMP",
+						DisplayName = "EMP Charge",
+						Description = "Fries the nearest enemy base's lasers and traps for 30s.",
+						Price = 5000,
+						MaxHeld = 3,
+						Kind = "Instant",
+						DisableSeconds = 30,
+						UseRange = 60,
+						},
+						{
+						Id = "Sprint",
+						DisplayName = "Swift Boots",
+						Description = "+30% move speed for 60s. Perfect for getaways.",
+						Price = 3000,
+						MaxHeld = 3,
+						Kind = "Instant",
+						SprintMult = 1.3,
+						SprintSeconds = 60,
+						},
+						}
+						
+						Gadgets.ById = {}
+						Gadgets.Order = {}
+						for _, def in ipairs(Gadgets.List) do
+						Gadgets.ById[def.Id] = def
+						Gadgets.Order[#Gadgets.Order + 1] = def.Id
+						end
+						
+						function Gadgets.IsValid(gadgetId)
+						return Gadgets.ById[gadgetId] ~= nil
+						end
+						
+						return Gadgets
+						</ProtectedString>
+					</Properties>
+				</Item>
+				<Item class="ModuleScript" referent="RBX10">
 					<Properties>
 						<string name="Name">Mutations</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Config/Mutations.lua
@@ -437,7 +636,92 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX8">
+				<Item class="ModuleScript" referent="RBX11">
+					<Properties>
+						<string name="Name">Npcs</string>
+						<ProtectedString name="Source">-- EggHeist | Shared/Config/Npcs.lua
+						-- Lightweight world NPCs: greeting + shortcut into the right UI.
+						-- Server builds them (World/NpcService), client wires prompts (NpcController).
+						--
+						-- Anchor: {path...} inside workspace.EggHeist; the NPC stands on that part.
+						-- Fallback: world position used when the anchor part is missing.
+						-- Action: { Ui = "&lt;UI module&gt;", Tab = "&lt;optional tab&gt;" } opened on talk.
+						
+						local Npcs = {}
+						
+						Npcs.List = {
+						{
+						Id = "Merchant",
+						DisplayName = "Egg Merchant",
+						Title = "Sells fine eggs",
+						Color = { 255, 200, 80 },
+						Greetings = {
+						"Fresh eggs, friend! Every legend starts with one.",
+						"Psst... the Crystal Egg is worth every coin.",
+						"Hatch more, earn more. That's the whole economy!",
+						},
+						Action = { Ui = "ShopUI", Tab = "Eggs" },
+						Anchor = { "Map", "EggMarket", "MarketFloor" },
+						Offset = { 0, 0, 10 },
+						Fallback = { 90, 4, 14 },
+						},
+						{
+						Id = "Guard",
+						DisplayName = "Security Specialist",
+						Title = "Base defense expert",
+						Color = { 90, 140, 255 },
+						Greetings = {
+						"Thieves hate this one trick: LOCKDOWN.",
+						"Lasers first, questions later. That's my motto.",
+						"A vault without a shield is just a donation box.",
+						},
+						Action = { Ui = "BaseUI", Tab = "Security" },
+						Anchor = { "Map", "HeistArea", "HeistFloor" },
+						Offset = { -14, 0, -14 },
+						Fallback = { -14, 4, 106 },
+						},
+						{
+						Id = "Scout",
+						DisplayName = "Quest Scout",
+						Title = "Always hiring",
+						Color = { 140, 255, 160 },
+						Greetings = {
+						"Quests pay well. Dailies reset every day!",
+						"Achievements are permanent glory. Chase them all.",
+						"Come back tomorrow — the scout always has work.",
+						},
+						Action = { Ui = "QuestsUI" },
+						Anchor = { "Map", "EventArea", "EventFloor" },
+						Offset = { 0, 0, 12 },
+						Fallback = { -90, 4, 14 },
+						},
+						{
+						Id = "Fence",
+						DisplayName = "Shady Fence",
+						Title = "No questions asked",
+						Color = { 200, 80, 80 },
+						Greetings = {
+						"Gadgets make getaways. Just saying.",
+						"Quick grabs are quiet. Full vaults are... profitable.",
+						"If the alarm screams, you were never here.",
+						},
+						Action = { Ui = "ShopUI", Tab = "Gadgets" },
+						Anchor = { "Map", "HeistArea", "HeistFloor" },
+						Offset = { 14, 0, -14 },
+						Fallback = { 14, 4, 106 },
+						},
+						}
+						
+						Npcs.ById = {}
+						for _, def in ipairs(Npcs.List) do
+						Npcs.ById[def.Id] = def
+						end
+						
+						return Npcs
+						</ProtectedString>
+					</Properties>
+				</Item>
+				<Item class="ModuleScript" referent="RBX12">
 					<Properties>
 						<string name="Name">Pets</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Config/Pets.lua
@@ -523,7 +807,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX9">
+				<Item class="ModuleScript" referent="RBX13">
 					<Properties>
 						<string name="Name">Quests</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Config/Quests.lua
@@ -564,7 +848,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX10">
+				<Item class="ModuleScript" referent="RBX14">
 					<Properties>
 						<string name="Name">Rarities</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Config/Rarities.lua
@@ -619,7 +903,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX11">
+				<Item class="ModuleScript" referent="RBX15">
 					<Properties>
 						<string name="Name">Security</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Config/Security.lua
@@ -733,7 +1017,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX12">
+				<Item class="ModuleScript" referent="RBX16">
 					<Properties>
 						<string name="Name">Settings</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Config/Settings.lua
@@ -758,6 +1042,19 @@
 						OwnerOnlineRequired = false, -- if true, can only steal from owners in-server
 						MinThiefLevel = 2,
 						ExtractionChannelTime = 3.0,
+						-- Loot targets: quick grab (fast, quiet, small) vs full vault (slow, loud, big)
+						QuickGrabLootFraction = 0.4, -- of the computed full-vault loot
+						QuickGrabBreachMult = 0.5, -- breach channel multiplier for quick grabs
+						-- Heist reputation: earned per success, lost per failure (min 0)
+						RepPerWin = 2,
+						RepPerFail = -1,
+						RepTitles = {
+						{ Rep = 0, Title = "Pickpocket" },
+						{ Rep = 5, Title = "Burglar" },
+						{ Rep = 15, Title = "Shadow" },
+						{ Rep = 30, Title = "Ghost" },
+						{ Rep = 60, Title = "Heist Legend" },
+						},
 						}
 						
 						-- Pet following
@@ -799,7 +1096,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX13">
+				<Item class="ModuleScript" referent="RBX17">
 					<Properties>
 						<string name="Name">Shop</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Config/Shop.lua
@@ -891,7 +1188,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX14">
+				<Item class="ModuleScript" referent="RBX18">
 					<Properties>
 						<string name="Name">Tutorial</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Config/Tutorial.lua
@@ -956,7 +1253,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX15">
+				<Item class="ModuleScript" referent="RBX19">
 					<Properties>
 						<string name="Name">Upgrades</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Config/Upgrades.lua
@@ -1026,7 +1323,7 @@
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="ModuleScript" referent="RBX17">
+			<Item class="ModuleScript" referent="RBX21">
 				<Properties>
 					<string name="Name">Remotes</string>
 					<ProtectedString name="Source">-- EggHeist | Shared/Remotes.lua
@@ -1056,8 +1353,13 @@
 					"BuySecurity",   -- (itemId)
 					"ToggleLockdown",-- ()
 					"CollectVault",  -- ()
-					"GrabLoot",      -- ()  (heist grab; server validates position/channel)
+					"GrabLoot",      -- (target?)  "quick"|"vault"; server validates position/channel
+					"AbandonLoot",   -- ()  drop carried loot (returns to victim, no fail stat)
+					"BuyGadget",     -- (gadgetId)
+					"UseGadget",     -- (gadgetId)
 					"ClaimQuest",    -- (questId)
+					"ClaimAchievement", -- (achievementId)
+					"ClaimMilestone",-- (milestoneIndex)
 					"ClaimDaily",    -- ()
 					"Prestige",      -- ()
 					"BuyDecoration", -- (decorId)
@@ -1100,7 +1402,12 @@
 					ToggleLockdown = 1,
 					CollectVault = 4,
 					GrabLoot = 3,
+					AbandonLoot = 2,
+					BuyGadget = 4,
+					UseGadget = 3,
 					ClaimQuest = 4,
+					ClaimAchievement = 4,
+					ClaimMilestone = 4,
 					ClaimDaily = 2,
 					Prestige = 1,
 					BuyDecoration = 4,
@@ -1114,7 +1421,7 @@
 					</ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="ModuleScript" referent="RBX18">
+			<Item class="ModuleScript" referent="RBX22">
 				<Properties>
 					<string name="Name">Types</string>
 					<ProtectedString name="Source">-- EggHeist | Shared/Types.lua
@@ -1214,11 +1521,11 @@
 					</ProtectedString>
 				</Properties>
 			</Item>
-			<Item class="Folder" referent="RBX23">
+			<Item class="Folder" referent="RBX27">
 				<Properties>
 					<string name="Name">Utilities</string>
 				</Properties>
-				<Item class="ModuleScript" referent="RBX19">
+				<Item class="ModuleScript" referent="RBX23">
 					<Properties>
 						<string name="Name">Format</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Utilities/Format.lua
@@ -1304,7 +1611,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX20">
+				<Item class="ModuleScript" referent="RBX24">
 					<Properties>
 						<string name="Name">Signal</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Utilities/Signal.lua
@@ -1355,7 +1662,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX21">
+				<Item class="ModuleScript" referent="RBX25">
 					<Properties>
 						<string name="Name">TableUtil</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Utilities/TableUtil.lua
@@ -1465,7 +1772,7 @@
 						</ProtectedString>
 					</Properties>
 				</Item>
-				<Item class="ModuleScript" referent="RBX22">
+				<Item class="ModuleScript" referent="RBX26">
 					<Properties>
 						<string name="Name">Validate</string>
 						<ProtectedString name="Source">-- EggHeist | Shared/Utilities/Validate.lua
@@ -1534,23 +1841,23 @@
 			</Item>
 		</Item>
 	</Item>
-	<Item class="ServerScriptService" referent="RBX64">
+	<Item class="ServerScriptService" referent="RBX72">
 		<Properties>
 			<string name="Name">ServerScriptService</string>
 		</Properties>
-		<Item class="Folder" referent="RBX63">
+		<Item class="Folder" referent="RBX71">
 			<Properties>
 				<string name="Name">EggHeistServer</string>
 			</Properties>
-			<Item class="Folder" referent="RBX61">
+			<Item class="Folder" referent="RBX69">
 				<Properties>
 					<string name="Name">Server</string>
 				</Properties>
-				<Item class="Folder" referent="RBX27">
+				<Item class="Folder" referent="RBX31">
 					<Properties>
 						<string name="Name">Admin</string>
 					</Properties>
-					<Item class="ModuleScript" referent="RBX26">
+					<Item class="ModuleScript" referent="RBX30">
 						<Properties>
 							<string name="Name">AdminService</string>
 							<ProtectedString name="Source">-- EggHeist | Server/Admin/AdminService.lua
@@ -1637,11 +1944,11 @@
 						</Properties>
 					</Item>
 				</Item>
-				<Item class="Folder" referent="RBX29">
+				<Item class="Folder" referent="RBX33">
 					<Properties>
 						<string name="Name">Bases</string>
 					</Properties>
-					<Item class="ModuleScript" referent="RBX28">
+					<Item class="ModuleScript" referent="RBX32">
 						<Properties>
 							<string name="Name">BaseService</string>
 							<ProtectedString name="Source">-- EggHeist | Server/Bases/BaseService.lua
@@ -1747,22 +2054,32 @@
 							return true
 							end
 							
+							local VAULT_PROMPTS = {
+							{ Name = "VaultPromptQuick", ActionText = "Quick Grab", Key = Enum.KeyCode.E, Target = "quick" },
+							{ Name = "VaultPromptFull", ActionText = "Full Heist", Key = Enum.KeyCode.F, Target = "vault" },
+							}
+							
 							local function ensureVaultPrompt(plotIndex)
 							local plot = registry.World.GetPlotModel(plotIndex)
 							if not plot then
 							return
 							end
-							if plot:FindFirstChild("VaultPrompt", true) then
-							return
+							-- legacy single prompt from older versions: remove in favor of the pair
+							local legacy = plot:FindFirstChild("VaultPrompt", true)
+							if legacy and legacy.Name == "VaultPrompt" then
+							pcall(function() legacy:Destroy() end)
 							end
 							local anchor = registry.World.GetVaultAnchor(plotIndex)
 							if not anchor then
 							return
 							end
+							for _, spec in ipairs(VAULT_PROMPTS) do
+							if not anchor:FindFirstChild(spec.Name) then
 							local prompt = Instance.new("ProximityPrompt")
-							prompt.Name = "VaultPrompt"
-							prompt.ActionText = "Vault"
+							prompt.Name = spec.Name
+							prompt.ActionText = spec.ActionText
 							prompt.ObjectText = "Base Vault"
+							prompt.KeyboardKeyCode = spec.Key
 							prompt.HoldDuration = 0.5
 							prompt.MaxActivationDistance = 14
 							prompt.RequiresLineOfSight = false
@@ -1774,12 +2091,12 @@
 							end
 							if player.UserId == ownerId then
 							BaseService.CollectVault(player)
-							else
-							if registry.Heist then
-							registry.Heist.TryGrab(player, plotIndex)
-							end
+							elseif registry.Heist then
+							registry.Heist.TryGrab(player, plotIndex, spec.Target)
 							end
 							end)
+							end
+							end
 							end
 							
 							function BaseService.AssignPlot(player, preferredIndex)
@@ -1937,6 +2254,9 @@
 							profile.stats.upgradesBought = (profile.stats.upgradesBought or 0) + 1
 							registry.Economy.AddXp(player, 15 * nextTier)
 							registry.Quest.AddProgress(player, "UpgradeBase", 1)
+							if registry.Achievement then
+							registry.Achievement.Check(player, "UpgradeBuy")
+							end
 							registry.Notify.Send(player, "success", "Upgrade purchased!",
 							track.DisplayName .. " tier " .. tostring(nextTier) .. ".", 4)
 							registry.Net.Fire(player, "Fx", "Upgrade", trackId, nextTier)
@@ -2161,11 +2481,11 @@
 						</Properties>
 					</Item>
 				</Item>
-				<Item class="Folder" referent="RBX31">
+				<Item class="Folder" referent="RBX35">
 					<Properties>
 						<string name="Name">Data</string>
 					</Properties>
-					<Item class="ModuleScript" referent="RBX30">
+					<Item class="ModuleScript" referent="RBX34">
 						<Properties>
 							<string name="Name">DataService</string>
 							<ProtectedString name="Source">-- EggHeist | Server/Data/DataService.lua
@@ -2235,6 +2555,9 @@
 							pets = {}, -- { {uid=..., id=..., mut=..., lvl=..., xp=...} }
 							equipped = {}, -- list of pet uids, in slot order
 							collection = {}, -- ["petId:mut"] = hatch count
+							gadgets = {}, -- [gadgetId] = count owned
+							achievements = {}, -- [achievementId] = { done, claimed }
+							collectionRewards = {}, -- [milestoneIndex] = true when claimed
 							base = {
 							plot = 0,
 							upgrades = defaultUpgrades(),
@@ -2258,6 +2581,11 @@
 							notifications = true,
 							showPets = true,
 							autoHatch = false,
+							cameraShake = true,
+							reducedEffects = false,
+							performanceMode = false,
+							heistAlerts = true,
+							npcTips = true,
 							},
 							tutorial = { done = false, step = 1 },
 							boosts = {}, -- { {id=..., expiresAt=...} }
@@ -2265,6 +2593,11 @@
 							totalEarned = 0,
 							totalHatched = 0,
 							mutatedHatched = 0,
+							eggsBought = 0,
+							maxRarityTier = 0,
+							legendaryPlusHatched = 0,
+							secretsHatched = 0,
+							heistRep = 0,
 							heistsWon = 0,
 							heistsFailed = 0,
 							timesRobbed = 0,
@@ -2273,6 +2606,7 @@
 							upgradesBought = 0,
 							securityBought = 0,
 							questsDone = 0,
+							gadgetsUsed = 0,
 							},
 							gamepasses = {},
 							lastSeen = os.time(),
@@ -2328,6 +2662,20 @@
 							if type(p.pets) ~= "table" then p.pets = {} end
 							if type(p.equipped) ~= "table" then p.equipped = {} end
 							if type(p.collection) ~= "table" then p.collection = {} end
+							if type(p.gadgets) ~= "table" then p.gadgets = {} end
+							if type(p.achievements) ~= "table" then p.achievements = {} end
+							if type(p.collectionRewards) ~= "table" then p.collectionRewards = {} end
+							-- clamp gadget counts (exploit/shenanigan guard)
+							for gadgetId, count in pairs(p.gadgets) do
+							if type(count) ~= "number" or count &lt; 0 then
+							p.gadgets[gadgetId] = nil
+							elseif count &gt; 99 then
+							p.gadgets[gadgetId] = 99
+							end
+							end
+							if type(p.stats.heistRep) ~= "number" or p.stats.heistRep &lt; 0 then
+							p.stats.heistRep = 0
+							end
 							if type(p.base) ~= "table" then p.base = {} end
 							p.base.plot = sanitizeNumber(p.base.plot, 0, 0, Settings.MaxBasePlots)
 							p.base.vault = sanitizeNumber(p.base.vault, 0, 0, 1e12)
@@ -2476,6 +2824,20 @@
 							end
 							end)
 							end
+							-- starter grant for brand-new players (first 10 minutes matter most)
+							if profile.isNew then
+							profile.cash = profile.cash + Settings.Tutorial.StarterCashBonus
+							profile.eggs[#profile.eggs + 1] = {
+							uid = DataService.GenerateUid(player),
+							eggId = Settings.Tutorial.StarterEgg,
+							}
+							task.delay(3, function()
+							if player.Parent then
+							registry.Notify.Send(player, "success", "Welcome to Egg Heist!",
+							"Here's a free egg + cash. Follow the guide (bottom-left)!", 8)
+							end
+							end)
+							end
 							-- full sync after a short delay (client needs remotes + UI ready)
 							task.delay(1, function()
 							if player.Parent then
@@ -2614,11 +2976,11 @@
 						</Properties>
 					</Item>
 				</Item>
-				<Item class="Folder" referent="RBX33">
+				<Item class="Folder" referent="RBX37">
 					<Properties>
 						<string name="Name">Economy</string>
 					</Properties>
-					<Item class="ModuleScript" referent="RBX32">
+					<Item class="ModuleScript" referent="RBX36">
 						<Properties>
 							<string name="Name">EconomyService</string>
 							<ProtectedString name="Source">-- EggHeist | Server/Economy/EconomyService.lua
@@ -2762,6 +3124,9 @@
 							registry.Notify.Send(player, "success", "Level up!",
 							"You reached level " .. tostring(p.level) .. "! Rewards added.", 5)
 							registry.Net.Fire(player, "Fx", "LevelUp", p.level)
+							if registry.Achievement then
+							registry.Achievement.Check(player, "LevelUp")
+							end
 							end
 							registry.Data.MarkDirty(player)
 							end
@@ -2826,6 +3191,30 @@
 							return mult
 							end
 							
+							-- Grants a reward bundle { Cash, Gems, Xp, Egg, Gadget, GadgetCount }.
+							-- Single choke point for achievement / milestone / daily-style rewards.
+							function EconomyService.GrantBundle(player, bundle, source)
+							if type(bundle) ~= "table" then
+							return false
+							end
+							if bundle.Cash and bundle.Cash &gt; 0 then
+							EconomyService.AddCash(player, bundle.Cash, source)
+							end
+							if bundle.Gems and bundle.Gems &gt; 0 then
+							EconomyService.AddGems(player, bundle.Gems, source)
+							end
+							if bundle.Xp and bundle.Xp &gt; 0 then
+							EconomyService.AddXp(player, bundle.Xp)
+							end
+							if bundle.Egg and registry.Egg then
+							registry.Egg.GiftEgg(player, bundle.Egg, source)
+							end
+							if bundle.Gadget and registry.Gadget then
+							registry.Gadget.GrantGadget(player, bundle.Gadget, bundle.GadgetCount or 1)
+							end
+							return true
+							end
+							
 							function EconomyService.AddBoost(player, boostId, duration, modifiers)
 							local p = profileOf(player)
 							if not p then
@@ -2874,11 +3263,11 @@
 						</Properties>
 					</Item>
 				</Item>
-				<Item class="Folder" referent="RBX35">
+				<Item class="Folder" referent="RBX39">
 					<Properties>
 						<string name="Name">Eggs</string>
 					</Properties>
-					<Item class="ModuleScript" referent="RBX34">
+					<Item class="ModuleScript" referent="RBX38">
 						<Properties>
 							<string name="Name">EggService</string>
 							<ProtectedString name="Source">-- EggHeist | Server/Eggs/EggService.lua
@@ -3028,6 +3417,17 @@
 							
 							-- progression hooks
 							profile.stats.totalHatched = (profile.stats.totalHatched or 0) + 1
+							local hatchTier = Rarities.GetTier(roll.rarity)
+							profile.stats.maxRarityTier = math.max(profile.stats.maxRarityTier or 0, hatchTier)
+							if hatchTier &gt;= 4 then
+							profile.stats.legendaryPlusHatched = (profile.stats.legendaryPlusHatched or 0) + 1
+							end
+							if hatchTier &gt;= 6 then
+							profile.stats.secretsHatched = (profile.stats.secretsHatched or 0) + 1
+							end
+							if registry.Achievement then
+							registry.Achievement.Check(player, "HatchEgg")
+							end
 							if roll.mut then
 							profile.stats.mutatedHatched = (profile.stats.mutatedHatched or 0) + 1
 							registry.Quest.AddProgress(player, "HatchMutated", 1)
@@ -3053,7 +3453,13 @@
 							end
 							
 							registry.Data.MarkDirty(player)
-							return { pet = pet, isNew = isNew, rarity = roll.rarity }
+							local sourceDef = Eggs.ById[egg.eggId]
+							return {
+							pet = pet,
+							isNew = isNew,
+							rarity = roll.rarity,
+							eggName = (sourceDef and sourceDef.DisplayName) or egg.eggId,
+							}
 							end
 							
 							function EggService.BuyEgg(player, eggId)
@@ -3082,6 +3488,10 @@
 							end
 							local egg = Types.NewEggRecord(registry.Data.GenerateUid(player), eggId)
 							profile.eggs[#profile.eggs + 1] = egg
+							profile.stats.eggsBought = (profile.stats.eggsBought or 0) + 1
+							if registry.Achievement then
+							registry.Achievement.Check(player, "BuyEgg")
+							end
 							registry.Data.MarkDirty(player)
 							if registry.TutorialHook then
 							registry.TutorialHook(player, "BuyEgg")
@@ -3173,11 +3583,11 @@
 						</Properties>
 					</Item>
 				</Item>
-				<Item class="Folder" referent="RBX37">
+				<Item class="Folder" referent="RBX41">
 					<Properties>
 						<string name="Name">Events</string>
 					</Properties>
-					<Item class="ModuleScript" referent="RBX36">
+					<Item class="ModuleScript" referent="RBX40">
 						<Properties>
 							<string name="Name">EventService</string>
 							<ProtectedString name="Source">-- EggHeist | Server/Events/EventService.lua
@@ -3483,11 +3893,274 @@
 						</Properties>
 					</Item>
 				</Item>
-				<Item class="Folder" referent="RBX39">
+				<Item class="Folder" referent="RBX44">
 					<Properties>
 						<string name="Name">Heists</string>
 					</Properties>
-					<Item class="ModuleScript" referent="RBX38">
+					<Item class="ModuleScript" referent="RBX42">
+						<Properties>
+							<string name="Name">GadgetService</string>
+							<ProtectedString name="Source">-- EggHeist | Server/Heists/GadgetService.lua
+							-- Heist gadgets: purchase, arming, and effect queries.
+							-- Definitions live in Shared/Config/Gadgets.lua (data-driven).
+							--
+							-- Armed gadgets (Lockpick/Smoke) are consumed when a breach STARTS, so a
+							-- wasted activation is impossible. Instant gadgets (EMP/Sprint) apply now.
+							-- State: profile.gadgets[gadgetId] = count owned.
+							
+							local Players = game:GetService("Players")
+							local ReplicatedStorage = game:GetService("ReplicatedStorage")
+							
+							local Shared = ReplicatedStorage:WaitForChild("EggHeistShared")
+							local ConfigFolder = Shared:WaitForChild("Config")
+							local Gadgets = require(ConfigFolder:WaitForChild("Gadgets"))
+							local Settings = require(ConfigFolder:WaitForChild("Settings"))
+							local Validate = require(Shared:WaitForChild("Utilities"):WaitForChild("Validate"))
+							
+							local GadgetService = {}
+							GadgetService.Name = "GadgetService"
+							
+							local registry = nil
+							local armed = {} -- [userId] = { lockpickUntil, smokeUntil } (os.clock timestamps)
+							local sprintUntil = {} -- [userId] = os.clock timestamp
+							
+							function GadgetService.Init(_, reg)
+							registry = reg
+							end
+							
+							local function profileOf(player)
+							return registry.Data.GetProfile(player)
+							end
+							
+							local function countOf(profile, gadgetId)
+							if not profile.gadgets then
+							return 0
+							end
+							return profile.gadgets[gadgetId] or 0
+							end
+							
+							-- Internal grant (rewards, admin). Bypasses MaxHeld purchase cap.
+							function GadgetService.GrantGadget(player, gadgetId, count)
+							if not Gadgets.IsValid(gadgetId) then
+							return false
+							end
+							local profile = profileOf(player)
+							if not profile then
+							return false
+							end
+							profile.gadgets = profile.gadgets or {}
+							profile.gadgets[gadgetId] = math.min(99,
+							countOf(profile, gadgetId) + math.max(1, math.floor(count or 1)))
+							registry.Data.MarkDirty(player)
+							return true
+							end
+							
+							local function consume(profile, gadgetId)
+							local have = countOf(profile, gadgetId)
+							if have &lt;= 0 then
+							return false
+							end
+							profile.gadgets[gadgetId] = have - 1
+							if profile.gadgets[gadgetId] &lt;= 0 then
+							profile.gadgets[gadgetId] = nil
+							end
+							return true
+							end
+							
+							function GadgetService.BuyGadget(player, gadgetId)
+							gadgetId = Validate.String(gadgetId, 32, nil)
+							local def = gadgetId and Gadgets.ById[gadgetId] or nil
+							if not def then
+							return false
+							end
+							local profile = profileOf(player)
+							if not profile then
+							return false
+							end
+							if countOf(profile, gadgetId) &gt;= def.MaxHeld then
+							registry.Notify.Send(player, "info", "Max held",
+							"You can't carry more " .. def.DisplayName .. ".", 3)
+							return false
+							end
+							if not registry.Economy.SpendCash(player, def.Price) then
+							registry.Notify.Send(player, "warning", "Not enough cash",
+							def.DisplayName .. " costs " .. tostring(def.Price) .. ".", 4)
+							return false
+							end
+							profile.gadgets = profile.gadgets or {}
+							profile.gadgets[gadgetId] = countOf(profile, gadgetId) + 1
+							registry.Data.MarkDirty(player)
+							registry.Notify.Send(player, "success", "Gadget purchased!",
+							def.DisplayName .. " ready. Use it from the Shop!", 4)
+							return true
+							end
+							
+							function GadgetService.UseGadget(player, gadgetId)
+							gadgetId = Validate.String(gadgetId, 32, nil)
+							local def = gadgetId and Gadgets.ById[gadgetId] or nil
+							if not def then
+							return false
+							end
+							local profile = profileOf(player)
+							if not profile then
+							return false
+							end
+							if countOf(profile, gadgetId) &lt;= 0 then
+							registry.Notify.Send(player, "warning", "None left",
+							"You don't own a " .. def.DisplayName .. ".", 3)
+							return false
+							end
+							local now = os.clock()
+							
+							if def.Kind == "Armed" then
+							local state = armed[player.UserId] or {}
+							armed[player.UserId] = state
+							if gadgetId == "Lockpick" then
+							if (state.lockpickUntil or 0) &gt; now then
+							registry.Notify.Send(player, "info", "Already armed",
+							"Lockpick is already armed for your next breach.", 3)
+							return false
+							end
+							state.lockpickUntil = now + (def.ArmExpirySeconds or 120)
+							registry.Notify.Send(player, "success", "Lockpick armed!",
+							"Your next breach will be twice as fast.", 4)
+							elseif gadgetId == "Smoke" then
+							if (state.smokeUntil or 0) &gt; now then
+							registry.Notify.Send(player, "info", "Already armed",
+							"Smoke is already armed for your next breach.", 3)
+							return false
+							end
+							state.smokeUntil = now + (def.ArmExpirySeconds or 120)
+							registry.Notify.Send(player, "success", "Smoke armed!",
+							"Your next breach starts silent.", 4)
+							else
+							return false
+							end
+							profile.stats.gadgetsUsed = (profile.stats.gadgetsUsed or 0) + 1
+							registry.Data.MarkDirty(player)
+							return true
+							end
+							
+							-- Instant gadgets consume immediately
+							if gadgetId == "Sprint" then
+							if not consume(profile, gadgetId) then
+							return false
+							end
+							sprintUntil[player.UserId] = now + (def.SprintSeconds or 60)
+							profile.stats.gadgetsUsed = (profile.stats.gadgetsUsed or 0) + 1
+							registry.Data.MarkDirty(player)
+							registry.Notify.Send(player, "success", "Swift boots!",
+							"Move faster for " .. tostring(def.SprintSeconds or 60) .. "s!", 4)
+							registry.Net.Fire(player, "Fx", "Gadget", gadgetId)
+							return true
+							elseif gadgetId == "EMP" then
+							-- must be near an enemy-owned plot
+							local character = player.Character
+							local hrp = character and character:FindFirstChild("HumanoidRootPart")
+							if not hrp then
+							return false
+							end
+							local best, bestDist = nil, def.UseRange or 60
+							for i = 1, Settings.MaxBasePlots do
+							local owner = registry.Base.GetOwnerOfPlot(i)
+							if owner and owner ~= player then
+							local plot = registry.World.GetPlotModel(i)
+							local foundation = plot and plot:FindFirstChild("Foundation")
+							if foundation and foundation:IsA("BasePart") then
+							local dist = (hrp.Position - foundation.Position).Magnitude
+							if dist &lt; bestDist then
+							best, bestDist = i, dist
+							end
+							end
+							end
+							end
+							if not best then
+							registry.Notify.Send(player, "warning", "No target",
+							"Get closer to an enemy base first!", 3)
+							return false
+							end
+							if not consume(profile, gadgetId) then
+							return false
+							end
+							registry.Security.SetEmpDisabled(best, def.DisableSeconds or 30)
+							profile.stats.gadgetsUsed = (profile.stats.gadgetsUsed or 0) + 1
+							registry.Data.MarkDirty(player)
+							registry.Notify.Send(player, "success", "EMP blast!",
+							"Enemy lasers and traps fried for " .. tostring(def.DisableSeconds or 30) .. "s!", 5)
+							registry.Net.Fire(player, "Fx", "Gadget", gadgetId)
+							local victim = registry.Base.GetOwnerOfPlot(best)
+							if victim then
+							registry.Notify.Send(victim, "warning", "Security fault!",
+							"Your lasers and traps just went offline!", 4)
+							end
+							return true
+							end
+							return false
+							end
+							
+							--------------------------------------------------------------------------------
+							-- Queries used by HeistService / SecurityService
+							--------------------------------------------------------------------------------
+							
+							-- Called when a breach starts. Consumes armed gadgets, returns modifiers.
+							function GadgetService.ConsumeArmedForBreach(player)
+							local profile = profileOf(player)
+							local mods = { breachMult = 1, silent = false }
+							if not profile then
+							return mods
+							end
+							local state = armed[player.UserId]
+							if not state then
+							return mods
+							end
+							local now = os.clock()
+							if (state.lockpickUntil or 0) &gt; now then
+							state.lockpickUntil = nil
+							if consume(profile, "Lockpick") then
+							mods.breachMult = Gadgets.ById.Lockpick.BreachMult or 0.5
+							registry.Data.MarkDirty(player)
+							end
+							end
+							if (state.smokeUntil or 0) &gt; now then
+							state.smokeUntil = nil
+							if consume(profile, "Smoke") then
+							mods.silent = true
+							registry.Data.MarkDirty(player)
+							end
+							end
+							return mods
+							end
+							
+							function GadgetService.IsSprintActive(player)
+							return (sprintUntil[player.UserId] or 0) &gt; os.clock()
+							end
+							
+							function GadgetService.GetSprintMult()
+							return Gadgets.ById.Sprint.SprintMult or 1.3
+							end
+							
+							function GadgetService.HandlePlayerLeaving(player)
+							armed[player.UserId] = nil
+							sprintUntil[player.UserId] = nil
+							end
+							
+							function GadgetService.Start()
+							registry.Net.OnRequest("BuyGadget", function(player, gadgetId)
+							GadgetService.BuyGadget(player, gadgetId)
+							end)
+							registry.Net.OnRequest("UseGadget", function(player, gadgetId)
+							GadgetService.UseGadget(player, gadgetId)
+							end)
+							Players.PlayerRemoving:Connect(function(player)
+							GadgetService.HandlePlayerLeaving(player)
+							end)
+							end
+							
+							return GadgetService
+							</ProtectedString>
+						</Properties>
+					</Item>
+					<Item class="ModuleScript" referent="RBX43">
 						<Properties>
 							<string name="Name">HeistService</string>
 							<ProtectedString name="Source">-- EggHeist | Server/Heists/HeistService.lua
@@ -3501,6 +4174,7 @@
 							local ConfigFolder = Shared:WaitForChild("Config")
 							local Economy = require(ConfigFolder:WaitForChild("Economy"))
 							local Settings = require(ConfigFolder:WaitForChild("Settings"))
+							local Validate = require(Shared:WaitForChild("Utilities"):WaitForChild("Validate"))
 							
 							local HeistService = {}
 							HeistService.Name = "HeistService"
@@ -3531,7 +4205,32 @@
 							if profile and profile.gamepasses and profile.gamepasses.FastHeist then
 							mult = mult * 1.15
 							end
-							return mult
+							if registry.Gadget and registry.Gadget.IsSprintActive(player) then
+							mult = mult * registry.Gadget.GetSprintMult()
+							end
+							return math.min(1, mult) -- gadgets can erase the slow, never exceed walk speed
+							end
+							
+							-- Notoriety title from reputation (shared table, client mirrors this logic)
+							function HeistService.GetRepTitle(rep)
+							local title = "Pickpocket"
+							for _, entry in ipairs(Settings.Heist.RepTitles or {}) do
+							if (rep or 0) &gt;= (entry.Rep or 0) then
+							title = entry.Title
+							end
+							end
+							return title
+							end
+							
+							local function addRep(player, delta)
+							local profile = profileOf(player)
+							if not profile then
+							return 0
+							end
+							profile.stats = profile.stats or {}
+							local before = profile.stats.heistRep or 0
+							profile.stats.heistRep = math.max(0, before + (delta or 0))
+							return profile.stats.heistRep, HeistService.GetRepTitle(before)
 							end
 							
 							local function setCarrySlow(player, active)
@@ -3642,6 +4341,7 @@
 							local thiefProfile = profileOf(thief)
 							if thiefProfile then
 							thiefProfile.stats.heistsFailed = (thiefProfile.stats.heistsFailed or 0) + 1
+							addRep(thief, Settings.Heist.RepPerFail or -1)
 							registry.Data.MarkDirty(thief)
 							end
 							registry.Notify.Send(thief, "warning", "Heist failed",
@@ -3653,10 +4353,15 @@
 							-- Grab flow
 							--------------------------------------------------------------------------------
 							
-							function HeistService.TryGrab(player, plotIndex)
+							function HeistService.TryGrab(player, plotIndex, target)
 							if not Settings.Features.Heists then
 							return
 							end
+							target = Validate.String(target, 8, "vault")
+							if target ~= "quick" and target ~= "vault" then
+							target = "vault"
+							end
+							local isQuick = target == "quick"
 							if carrying[player.UserId] or channeling[player.UserId] then
 							return
 							end
@@ -3709,13 +4414,27 @@
 							return
 							end
 							
+							-- gadget modifiers (armed gadgets are consumed as the breach starts)
+							local mods = { breachMult = 1, silent = false }
+							if registry.Gadget then
+							mods = registry.Gadget.ConsumeArmedForBreach(player)
+							end
 							-- begin breach channel: must stay near the vault
 							local breachTime = registry.Security.GetBreachTime(victim)
-							channeling[player.UserId] = { plotIndex = plotIndex, endsAt = now + breachTime }
-							registry.Notify.Send(player, "info", "Breaching...",
+							* (isQuick and (Settings.Heist.QuickGrabBreachMult or 0.5) or 1)
+							* (mods.breachMult or 1)
+							breachTime = math.max(0.8, breachTime)
+							channeling[player.UserId] = { plotIndex = plotIndex, endsAt = now + breachTime, target = target }
+							local breachLabel = isQuick and "Quick grab..." or "Breaching..."
+							registry.Notify.Send(player, "info", breachLabel,
 							"Stay by the vault for " .. string.format("%.1f", breachTime) .. "s!", 4)
-							registry.Net.Fire(player, "HeistUpdate", { channeling = true, duration = breachTime })
+							registry.Net.Fire(player, "HeistUpdate", { channeling = true, duration = breachTime, target = target })
+							if not isQuick and not mods.silent then
 							registry.Security.AlertOwner(victim, player, "is breaching your vault!")
+							elseif mods.silent then
+							registry.Notify.Send(player, "info", "Silent breach",
+							"Smoke hides you... until the grab.", 3)
+							end
 							
 							task.delay(breachTime, function()
 							local state = channeling[player.UserId]
@@ -3743,11 +4462,11 @@
 							registry.Notify.Send(player, "warning", "Lockdown!", "Sealed mid-breach!", 3)
 							return
 							end
-							HeistService.CompleteGrab(player, victim2, plotIndex)
+							HeistService.CompleteGrab(player, victim2, plotIndex, state.target)
 							end)
 							end
 							
-							function HeistService.CompleteGrab(thief, victim, plotIndex)
+							function HeistService.CompleteGrab(thief, victim, plotIndex, target)
 							local victimProfile = profileOf(victim)
 							local thiefProfile = profileOf(thief)
 							if not victimProfile or not thiefProfile then
@@ -3773,13 +4492,20 @@
 							payoutMult = registry.Event.GetHeistPayoutMultiplier()
 							end
 							local loot = math.floor(vault * Economy.HeistStealFraction * (1 - protection) * payoutMult)
+							if target == "quick" then
+							loot = math.floor(loot * (Settings.Heist.QuickGrabLootFraction or 0.4))
+							end
 							loot = math.max(0, loot)
 							if loot &lt; 10 then
 							registry.Notify.Send(thief, "info", "Vault nearly empty", "Nothing worth carrying.", 3)
 							return
 							end
 							-- deduct now (server-authoritative, no duplication possible)
-							victimProfile.base.vault = vault - math.floor(vault * Economy.HeistStealFraction * (1 - protection))
+							local deducted = math.floor(vault * Economy.HeistStealFraction * (1 - protection))
+							if target == "quick" then
+							deducted = math.floor(deducted * (Settings.Heist.QuickGrabLootFraction or 0.4))
+							end
+							victimProfile.base.vault = vault - deducted
 							victimProfile.stats.timesRobbed = (victimProfile.stats.timesRobbed or 0) + 1
 							registry.Data.MarkDirty(victim)
 							
@@ -3798,6 +4524,7 @@
 							registry.Net.Fire(thief, "HeistUpdate", {
 							carrying = true,
 							amount = loot,
+							target = target,
 							timeLeft = Settings.Heist.MaxCarryTime,
 							})
 							-- death drops loot
@@ -3832,8 +4559,17 @@
 							registry.Data.MarkDirty(thief)
 							end
 							registry.Quest.AddProgress(thief, "CompleteHeists", 1)
+							local newRep, oldTitle = addRep(thief, Settings.Heist.RepPerWin or 2)
+							local newTitle = HeistService.GetRepTitle(newRep)
 							registry.Notify.Send(thief, "success", "Heist complete!",
 							"You extracted loot successfully!", 6)
+							if newTitle ~= oldTitle then
+							registry.Notify.Send(thief, "secret", "Notoriety up!",
+							"You are now known as: " .. newTitle .. "!", 6)
+							end
+							if registry.Achievement then
+							registry.Achievement.Check(thief, "HeistWin")
+							end
 							registry.Net.Fire(thief, "HeistUpdate", { carrying = false, extracted = true })
 							registry.Net.Fire(thief, "Fx", "HeistWin", state.amount)
 							if state.amount &gt;= 25000 then
@@ -3894,6 +4630,36 @@
 							end
 							end
 							
+							-- Tactical drop: loot returns to the victim. Kinder than failing (no fail
+							-- stat, no rep loss) but the run is over and cooldowns were already spent.
+							function HeistService.AbandonCarry(player)
+							local state = carrying[player.UserId]
+							if not state then
+							return false
+							end
+							carrying[player.UserId] = nil
+							extracting[player.UserId] = nil
+							setCarrySlow(player, false)
+							clearLootVisual(player)
+							disconnectDeathWatch(player)
+							local victim = Players:GetPlayerByUserId(state.victimUserId)
+							if victim then
+							local victimProfile = profileOf(victim)
+							if victimProfile then
+							local capacity = registry.Base.GetVaultCapacity(victim)
+							victimProfile.base.vault = math.min(capacity,
+							(victimProfile.base.vault or 0) + state.amount)
+							registry.Data.MarkDirty(victim)
+							registry.Notify.Send(victim, "info", "Loot dropped",
+							"The thief abandoned your loot. Vault refunded.", 4)
+							end
+							end
+							registry.Notify.Send(player, "info", "Loot abandoned",
+							"You dropped the loot and slipped away.", 4)
+							registry.Net.Fire(player, "HeistUpdate", { carrying = false })
+							return true
+							end
+							
 							function HeistService.HandlePlayerLeaving(player)
 							channeling[player.UserId] = nil
 							extracting[player.UserId] = nil
@@ -3903,7 +4669,7 @@
 							end
 							
 							function HeistService.Start()
-							registry.Net.OnRequest("GrabLoot", function(player)
+							registry.Net.OnRequest("GrabLoot", function(player, target)
 							-- client hint only; server finds nearest foreign vault
 							local character = player.Character
 							local hrp = character and character:FindFirstChild("HumanoidRootPart")
@@ -3922,8 +4688,12 @@
 							end
 							end
 							if best then
-							HeistService.TryGrab(player, best)
+							HeistService.TryGrab(player, best, target)
 							end
+							end)
+							
+							registry.Net.OnRequest("AbandonLoot", function(player)
+							HeistService.AbandonCarry(player)
 							end)
 							
 							task.spawn(extractionLoop)
@@ -3934,11 +4704,11 @@
 						</Properties>
 					</Item>
 				</Item>
-				<Item class="Folder" referent="RBX41">
+				<Item class="Folder" referent="RBX46">
 					<Properties>
 						<string name="Name">Monetization</string>
 					</Properties>
-					<Item class="ModuleScript" referent="RBX40">
+					<Item class="ModuleScript" referent="RBX45">
 						<Properties>
 							<string name="Name">ShopService</string>
 							<ProtectedString name="Source">-- EggHeist | Server/Monetization/ShopService.lua
@@ -4099,11 +4869,11 @@
 						</Properties>
 					</Item>
 				</Item>
-				<Item class="Folder" referent="RBX44">
+				<Item class="Folder" referent="RBX49">
 					<Properties>
 						<string name="Name">Net</string>
 					</Properties>
-					<Item class="ModuleScript" referent="RBX42">
+					<Item class="ModuleScript" referent="RBX47">
 						<Properties>
 							<string name="Name">NetService</string>
 							<ProtectedString name="Source">-- EggHeist | Server/Net/NetService.lua
@@ -4240,7 +5010,7 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="ModuleScript" referent="RBX43">
+					<Item class="ModuleScript" referent="RBX48">
 						<Properties>
 							<string name="Name">NotifyService</string>
 							<ProtectedString name="Source">-- EggHeist | Server/Net/NotifyService.lua
@@ -4278,11 +5048,11 @@
 						</Properties>
 					</Item>
 				</Item>
-				<Item class="Folder" referent="RBX46">
+				<Item class="Folder" referent="RBX51">
 					<Properties>
 						<string name="Name">Pets</string>
 					</Properties>
-					<Item class="ModuleScript" referent="RBX45">
+					<Item class="ModuleScript" referent="RBX50">
 						<Properties>
 							<string name="Name">PetService</string>
 							<ProtectedString name="Source">-- EggHeist | Server/Pets/PetService.lua
@@ -4445,6 +5215,9 @@
 							profile.equipped[#profile.equipped + 1] = petUid
 							registry.Data.MarkDirty(player)
 							registry.Quest.AddProgress(player, "EquipPets", 0) -- re-evaluated as count check
+							if registry.Achievement then
+							registry.Achievement.Check(player, "EquipPet")
+							end
 							if registry.TutorialHook then
 							registry.TutorialHook(player, "EquipPet")
 							end
@@ -4811,11 +5584,146 @@
 						</Properties>
 					</Item>
 				</Item>
-				<Item class="Folder" referent="RBX48">
+				<Item class="Folder" referent="RBX54">
 					<Properties>
 						<string name="Name">Progression</string>
 					</Properties>
-					<Item class="ModuleScript" referent="RBX47">
+					<Item class="ModuleScript" referent="RBX52">
+						<Properties>
+							<string name="Name">AchievementService</string>
+							<ProtectedString name="Source">-- EggHeist | Server/Progression/AchievementService.lua
+							-- One-time achievements: trigger evaluation + reward claiming.
+							-- Definitions live in Shared/Config/Achievements.lua (data-driven).
+							-- State: profile.achievements[achievementId] = { done = bool, claimed = bool }.
+							
+							local ReplicatedStorage = game:GetService("ReplicatedStorage")
+							
+							local Shared = ReplicatedStorage:WaitForChild("EggHeistShared")
+							local ConfigFolder = Shared:WaitForChild("Config")
+							local Achievements = require(ConfigFolder:WaitForChild("Achievements"))
+							local Validate = require(Shared:WaitForChild("Utilities"):WaitForChild("Validate"))
+							local TableUtil = require(Shared:WaitForChild("Utilities"):WaitForChild("TableUtil"))
+							
+							local AchievementService = {}
+							AchievementService.Name = "AchievementService"
+							
+							local registry = nil
+							
+							function AchievementService.Init(_, reg)
+							registry = reg
+							end
+							
+							local function profileOf(player)
+							return registry.Data.GetProfile(player)
+							end
+							
+							local function sumTiers(tierTable)
+							local total = 0
+							if type(tierTable) == "table" then
+							for _, tier in pairs(tierTable) do
+							if type(tier) == "number" then
+							total = total + tier
+							end
+							end
+							end
+							return total
+							end
+							
+							local function conditionsMet(profile, def)
+							if def.Stat then
+							local value = (profile.stats and profile.stats[def.Stat.Key]) or 0
+							if value &lt; (def.Stat.Value or 1) then
+							return false
+							end
+							end
+							if def.Level and (profile.level or 1) &lt; def.Level then
+							return false
+							end
+							if def.Collection then
+							if TableUtil.Count(profile.collection or {}) &lt; def.Collection then
+							return false
+							end
+							end
+							if def.Prestige and ((profile.prestige and profile.prestige.count) or 0) &lt; def.Prestige then
+							return false
+							end
+							if def.Equipped and #(profile.equipped or {}) &lt; def.Equipped then
+							return false
+							end
+							if def.UpgradeTotal then
+							local upgrades = profile.base and profile.base.upgrades
+							if sumTiers(upgrades) &lt; def.UpgradeTotal then
+							return false
+							end
+							end
+							if def.SecurityTotal then
+							local security = profile.base and profile.base.security
+							if sumTiers(security) &lt; def.SecurityTotal then
+							return false
+							end
+							end
+							return true
+							end
+							
+							-- Called by other systems when a trigger event fires. Marks newly completed
+							-- achievements (rewards are claimed via the Quests UI achievements tab).
+							function AchievementService.Check(player, trigger)
+							local profile = profileOf(player)
+							if not profile then
+							return
+							end
+							profile.achievements = profile.achievements or {}
+							local completedAny = false
+							for _, def in ipairs(Achievements.List) do
+							if def.Trigger == trigger then
+							local state = profile.achievements[def.Id]
+							if (not state or not state.done) and conditionsMet(profile, def) then
+							profile.achievements[def.Id] = { done = true, claimed = false }
+							completedAny = true
+							registry.Notify.Send(player, "rare", "Achievement unlocked!",
+							def.Name .. " - claim your reward in Quests!", 6)
+							registry.Net.Fire(player, "Fx", "Achievement", def.Id)
+							end
+							end
+							end
+							if completedAny then
+							registry.Data.MarkDirty(player)
+							end
+							end
+							
+							function AchievementService.Claim(player, achievementId)
+							achievementId = Validate.String(achievementId, 32, nil)
+							if not achievementId or not Achievements.IsValid(achievementId) then
+							return false
+							end
+							local profile = profileOf(player)
+							if not profile then
+							return false
+							end
+							local state = (profile.achievements or {})[achievementId]
+							if not state or not state.done or state.claimed then
+							return false
+							end
+							state.claimed = true
+							local def = Achievements.ById[achievementId]
+							registry.Economy.GrantBundle(player, def.Reward, "achievement")
+							registry.Data.MarkDirty(player)
+							registry.Notify.Send(player, "success", "Achievement claimed!", def.Name, 4)
+							registry.Net.Fire(player, "Fx", "QuestClaim")
+							return true
+							end
+							
+							function AchievementService.Start()
+							registry.Net.OnRequest("ClaimAchievement", function(player, achievementId)
+							AchievementService.Claim(player, achievementId)
+							end)
+							end
+							
+							return AchievementService
+							</ProtectedString>
+						</Properties>
+					</Item>
+					<Item class="ModuleScript" referent="RBX53">
 						<Properties>
 							<string name="Name">ProgressionService</string>
 							<ProtectedString name="Source">-- EggHeist | Server/Progression/ProgressionService.lua
@@ -4929,6 +5837,9 @@
 							registry.Notify.Broadcast("secret", "PRESTIGE!",
 							player.DisplayName .. " prestiged to rank " .. tostring(p.prestige.count)
 							.. " (+" .. tostring(math.floor(p.prestige.bonus * 100)) .. "% income)!", 8)
+							if registry.Achievement then
+							registry.Achievement.Check(player, "Prestige")
+							end
 							return true
 							end
 							
@@ -4943,11 +5854,11 @@
 						</Properties>
 					</Item>
 				</Item>
-				<Item class="Folder" referent="RBX50">
+				<Item class="Folder" referent="RBX56">
 					<Properties>
 						<string name="Name">Quests</string>
 					</Properties>
-					<Item class="ModuleScript" referent="RBX49">
+					<Item class="ModuleScript" referent="RBX55">
 						<Properties>
 							<string name="Name">QuestService</string>
 							<ProtectedString name="Source">-- EggHeist | Server/Quests/QuestService.lua
@@ -5145,6 +6056,9 @@
 							registry.Economy.AddXp(player, reward.Xp)
 							end
 							profile.stats.questsDone = (profile.stats.questsDone or 0) + 1
+							if registry.Achievement then
+							registry.Achievement.Check(player, "QuestClaim")
+							end
 							registry.Data.MarkDirty(player)
 							registry.Notify.Send(player, "success", "Reward claimed!",
 							quest.text, 4)
@@ -5215,11 +6129,86 @@
 						</Properties>
 					</Item>
 				</Item>
-				<Item class="Folder" referent="RBX52">
+				<Item class="Folder" referent="RBX59">
 					<Properties>
 						<string name="Name">Rewards</string>
 					</Properties>
-					<Item class="ModuleScript" referent="RBX51">
+					<Item class="ModuleScript" referent="RBX57">
+						<Properties>
+							<string name="Name">CollectionService</string>
+							<ProtectedString name="Source">-- EggHeist | Server/Rewards/CollectionService.lua
+							-- Collection milestones: claim-once rewards for unique discoveries.
+							-- Definitions live in Shared/Config/Collection.lua (data-driven).
+							-- State: profile.collectionRewards[milestoneIndex] = true.
+							
+							local ReplicatedStorage = game:GetService("ReplicatedStorage")
+							
+							local Shared = ReplicatedStorage:WaitForChild("EggHeistShared")
+							local ConfigFolder = Shared:WaitForChild("Config")
+							local Collection = require(ConfigFolder:WaitForChild("Collection"))
+							local Validate = require(Shared:WaitForChild("Utilities"):WaitForChild("Validate"))
+							local TableUtil = require(Shared:WaitForChild("Utilities"):WaitForChild("TableUtil"))
+							
+							local CollectionService = {}
+							CollectionService.Name = "CollectionService"
+							
+							local registry = nil
+							
+							function CollectionService.Init(_, reg)
+							registry = reg
+							end
+							
+							function CollectionService.UniqueCount(player)
+							local profile = registry.Data.GetProfile(player)
+							if not profile then
+							return 0
+							end
+							return TableUtil.Count(profile.collection or {})
+							end
+							
+							function CollectionService.ClaimMilestone(player, milestoneIndex)
+							milestoneIndex = Validate.ClampNumber(tonumber(milestoneIndex), 1, #Collection.Milestones, nil)
+							if not milestoneIndex then
+							return false
+							end
+							milestoneIndex = math.floor(milestoneIndex)
+							local milestone = Collection.Milestones[milestoneIndex]
+							if not milestone then
+							return false
+							end
+							local profile = registry.Data.GetProfile(player)
+							if not profile then
+							return false
+							end
+							profile.collectionRewards = profile.collectionRewards or {}
+							if profile.collectionRewards[milestoneIndex] then
+							return false
+							end
+							if TableUtil.Count(profile.collection or {}) &lt; milestone.Count then
+							registry.Notify.Send(player, "warning", "Not yet",
+							"Discover " .. tostring(milestone.Count) .. " unique entries first!", 4)
+							return false
+							end
+							profile.collectionRewards[milestoneIndex] = true
+							registry.Economy.GrantBundle(player, milestone.Reward, "collection")
+							registry.Data.MarkDirty(player)
+							registry.Notify.Send(player, "success", "Milestone claimed!",
+							tostring(milestone.Count) .. " discoveries — nice collection!", 5)
+							registry.Net.Fire(player, "Fx", "QuestClaim")
+							return true
+							end
+							
+							function CollectionService.Start()
+							registry.Net.OnRequest("ClaimMilestone", function(player, milestoneIndex)
+							CollectionService.ClaimMilestone(player, milestoneIndex)
+							end)
+							end
+							
+							return CollectionService
+							</ProtectedString>
+						</Properties>
+					</Item>
+					<Item class="ModuleScript" referent="RBX58">
 						<Properties>
 							<string name="Name">RewardService</string>
 							<ProtectedString name="Source">-- EggHeist | Server/Rewards/RewardService.lua
@@ -5278,15 +6267,7 @@
 							profile.daily.lastClaimDay = today
 							local dayIndex = ((profile.daily.streak - 1) % 7) + 1
 							local reward = Economy.DailyRewards[dayIndex]
-							if reward.Cash and reward.Cash &gt; 0 then
-							registry.Economy.AddCash(player, reward.Cash, "daily")
-							end
-							if reward.Gems and reward.Gems &gt; 0 then
-							registry.Economy.AddGems(player, reward.Gems, "daily")
-							end
-							if reward.Egg then
-							registry.Egg.GiftEgg(player, reward.Egg, "daily")
-							end
+							registry.Economy.GrantBundle(player, reward, "daily")
 							registry.Data.MarkDirty(player)
 							registry.Notify.Send(player, "success",
 							"Day " .. tostring(profile.daily.streak) .. " reward claimed!",
@@ -5306,11 +6287,11 @@
 						</Properties>
 					</Item>
 				</Item>
-				<Item class="Folder" referent="RBX54">
+				<Item class="Folder" referent="RBX61">
 					<Properties>
 						<string name="Name">Security</string>
 					</Properties>
-					<Item class="ModuleScript" referent="RBX53">
+					<Item class="ModuleScript" referent="RBX60">
 						<Properties>
 							<string name="Name">SecurityService</string>
 							<ProtectedString name="Source">-- EggHeist | Server/Security/SecurityService.lua
@@ -5333,6 +6314,7 @@
 							local stunUntil = {} -- [userId] = timestamp (trap stun)
 							local trapCooldown = {} -- [trapPart] = timestamp
 							local alarmLastPing = {} -- [plotIndex] = timestamp
+							local empUntil = {} -- [plotIndex] = os.clock timestamp (EMP suppression)
 							
 							function SecurityService.Init(_, reg)
 							registry = reg
@@ -5395,6 +6377,9 @@
 							profile.stats.securityBought = (profile.stats.securityBought or 0) + 1
 							registry.Economy.AddXp(player, 20 * nextTier)
 							registry.Quest.AddProgress(player, "UpgradeSecurity", 1)
+							if registry.Achievement then
+							registry.Achievement.Check(player, "SecurityBuy")
+							end
 							registry.Notify.Send(player, "success", "Security upgraded!",
 							item.DisplayName .. " tier " .. tostring(nextTier) .. ".", 4)
 							local plotIndex = registry.Base.GetPlotOf(player)
@@ -5533,6 +6518,43 @@
 							end
 							
 							--------------------------------------------------------------------------------
+							-- EMP suppression (gadget counter-play)
+							--------------------------------------------------------------------------------
+							
+							function SecurityService.IsEmpDisabled(plotIndex)
+							return (empUntil[plotIndex] or 0) &gt; os.clock()
+							end
+							
+							function SecurityService.SetEmpDisabled(plotIndex, seconds)
+							local untilAt = os.clock() + math.max(1, seconds or 30)
+							empUntil[plotIndex] = untilAt
+							-- visual: dim the beams while fried
+							local state = plotSecurity[plotIndex]
+							if state and state.lasers then
+							for _, beam in ipairs(state.lasers) do
+							if beam and beam.Parent then
+							beam.Color = Color3.fromRGB(90, 90, 100)
+							beam.Transparency = 0.7
+							end
+							end
+							end
+							task.delay(math.max(1, seconds or 30) + 0.1, function()
+							if empUntil[plotIndex] == untilAt then
+							empUntil[plotIndex] = nil
+							local current = plotSecurity[plotIndex]
+							if current and current.lasers then
+							for _, beam in ipairs(current.lasers) do
+							if beam and beam.Parent then
+							beam.Color = Color3.fromRGB(255, 40, 40)
+							beam.Transparency = 0
+							end
+							end
+							end
+							end
+							end)
+							end
+							
+							--------------------------------------------------------------------------------
 							-- Queries used by HeistService
 							--------------------------------------------------------------------------------
 							
@@ -5647,6 +6669,9 @@
 							if SecurityService.IsLockedDown(owner) then
 							return -- sealed base: traps dormant (intruders already ejected)
 							end
+							if SecurityService.IsEmpDisabled(plotIndex) then
+							return -- fried by EMP
+							end
 							trapCooldown[trap] = now + 6
 							local stun = Security.Items.Trap.StunDuration(securityTier(owner, "Trap"))
 							stunUntil[player.UserId] = now + stun
@@ -5704,7 +6729,8 @@
 							task.wait(0.5)
 							local now = os.clock()
 							for plotIndex, state in pairs(plotSecurity) do
-							if state.lasers and #state.lasers &gt; 0 then
+							if state.lasers and #state.lasers &gt; 0
+							and not SecurityService.IsEmpDisabled(plotIndex) then
 							local owner = ownerOfPlot(plotIndex)
 							if owner and not SecurityService.IsLockedDown(owner) then
 							local tier = securityTier(owner, "Laser")
@@ -5794,18 +6820,19 @@
 						</Properties>
 					</Item>
 				</Item>
-				<Item class="Folder" referent="RBX56">
+				<Item class="Folder" referent="RBX63">
 					<Properties>
 						<string name="Name">Social</string>
 					</Properties>
-					<Item class="ModuleScript" referent="RBX55">
+					<Item class="ModuleScript" referent="RBX62">
 						<Properties>
 							<string name="Name">LeaderboardService</string>
 							<ProtectedString name="Source">-- EggHeist | Server/Social/LeaderboardService.lua
-							-- OrderedDataStore rankings: richest, heists, collectors.
+							-- OrderedDataStore rankings: richest, heists, collectors, levels.
 							-- Studio-safe: falls back to in-session rankings when stores are unavailable.
 							
 							local Players = game:GetService("Players")
+							local Workspace = game:GetService("Workspace")
 							local DataStoreService = game:GetService("DataStoreService")
 							local ReplicatedStorage = game:GetService("ReplicatedStorage")
 							
@@ -5824,6 +6851,7 @@
 							Richest = { Store = "EggHeist_Board_Richest", Stat = "totalEarned", Display = "Richest Heisters" },
 							Heists = { Store = "EggHeist_Board_Heists", Stat = "heistsWon", Display = "Master Thieves" },
 							Collectors = { Store = "EggHeist_Board_Collectors", Stat = "__collection", Display = "Top Collectors" },
+							Levels = { Store = "EggHeist_Board_Levels", Stat = "__level", Display = "Highest Level" },
 							}
 							
 							function LeaderboardService.Init(_, reg)
@@ -5849,6 +6877,9 @@
 							end
 							if board == "Collectors" then
 							return TableUtil.Count(profile.collection or {})
+							end
+							if board == "Levels" then
+							return math.floor(profile.level or 1)
 							end
 							local stat = BOARDS[board].Stat
 							return math.floor((profile.stats and profile.stats[stat]) or 0)
@@ -6008,11 +7039,11 @@
 						</Properties>
 					</Item>
 				</Item>
-				<Item class="Folder" referent="RBX58">
+				<Item class="Folder" referent="RBX65">
 					<Properties>
 						<string name="Name">Util</string>
 					</Properties>
-					<Item class="ModuleScript" referent="RBX57">
+					<Item class="ModuleScript" referent="RBX64">
 						<Properties>
 							<string name="Name">RateLimiter</string>
 							<ProtectedString name="Source">-- EggHeist | Server/Util/RateLimiter.lua
@@ -6060,11 +7091,155 @@
 						</Properties>
 					</Item>
 				</Item>
-				<Item class="Folder" referent="RBX60">
+				<Item class="Folder" referent="RBX68">
 					<Properties>
 						<string name="Name">World</string>
 					</Properties>
-					<Item class="ModuleScript" referent="RBX59">
+					<Item class="ModuleScript" referent="RBX66">
+						<Properties>
+							<string name="Name">NpcService</string>
+							<ProtectedString name="Source">-- EggHeist | Server/World/NpcService.lua
+							-- Builds lightweight world NPCs from Shared/Config/Npcs.lua.
+							-- NPCs are anchored display models (no AI, no pathfinding): a body, a head,
+							-- a floating nametag, and a Talk prompt the CLIENT wires to UI (NpcController).
+							-- Zero exploit surface: talking only opens local UI.
+							
+							local NpcService = {}
+							NpcService.Name = "NpcService"
+							
+							local registry = nil
+							
+							function NpcService.Init(_, reg)
+							registry = reg
+							end
+							
+							local function resolvePosition(def)
+							-- Prefer the world anchor part; fall back to the configured position.
+							local root = registry.World.GetRoot()
+							if root then
+							local current = root
+							for _, name in ipairs(def.Anchor or {}) do
+							current = current and current:FindFirstChild(name) or nil
+							end
+							if current and current:IsA("BasePart") then
+							local offset = def.Offset or { 0, 0, 0 }
+							return current.Position + Vector3.new(
+							offset[1] + current.Size.X / 2 - 4,
+							current.Size.Y / 2 + 3,
+							offset[3]
+							)
+							end
+							end
+							local fallback = def.Fallback or { 0, 6, 0 }
+							return Vector3.new(fallback[1], fallback[2], fallback[3])
+							end
+							
+							local function buildNpc(def)
+							local color = Color3.fromRGB(200, 200, 200)
+							if def.Color then
+							color = Color3.fromRGB(def.Color[1], def.Color[2], def.Color[3])
+							end
+							local model = Instance.new("Model")
+							model.Name = "Npc_" .. def.Id
+							
+							local body = Instance.new("Part")
+							body.Name = "Body"
+							body.Size = Vector3.new(2, 3, 1.4)
+							body.Color = color
+							body.Material = Enum.Material.SmoothPlastic
+							body.Anchored = true
+							body.CanCollide = true
+							body.CanQuery = true
+							body.TopSurface = Enum.SurfaceType.Smooth
+							body.BottomSurface = Enum.SurfaceType.Smooth
+							body.Parent = model
+							
+							local head = Instance.new("Part")
+							head.Name = "Head"
+							head.Shape = Enum.PartType.Ball
+							head.Size = Vector3.new(1.8, 1.8, 1.8)
+							head.Color = Color3.fromRGB(255, 220, 180)
+							head.Material = Enum.Material.SmoothPlastic
+							head.Anchored = true
+							head.CanCollide = false
+							head.CanQuery = false
+							head.TopSurface = Enum.SurfaceType.Smooth
+							head.BottomSurface = Enum.SurfaceType.Smooth
+							head.Parent = model
+							
+							local tag = Instance.new("BillboardGui")
+							tag.Name = "Nametag"
+							tag.Size = UDim2.new(0, 200, 0, 56)
+							tag.StudsOffset = Vector3.new(0, 3.2, 0)
+							tag.AlwaysOnTop = false
+							tag.MaxDistance = 80
+							tag.Parent = head
+							local nameLabel = Instance.new("TextLabel")
+							nameLabel.Size = UDim2.new(1, 0, 0, 28)
+							nameLabel.BackgroundTransparency = 1
+							nameLabel.Text = def.DisplayName or def.Id
+							nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+							nameLabel.Font = Enum.Font.GothamBold
+							nameLabel.TextSize = 16
+							nameLabel.TextStrokeTransparency = 0.4
+							nameLabel.Parent = tag
+							local titleLabel = Instance.new("TextLabel")
+							titleLabel.Position = UDim2.new(0, 0, 0, 26)
+							titleLabel.Size = UDim2.new(1, 0, 0, 22)
+							titleLabel.BackgroundTransparency = 1
+							titleLabel.Text = def.Title or "Talk to me!"
+							titleLabel.TextColor3 = color
+							titleLabel.Font = Enum.Font.Gotham
+							titleLabel.TextSize = 13
+							titleLabel.TextStrokeTransparency = 0.4
+							titleLabel.Parent = tag
+							
+							local prompt = Instance.new("ProximityPrompt")
+							prompt.Name = "NpcPrompt"
+							prompt:SetAttribute("NpcId", def.Id)
+							prompt.ActionText = "Talk"
+							prompt.ObjectText = def.DisplayName or def.Id
+							prompt.HoldDuration = 0
+							prompt.MaxActivationDistance = 12
+							prompt.RequiresLineOfSight = false
+							prompt.Parent = body
+							
+							return model, body, head
+							end
+							
+							function NpcService.Start()
+							local ReplicatedStorage = game:GetService("ReplicatedStorage")
+							local Shared = ReplicatedStorage:WaitForChild("EggHeistShared")
+							local Npcs = require(Shared:WaitForChild("Config"):WaitForChild("Npcs"))
+							
+							local root = registry.World.GetRoot()
+							if not root then
+							warn("[EggHeist] NpcService: no world root, skipping NPCs.")
+							return
+							end
+							local folder = root:FindFirstChild("Npcs")
+							if not folder then
+							folder = Instance.new("Folder")
+							folder.Name = "Npcs"
+							folder.Parent = root
+							end
+							for _, def in ipairs(Npcs.List) do
+							if not folder:FindFirstChild("Npc_" .. def.Id) then
+							local model, body, head = buildNpc(def)
+							local position = resolvePosition(def)
+							body.CFrame = CFrame.new(position)
+							head.CFrame = CFrame.new(position + Vector3.new(0, 2.4, 0))
+							model.Parent = folder
+							end
+							end
+							print("[EggHeist] NPCs ready (" .. tostring(#Npcs.List) .. ").")
+							end
+							
+							return NpcService
+							</ProtectedString>
+						</Properties>
+					</Item>
+					<Item class="ModuleScript" referent="RBX67">
 						<Properties>
 							<string name="Name">WorldService</string>
 							<ProtectedString name="Source">-- EggHeist | Server/World/WorldService.lua
@@ -6432,6 +7607,29 @@
 							else
 							extractionPad.CFrame = CFrame.new(0, 1.5, 120)
 							end
+							-- Sky beacon so carriers can find the pad from anywhere
+							if not gameplay:FindFirstChild("ExtractionBeacon") then
+							local beacon = Instance.new("Part")
+							beacon.Name = "ExtractionBeacon"
+							beacon.Size = Vector3.new(3, 120, 3)
+							beacon.Anchored = true
+							beacon.CanCollide = false
+							beacon.CanQuery = false
+							beacon.Material = Enum.Material.Neon
+							beacon.Color = Color3.fromRGB(80, 255, 140)
+							beacon.Transparency = 0.55
+							beacon.TopSurface = Enum.SurfaceType.Smooth
+							beacon.BottomSurface = Enum.SurfaceType.Smooth
+							beacon.Parent = gameplay
+							local light = Instance.new("PointLight")
+							light.Color = Color3.fromRGB(80, 255, 140)
+							light.Range = 40
+							light.Parent = beacon
+							end
+							local beacon = gameplay:FindFirstChild("ExtractionBeacon")
+							if beacon and beacon:IsA("BasePart") then
+							beacon.CFrame = extractionPad.CFrame + Vector3.new(0, 60, 0)
+							end
 							end
 							
 							function WorldService.GetExtractionPad()
@@ -6599,7 +7797,7 @@
 					</Item>
 				</Item>
 			</Item>
-			<Item class="Script" referent="RBX62">
+			<Item class="Script" referent="RBX70">
 				<Properties>
 					<string name="Name">ServerMain</string>
 					<bool name="Disabled">false</bool>
@@ -6618,6 +7816,7 @@
 					local LOAD_ORDER = {
 					"Net/NetService", -- remotes + routing first (everyone depends on Net)
 					"World/WorldService", -- world discovery / fallback before gameplay builds on it
+					"World/NpcService", -- world NPCs (needs the world root)
 					"Data/DataService", -- profiles before any system touches player data
 					"Net/NotifyService",
 					"Economy/EconomyService",
@@ -6625,10 +7824,13 @@
 					"Pets/PetService",
 					"Bases/BaseService",
 					"Security/SecurityService",
+					"Heists/GadgetService", -- gadget state before heists query it
 					"Heists/HeistService",
 					"Progression/ProgressionService",
 					"Quests/QuestService",
 					"Rewards/RewardService",
+					"Rewards/CollectionService",
+					"Progression/AchievementService",
 					"Events/EventService",
 					"Monetization/ShopService",
 					"Social/LeaderboardService",
@@ -6702,23 +7904,23 @@
 			</Item>
 		</Item>
 	</Item>
-	<Item class="StarterPlayer" referent="RBX100">
+	<Item class="StarterPlayer" referent="RBX112">
 		<Properties>
 			<string name="Name">StarterPlayer</string>
 		</Properties>
-		<Item class="StarterPlayerScripts" referent="RBX99">
+		<Item class="StarterPlayerScripts" referent="RBX111">
 			<Properties>
 				<string name="Name">StarterPlayerScripts</string>
 			</Properties>
-			<Item class="Folder" referent="RBX98">
+			<Item class="Folder" referent="RBX110">
 				<Properties>
 					<string name="Name">EggHeistClient</string>
 				</Properties>
-				<Item class="Folder" referent="RBX96">
+				<Item class="Folder" referent="RBX108">
 					<Properties>
 						<string name="Name">Client</string>
 					</Properties>
-					<Item class="ModuleScript" referent="RBX65">
+					<Item class="ModuleScript" referent="RBX73">
 						<Properties>
 							<string name="Name">ClientNet</string>
 							<ProtectedString name="Source">-- EggHeist | Client/ClientNet.lua
@@ -6786,11 +7988,11 @@
 							</ProtectedString>
 						</Properties>
 					</Item>
-					<Item class="Folder" referent="RBX75">
+					<Item class="Folder" referent="RBX86">
 						<Properties>
 							<string name="Name">Controllers</string>
 						</Properties>
-						<Item class="ModuleScript" referent="RBX66">
+						<Item class="ModuleScript" referent="RBX74">
 							<Properties>
 								<string name="Name">BaseController</string>
 								<ProtectedString name="Source">-- EggHeist | Client/Controllers/BaseController.lua
@@ -6833,7 +8035,31 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX67">
+						<Item class="ModuleScript" referent="RBX75">
+							<Properties>
+								<string name="Name">CollectionController</string>
+								<ProtectedString name="Source">-- EggHeist | Client/Controllers/CollectionController.lua
+								-- Collection milestone claims. Progress is computed server-side.
+								
+								local CollectionController = {}
+								local ctx = nil
+								
+								function CollectionController.Init(context)
+								ctx = context
+								end
+								
+								function CollectionController.ClaimMilestone(milestoneIndex)
+								ctx.Net.Fire("ClaimMilestone", milestoneIndex)
+								end
+								
+								function CollectionController.Start()
+								end
+								
+								return CollectionController
+								</ProtectedString>
+							</Properties>
+						</Item>
+						<Item class="ModuleScript" referent="RBX76">
 							<Properties>
 								<string name="Name">DataController</string>
 								<ProtectedString name="Source">-- EggHeist | Client/Controllers/DataController.lua
@@ -6895,7 +8121,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX68">
+						<Item class="ModuleScript" referent="RBX77">
 							<Properties>
 								<string name="Name">EggController</string>
 								<ProtectedString name="Source">-- EggHeist | Client/Controllers/EggController.lua
@@ -6932,7 +8158,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX69">
+						<Item class="ModuleScript" referent="RBX78">
 							<Properties>
 								<string name="Name">EventController</string>
 								<ProtectedString name="Source">-- EggHeist | Client/Controllers/EventController.lua
@@ -6979,7 +8205,35 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX70">
+						<Item class="ModuleScript" referent="RBX79">
+							<Properties>
+								<string name="Name">GadgetController</string>
+								<ProtectedString name="Source">-- EggHeist | Client/Controllers/GadgetController.lua
+								-- Gadget shop intent: buy + use. All effects resolve server-side.
+								
+								local GadgetController = {}
+								local ctx = nil
+								
+								function GadgetController.Init(context)
+								ctx = context
+								end
+								
+								function GadgetController.Buy(gadgetId)
+								ctx.Net.Fire("BuyGadget", gadgetId)
+								end
+								
+								function GadgetController.Use(gadgetId)
+								ctx.Net.Fire("UseGadget", gadgetId)
+								end
+								
+								function GadgetController.Start()
+								end
+								
+								return GadgetController
+								</ProtectedString>
+							</Properties>
+						</Item>
+						<Item class="ModuleScript" referent="RBX80">
 							<Properties>
 								<string name="Name">HeistController</string>
 								<ProtectedString name="Source">-- EggHeist | Client/Controllers/HeistController.lua
@@ -7005,8 +8259,12 @@
 								end)
 								end
 								
-								function HeistController.Grab()
-								ctx.Net.Fire("GrabLoot")
+								function HeistController.Grab(target)
+								ctx.Net.Fire("GrabLoot", target)
+								end
+								
+								function HeistController.Abandon()
+								ctx.Net.Fire("AbandonLoot")
 								end
 								
 								function HeistController.IsCarrying()
@@ -7020,7 +8278,110 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX71">
+						<Item class="ModuleScript" referent="RBX81">
+							<Properties>
+								<string name="Name">NpcController</string>
+								<ProtectedString name="Source">-- EggHeist | Client/Controllers/NpcController.lua
+								-- Wires world NPC talk-prompts to UI shortcuts + greeting toasts.
+								-- Talking to an NPC only opens LOCAL UI: zero exploit surface.
+								
+								local Workspace = game:GetService("Workspace")
+								local ReplicatedStorage = game:GetService("ReplicatedStorage")
+								
+								local Shared = ReplicatedStorage:WaitForChild("EggHeistShared")
+								local Npcs = require(Shared:WaitForChild("Config"):WaitForChild("Npcs"))
+								
+								local NpcController = {}
+								local ctx = nil
+								local wired = {} -- [ProximityPrompt] = true
+								
+								function NpcController.Init(context)
+								ctx = context
+								end
+								
+								local function talkTo(npcId)
+								local def = Npcs.ById[npcId]
+								if not def then
+								return
+								end
+								-- greeting toast
+								local notifications = ctx.UI and ctx.UI.NotificationsUI
+								if notifications and def.Greetings and #def.Greetings &gt; 0 then
+								local line = def.Greetings[math.random(1, #def.Greetings)]
+								notifications.Show("info", def.DisplayName or npcId, line, 5)
+								end
+								-- open the mapped UI
+								local action = def.Action
+								if action and action.Ui then
+								local ui = ctx.UI and ctx.UI[action.Ui]
+								if ui then
+								if action.Tab and type(ui.ShowTab) == "function" then
+								ui.ShowTab(action.Tab)
+								end
+								if type(ui.SetVisible) == "function" then
+								ui.SetVisible(true)
+								elseif type(ui.Toggle) == "function" then
+								ui.Toggle()
+								end
+								end
+								end
+								end
+								
+								local function wirePrompt(prompt)
+								if not prompt:IsA("ProximityPrompt") then
+								return
+								end
+								if prompt.Name ~= "NpcPrompt" or wired[prompt] then
+								return
+								end
+								wired[prompt] = true
+								prompt.Triggered:Connect(function()
+								local npcId = prompt:GetAttribute("NpcId")
+								if npcId then
+								talkTo(npcId)
+								end
+								end)
+								end
+								
+								function NpcController.Start()
+								-- NPCs are built during server Start; the client may boot first in
+								-- Play Solo, so wire existing prompts AND late-arriving ones.
+								local root = Workspace:FindFirstChild("EggHeist")
+								if root then
+								for _, descendant in ipairs(root:GetDescendants()) do
+								if descendant:IsA("ProximityPrompt") then
+								wirePrompt(descendant)
+								end
+								end
+								root.DescendantAdded:Connect(function(descendant)
+								if descendant:IsA("ProximityPrompt") then
+								wirePrompt(descendant)
+								end
+								end)
+								else
+								task.delay(5, function()
+								local lateRoot = Workspace:FindFirstChild("EggHeist")
+								if lateRoot then
+								for _, descendant in ipairs(lateRoot:GetDescendants()) do
+								if descendant:IsA("ProximityPrompt") then
+								wirePrompt(descendant)
+								end
+								end
+								lateRoot.DescendantAdded:Connect(function(descendant)
+								if descendant:IsA("ProximityPrompt") then
+								wirePrompt(descendant)
+								end
+								end)
+								end
+								end)
+								end
+								end
+								
+								return NpcController
+								</ProtectedString>
+							</Properties>
+						</Item>
+						<Item class="ModuleScript" referent="RBX82">
 							<Properties>
 								<string name="Name">PetController</string>
 								<ProtectedString name="Source">-- EggHeist | Client/Controllers/PetController.lua
@@ -7055,7 +8416,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX72">
+						<Item class="ModuleScript" referent="RBX83">
 							<Properties>
 								<string name="Name">QuestController</string>
 								<ProtectedString name="Source">-- EggHeist | Client/Controllers/QuestController.lua
@@ -7075,6 +8436,10 @@
 								ctx.Net.Fire("ClaimDaily")
 								end
 								
+								function QuestController.ClaimAchievement(achievementId)
+								ctx.Net.Fire("ClaimAchievement", achievementId)
+								end
+								
 								function QuestController.Start()
 								end
 								
@@ -7082,7 +8447,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX73">
+						<Item class="ModuleScript" referent="RBX84">
 							<Properties>
 								<string name="Name">ShopController</string>
 								<ProtectedString name="Source">-- EggHeist | Client/Controllers/ShopController.lua
@@ -7105,7 +8470,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX74">
+						<Item class="ModuleScript" referent="RBX85">
 							<Properties>
 								<string name="Name">TutorialController</string>
 								<ProtectedString name="Source">-- EggHeist | Client/Controllers/TutorialController.lua
@@ -7137,11 +8502,11 @@
 							</Properties>
 						</Item>
 					</Item>
-					<Item class="Folder" referent="RBX78">
+					<Item class="Folder" referent="RBX89">
 						<Properties>
 							<string name="Name">Effects</string>
 						</Properties>
-						<Item class="ModuleScript" referent="RBX76">
+						<Item class="ModuleScript" referent="RBX87">
 							<Properties>
 								<string name="Name">Effects</string>
 								<ProtectedString name="Source">-- EggHeist | Client/Effects/Effects.lua
@@ -7152,6 +8517,36 @@
 								local Players = game:GetService("Players")
 								
 								local Effects = {}
+								
+								-- Settings-aware gates, refreshed by MainUI from the player snapshot.
+								local gates = {
+								cameraShake = true,
+								reducedEffects = false,
+								performanceMode = false,
+								}
+								
+								function Effects.Configure(settings)
+								if type(settings) ~= "table" then
+								return
+								end
+								if settings.cameraShake ~= nil then
+								gates.cameraShake = settings.cameraShake ~= false
+								end
+								if settings.reducedEffects ~= nil then
+								gates.reducedEffects = settings.reducedEffects == true
+								end
+								if settings.performanceMode ~= nil then
+								gates.performanceMode = settings.performanceMode == true
+								end
+								end
+								
+								local function effectsMuted()
+								return gates.performanceMode
+								end
+								
+								local function effectsReduced()
+								return gates.performanceMode or gates.reducedEffects
+								end
 								
 								function Effects.Tween(instance, info, goals, callback)
 								local tween = TweenService:Create(instance, info, goals)
@@ -7179,6 +8574,9 @@
 								end
 								
 								function Effects.Flash(parent, color, duration)
+								if effectsMuted() then
+								return
+								end
 								local flash = Instance.new("Frame")
 								flash.Size = UDim2.fromScale(1, 1)
 								flash.BackgroundColor3 = color or Color3.fromRGB(255, 255, 255)
@@ -7193,6 +8591,11 @@
 								
 								-- Simple UI confetti burst inside a container (anchored center-ish)
 								function Effects.Confetti(parent, count, colors)
+								if effectsMuted() then
+								return
+								elseif effectsReduced() then
+								count = math.min(count or 0, 12)
+								end
 								count = count or 40
 								colors = colors or {
 								Color3.fromRGB(255, 200, 80), Color3.fromRGB(120, 220, 255),
@@ -7222,9 +8625,12 @@
 								end
 								
 								function Effects.ShakeCamera(intensity, duration)
+								if not gates.cameraShake or effectsMuted() then
+								return
+								end
 								intensity = intensity or 0.5
 								duration = duration or 0.3
-								local camera = workspace.CurrentCamera
+								local camera = Workspace.CurrentCamera
 								if not camera then
 								return
 								end
@@ -7270,7 +8676,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX77">
+						<Item class="ModuleScript" referent="RBX88">
 							<Properties>
 								<string name="Name">SoundManager</string>
 								<ProtectedString name="Source">-- EggHeist | Client/Effects/SoundManager.lua
@@ -7292,6 +8698,10 @@
 								Rare = "rbxasset://sounds/unsheath.wav",
 								Coins = "rbxasset://sounds/coins.wav",
 								Alarm = "rbxasset://sounds/alarm.wav",
+								HeistAlert = "rbxasset://sounds/alarm.wav",
+								Achievement = "rbxasset://sounds/electronicping.wav",
+								Gadget = "rbxasset://sounds/swordslash.wav",
+								Extract = "rbxasset://sounds/coins.wav",
 								}
 								
 								function SoundManager.Init(ctx)
@@ -7307,7 +8717,8 @@
 								return true
 								end
 								
-								function SoundManager.Play(soundName, volume)
+								-- pitch shifts PlaybackSpeed (1 = normal). Pass 1 +/- small random for variety.
+								function SoundManager.Play(soundName, volume, pitch)
 								if not sfxEnabled() then
 								return
 								end
@@ -7318,6 +8729,7 @@
 								local sound = Instance.new("Sound")
 								sound.SoundId = assetId
 								sound.Volume = volume or 0.6
+								sound.PlaybackSpeed = tonumber(pitch) or 1
 								sound.Parent = SoundService
 								sound.Ended:Connect(function()
 								sound:Destroy()
@@ -7338,11 +8750,11 @@
 							</Properties>
 						</Item>
 					</Item>
-					<Item class="Folder" referent="RBX80">
+					<Item class="Folder" referent="RBX91">
 						<Properties>
 							<string name="Name">Input</string>
 						</Properties>
-						<Item class="ModuleScript" referent="RBX79">
+						<Item class="ModuleScript" referent="RBX90">
 							<Properties>
 								<string name="Name">InputController</string>
 								<ProtectedString name="Source">-- EggHeist | Client/Input/InputController.lua
@@ -7431,11 +8843,11 @@
 							</Properties>
 						</Item>
 					</Item>
-					<Item class="Folder" referent="RBX95">
+					<Item class="Folder" referent="RBX107">
 						<Properties>
 							<string name="Name">UI</string>
 						</Properties>
-						<Item class="ModuleScript" referent="RBX81">
+						<Item class="ModuleScript" referent="RBX92">
 							<Properties>
 								<string name="Name">BaseUI</string>
 								<ProtectedString name="Source">-- EggHeist | Client/UI/BaseUI.lua
@@ -7681,7 +9093,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX82">
+						<Item class="ModuleScript" referent="RBX93">
 							<Properties>
 								<string name="Name">CollectionUI</string>
 								<ProtectedString name="Source">-- EggHeist | Client/UI/CollectionUI.lua
@@ -7695,6 +9107,8 @@
 								local Pets = require(ConfigFolder:WaitForChild("Pets"))
 								local Rarities = require(ConfigFolder:WaitForChild("Rarities"))
 								local Mutations = require(ConfigFolder:WaitForChild("Mutations"))
+								local Collection = require(ConfigFolder:WaitForChild("Collection"))
+								local Format = require(Shared:WaitForChild("Utilities"):WaitForChild("Format"))
 								local UIFactory = require(script.Parent:WaitForChild("UIFactory"))
 								
 								local CollectionUI = {}
@@ -7702,6 +9116,8 @@
 								local window = nil
 								local grid = nil
 								local progressLabel = nil
+								local milestoneBox = nil
+								local gridHolder = nil
 								
 								local Theme = UIFactory.Theme
 								
@@ -7711,15 +9127,30 @@
 								local gui = UIFactory.ScreenGui("EggHeistCollection", 20)
 								gui.Parent = playerGui
 								
-								window = UIFactory.Window(gui, "Collection", UDim2.new(0, 560, 0, 470))
+								window = UIFactory.Window(gui, "Collection", UDim2.new(0, 560, 0, 520))
 								progressLabel = UIFactory.Label("", UDim2.new(1, 0, 0, 24), Theme.Accent, 14)
 								progressLabel.Parent = window.Content
-								local holder = Instance.new("Frame")
-								holder.Position = UDim2.new(0, 0, 0, 28)
-								holder.Size = UDim2.new(1, 0, 1, -28)
-								holder.BackgroundTransparency = 1
-								holder.Parent = window.Content
-								grid = UIFactory.Grid(holder, UDim2.new(0, 158, 0, 120), 8)
+								local milestoneHeight = 30 + #Collection.Milestones * 28 + 8
+								milestoneBox = Instance.new("Frame")
+								milestoneBox.Position = UDim2.new(0, 0, 0, 28)
+								milestoneBox.Size = UDim2.new(1, 0, 0, milestoneHeight)
+								milestoneBox.BackgroundColor3 = Theme.Panel
+								milestoneBox.BorderSizePixel = 0
+								milestoneBox.Parent = window.Content
+								local milestoneCorner = Instance.new("UICorner")
+								milestoneCorner.CornerRadius = UDim.new(0, 8)
+								milestoneCorner.Parent = milestoneBox
+								local milestonePad = Instance.new("UIPadding")
+								milestonePad.PaddingTop = UDim.new(0, 6)
+								milestonePad.PaddingLeft = UDim.new(0, 10)
+								milestonePad.PaddingRight = UDim.new(0, 10)
+								milestonePad.Parent = milestoneBox
+								gridHolder = Instance.new("Frame")
+								gridHolder.Position = UDim2.new(0, 0, 0, 28 + milestoneHeight + 6)
+								gridHolder.Size = UDim2.new(1, 0, 1, -(28 + milestoneHeight + 6))
+								gridHolder.BackgroundTransparency = 1
+								gridHolder.Parent = window.Content
+								grid = UIFactory.Grid(gridHolder, UDim2.new(0, 158, 0, 120), 8)
 								
 								if ctx.Data then
 								ctx.Data.Changed:Connect(function()
@@ -7736,6 +9167,34 @@
 								return
 								end
 								UIFactory.ClearChildren(grid, true)
+								-- Milestone panel (rewards granted automatically by the server)
+								UIFactory.ClearChildren(milestoneBox, true)
+								local milestoneHeader = UIFactory.Label("COLLECTION MILESTONES", UDim2.new(1, 0, 0, 24),
+								Theme.Accent, 13)
+								milestoneHeader.TextXAlignment = Enum.TextXAlignment.Left
+								milestoneHeader.Parent = milestoneBox
+								local claimedMilestones = snapshot.collectionRewards or {}
+								for i, milestone in ipairs(Collection.Milestones) do
+								local id = milestone.Id or ("tier" .. tostring(i))
+								local claimed = claimedMilestones[id] == true
+								local parts = {}
+								if milestone.Cash and milestone.Cash &gt; 0 then
+								parts[#parts + 1] = Format.Money(milestone.Cash)
+								end
+								if milestone.Gems and milestone.Gems &gt; 0 then
+								parts[#parts + 1] = tostring(milestone.Gems) .. " G"
+								end
+								if milestone.Xp and milestone.Xp &gt; 0 then
+								parts[#parts + 1] = "+" .. tostring(milestone.Xp) .. " XP"
+								end
+								local row = UIFactory.Label(tostring(milestone.Required) .. " pets  -&gt;  "
+								.. table.concat(parts, "  +  ") .. (claimed and "   (claimed)" or ""),
+								UDim2.new(1, 0, 0, 26), claimed and Theme.TextDim or Theme.Text, 12)
+								row.TextXAlignment = Enum.TextXAlignment.Left
+								row.Position = UDim2.new(0, 0, 0, 24 + (i - 1) * 28)
+								row.Font = Theme.FontRegular
+								row.Parent = milestoneBox
+								end
 								local collection = snapshot.collection or {}
 								local found = 0
 								local total = 0
@@ -7807,7 +9266,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX83">
+						<Item class="ModuleScript" referent="RBX94">
 							<Properties>
 								<string name="Name">DailyUI</string>
 								<ProtectedString name="Source">-- EggHeist | Client/UI/DailyUI.lua
@@ -7819,6 +9278,7 @@
 								local Shared = ReplicatedStorage:WaitForChild("EggHeistShared")
 								local Economy = require(Shared:WaitForChild("Config"):WaitForChild("Economy"))
 								local Eggs = require(Shared:WaitForChild("Config"):WaitForChild("Eggs"))
+								local Gadgets = require(Shared:WaitForChild("Config"):WaitForChild("Gadgets"))
 								local Format = require(Shared:WaitForChild("Utilities"):WaitForChild("Format"))
 								local UIFactory = require(script.Parent:WaitForChild("UIFactory"))
 								
@@ -7842,6 +9302,10 @@
 								if reward.Egg then
 								local def = Eggs.ById[reward.Egg]
 								parts[#parts + 1] = def and def.DisplayName or reward.Egg
+								end
+								if reward.Gadget then
+								local def = Gadgets.ById[reward.Gadget]
+								parts[#parts + 1] = def and def.DisplayName or reward.Gadget
 								end
 								return table.concat(parts, "\n")
 								end
@@ -7939,7 +9403,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX84">
+						<Item class="ModuleScript" referent="RBX95">
 							<Properties>
 								<string name="Name">EventBannerUI</string>
 								<ProtectedString name="Source">-- EggHeist | Client/UI/EventBannerUI.lua
@@ -8001,7 +9465,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX85">
+						<Item class="ModuleScript" referent="RBX96">
 							<Properties>
 								<string name="Name">HatchUI</string>
 								<ProtectedString name="Source">-- EggHeist | Client/UI/HatchUI.lua
@@ -8105,7 +9569,7 @@
 								revealCard.Visible = false
 								tapToContinue.Visible = false
 								eggLabel.Visible = true
-								eggLabel.Text = "EGG"
+								eggLabel.Text = string.upper(tostring(entry.eggName or "Egg"))
 								eggLabel.TextColor3 = Theme.Accent
 								eggLabel.Rotation = 0
 								
@@ -8140,7 +9604,10 @@
 								revealTitle.Text = displayName
 								revealTitle.TextColor3 = pet.mut and Mutations.GetColor(pet.mut) or rarityColor
 								
-								local lines = { rarity .. (entry.isNew and "  -  NEW!" or "") }
+								local lines = {
+								rarity .. (entry.isNew and "  -  NEW!" or ""),
+								"from " .. tostring(entry.eggName or "an egg"),
+								}
 								if pet.mut then
 								lines[#lines + 1] = "Mutation: " .. pet.mut
 								end
@@ -8188,16 +9655,21 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX86">
+						<Item class="ModuleScript" referent="RBX97">
 							<Properties>
 								<string name="Name">HeistUI</string>
 								<ProtectedString name="Source">-- EggHeist | Client/UI/HeistUI.lua
 								-- Heist HUD: carrying indicator, breach/extraction channels, intruder alerts.
 								
 								local Players = game:GetService("Players")
+								local ReplicatedStorage = game:GetService("ReplicatedStorage")
 								
+								local Shared = ReplicatedStorage:WaitForChild("EggHeistShared")
+								local Settings = require(Shared:WaitForChild("Config"):WaitForChild("Settings"))
+								local Format = require(Shared:WaitForChild("Utilities"):WaitForChild("Format"))
 								local UIFactory = require(script.Parent:WaitForChild("UIFactory"))
 								local Effects = require(script.Parent.Parent:WaitForChild("Effects"):WaitForChild("Effects"))
+								local SoundManager = require(script.Parent.Parent:WaitForChild("Effects"):WaitForChild("SoundManager"))
 								
 								local HeistUI = {}
 								local ctx = nil
@@ -8210,6 +9682,10 @@
 								local alertLabel = nil
 								local channelEndsAt = 0
 								local channelTotal = 1
+								local repChip = nil
+								local carryAmount = 0
+								local carryTarget = "Vault"
+								local carryEndsAt = 0
 								
 								local Theme = UIFactory.Theme
 								
@@ -8220,20 +9696,37 @@
 								gui.Parent = playerGui
 								
 								-- carrying indicator (bottom center, above claim button area)
+								-- heist rep chip (top-left, under the main HUD strip)
+								repChip = Instance.new("Frame")
+								repChip.Position = UDim2.new(0, 12, 0, 116)
+								repChip.Size = UDim2.new(0, 220, 0, 30)
+								repChip.BackgroundColor3 = Theme.Panel
+								repChip.BorderSizePixel = 0
+								UIFactory.Corner(repChip, 8)
+								repChip.Parent = gui
+								
 								carryFrame = Instance.new("Frame")
 								carryFrame.AnchorPoint = Vector2.new(0.5, 1)
 								carryFrame.Position = UDim2.new(0.5, 0, 1, -150)
-								carryFrame.Size = UDim2.new(0, 320, 0, 60)
+								carryFrame.Size = UDim2.new(0, 340, 0, 104)
 								carryFrame.BackgroundColor3 = Color3.fromRGB(60, 20, 20)
 								carryFrame.BorderSizePixel = 0
 								carryFrame.Visible = false
 								UIFactory.Corner(carryFrame, 10)
 								UIFactory.Stroke(carryFrame, Color3.fromRGB(255, 80, 80), 2)
 								carryFrame.Parent = gui
-								carryLabel = UIFactory.Label("CARRYING LOOT", UDim2.new(1, -16, 1, 0), Color3.fromRGB(255, 160, 160), 15)
-								carryLabel.Position = UDim2.new(0, 8, 0, 0)
+								carryLabel = UIFactory.Label("CARRYING LOOT", UDim2.new(1, -16, 0, 56), Color3.fromRGB(255, 160, 160), 14)
+								carryLabel.Position = UDim2.new(0, 8, 0, 4)
 								carryLabel.TextWrapped = true
 								carryLabel.Parent = carryFrame
+								local abandonButton = UIFactory.Button("DROP LOOT", function()
+								if ctx.Controllers and ctx.Controllers.HeistController then
+								ctx.Controllers.HeistController.Abandon()
+								end
+								end)
+								abandonButton.Size = UDim2.new(1, -16, 0, 32)
+								abandonButton.Position = UDim2.new(0, 8, 0, 64)
+								abandonButton.Parent = carryFrame
 								
 								-- channel bar (center)
 								channelFrame = Instance.new("Frame")
@@ -8274,10 +9767,22 @@
 								alertLabel = UIFactory.Label("", UDim2.new(1, 0, 1, 0), Color3.fromRGB(255, 255, 255), 14)
 								alertLabel.Parent = alertFrame
 								
-								-- channel ticker
+								if ctx.Data then
+								ctx.Data.Changed:Connect(function()
+								HeistUI.Refresh()
+								end)
+								end
+								
+								-- channel + carry tickers
 								task.spawn(function()
 								while true do
 								task.wait(0.05)
+								if carryFrame.Visible and carryEndsAt &gt; 0 then
+								local left = math.max(0, carryEndsAt - os.clock())
+								carryLabel.Text = "CARRYING " .. string.upper(tostring(carryTarget))
+								.. " LOOT (" .. Format.Money(carryAmount) .. ")!\nReach EXTRACTION! "
+								.. string.format("%.0fs left", left)
+								end
 								if channelFrame.Visible then
 								local left = channelEndsAt - os.clock()
 								if left &lt;= 0 then
@@ -8291,17 +9796,54 @@
 								end)
 								end
 								
+								local function repTitle(rep)
+								local title = "Pickpocket"
+								for _, tier in ipairs((Settings.Heist or {}).RepTitles or {}) do
+								if (rep or 0) &gt;= (tier.Rep or 0) then
+								title = tier.Title
+								end
+								end
+								return title
+								end
+								
+								function HeistUI.Refresh()
+								local snapshot = ctx.Data and ctx.Data.Get()
+								if not snapshot then
+								return
+								end
+								local rep = (snapshot.stats and snapshot.stats.heistRep) or 0
+								repChip:ClearAllChildren()
+								local label = UIFactory.Label("Heist rep: " .. tostring(rep) .. " (" .. repTitle(rep) .. ")",
+								UDim2.new(1, -12, 1, 0), Theme.Accent, 13)
+								label.Position = UDim2.new(0, 6, 0, 0)
+								label.TextXAlignment = Enum.TextXAlignment.Left
+								label.Parent = repChip
+								end
+								
+								local function alertsEnabled()
+								local snapshot = ctx.Data and ctx.Data.Get()
+								return (snapshot and snapshot.settings and snapshot.settings.heistAlerts) ~= false
+								end
+								
 								function HeistUI.OnState(state)
 								if state.carrying == true then
+								carryAmount = tonumber(state.amount) or 0
+								carryTarget = tostring(state.target or "Vault")
+								carryEndsAt = os.clock() + (tonumber(state.timeLeft) or 60)
 								carryFrame.Visible = true
-								carryLabel.Text = "CARRYING LOOT! Get to EXTRACTION (green pad in the vault grounds)!"
 								Effects.Pop(carryFrame, 1.05)
+								SoundManager.Play("Coins", 0.7)
 								elseif state.carrying == false then
 								carryFrame.Visible = false
+								carryEndsAt = 0
 								end
 								if state.channeling == true then
 								channelFrame.Visible = true
+								if state.target then
+								channelLabel.Text = "BREACHING " .. string.upper(tostring(state.target)) .. "... STAY CLOSE!"
+								else
 								channelLabel.Text = "BREACHING... STAY CLOSE!"
+								end
 								channelTotal = tonumber(state.duration) or 3
 								channelEndsAt = os.clock() + channelTotal
 								elseif state.channeling == false then
@@ -8310,14 +9852,20 @@
 								if state.extracted == true then
 								carryFrame.Visible = false
 								channelFrame.Visible = false
+								carryEndsAt = 0
+								SoundManager.Play("Extract", 0.8, 1.15)
 								end
 								if state.alert == true then
+								state.alert = false
+								if alertsEnabled() then
 								alertLabel.Text = "INTRUDER: " .. tostring(state.intruder or "unknown") .. " is in your base!"
 								alertFrame.Visible = true
 								Effects.Pop(alertFrame, 1.05)
+								SoundManager.Play("HeistAlert", 0.7)
 								task.delay(5, function()
 								alertFrame.Visible = false
 								end)
+								end
 								end
 								end
 								
@@ -8325,7 +9873,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX87">
+						<Item class="ModuleScript" referent="RBX98">
 							<Properties>
 								<string name="Name">InventoryUI</string>
 								<ProtectedString name="Source">-- EggHeist | Client/UI/InventoryUI.lua
@@ -8611,7 +10159,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX88">
+						<Item class="ModuleScript" referent="RBX99">
 							<Properties>
 								<string name="Name">MainUI</string>
 								<ProtectedString name="Source">-- EggHeist | Client/UI/MainUI.lua
@@ -8857,6 +10405,7 @@
 								if not snapshot then
 								return
 								end
+								Effects.Configure(snapshot.settings)
 								local cash = snapshot.cash or 0
 								if cash ~= lastCash then
 								Effects.CountUp(cashLabel, lastCash, cash, 0.4, Format.Money)
@@ -8884,6 +10433,11 @@
 								end
 								for _, q in ipairs((snapshot.quests and snapshot.quests.weeklies) or {}) do
 								if q.progress &gt;= q.target and not q.claimed then
+								claimable = claimable + 1
+								end
+								end
+								for _, state in pairs(snapshot.achievements or {}) do
+								if state.done and not state.claimed then
 								claimable = claimable + 1
 								end
 								end
@@ -8919,8 +10473,9 @@
 								
 								function MainUI.RefreshRanks()
 								UIFactory.ClearChildren(ranksList, true)
-								local boards = { "Richest", "Heists", "Collectors" }
+								local boards = { "Richest", "Levels", "Heists", "Collectors" }
 								local titles = { Richest = "Richest Heisters (lifetime earned)",
+								Levels = "Highest Levels",
 								Heists = "Master Thieves (successful extractions)",
 								Collectors = "Top Collectors (unique discoveries)" }
 								for _, board in ipairs(boards) do
@@ -8969,6 +10524,11 @@
 								SoundManager.Play("Success", 0.8)
 								Effects.Confetti(playerGui, 50)
 								Effects.ShakeCamera(0.4, 0.3)
+								elseif fxName == "Achievement" then
+								SoundManager.Play("Achievement", 0.8, 1.1)
+								Effects.Confetti(playerGui, 40)
+								elseif fxName == "Gadget" then
+								SoundManager.Play("Gadget", 0.7, 0.9 + math.random() * 0.2)
 								elseif fxName == "TrapStun" then
 								SoundManager.Play("Error", 0.7)
 								Effects.ShakeCamera(0.8, 0.4)
@@ -8991,7 +10551,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX89">
+						<Item class="ModuleScript" referent="RBX100">
 							<Properties>
 								<string name="Name">NotificationsUI</string>
 								<ProtectedString name="Source">-- EggHeist | Client/UI/NotificationsUI.lua
@@ -9140,7 +10700,157 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX90">
+						<Item class="ModuleScript" referent="RBX101">
+							<Properties>
+								<string name="Name">ObjectiveUI</string>
+								<ProtectedString name="Source">-- EggHeist | Client/UI/ObjectiveUI.lua
+								-- "What next?" chip: derives the current suggested goal from the profile.
+								-- Shows after the tutorial completes. Purely client-side (display only).
+								
+								local Players = game:GetService("Players")
+								local ReplicatedStorage = game:GetService("ReplicatedStorage")
+								
+								local Shared = ReplicatedStorage:WaitForChild("EggHeistShared")
+								local Economy = require(Shared:WaitForChild("Config"):WaitForChild("Economy"))
+								local UIFactory = require(script.Parent:WaitForChild("UIFactory"))
+								
+								local ObjectiveUI = {}
+								local ctx = nil
+								local chip = nil
+								local objectiveLabel = nil
+								local currentAction = nil
+								
+								local Theme = UIFactory.Theme
+								
+								local function securityTotal(snapshot)
+								local total = 0
+								local security = snapshot.base and snapshot.base.security
+								if type(security) == "table" then
+								for _, tier in pairs(security) do
+								if type(tier) == "number" then
+								total = total + tier
+								end
+								end
+								end
+								return total
+								end
+								
+								-- Returns { text, ui?, tab? }
+								local function computeObjective(snapshot)
+								local level = snapshot.level or 1
+								local stats = snapshot.stats or {}
+								local eggs = snapshot.eggs or {}
+								local pets = snapshot.pets or {}
+								local equipped = snapshot.equipped or {}
+								local upgrades = (snapshot.base and snapshot.base.upgrades) or {}
+								local plot = (snapshot.base and snapshot.base.plot) or 0
+								
+								if plot == 0 then
+								return { text = "Claim a base plot (walk to a glowing plot)" }
+								end
+								if #eggs == 0 and #pets == 0 then
+								return { text = "Buy your first egg", ui = "ShopUI", tab = "Eggs" }
+								end
+								if #eggs &gt; 0 then
+								return { text = "Hatch your egg", ui = "InventoryUI" }
+								end
+								if #pets &gt; 0 and #equipped == 0 then
+								return { text = "Equip a pet to earn income", ui = "InventoryUI" }
+								end
+								if (upgrades.Income or 0) == 0 then
+								return { text = "Buy an Income upgrade", ui = "BaseUI", tab = "Upgrades" }
+								end
+								if level &gt;= 3 and securityTotal(snapshot) == 0 then
+								return { text = "Buy your first security", ui = "BaseUI", tab = "Security" }
+								end
+								if level &gt;= 2 and (stats.heistsWon or 0) == 0 then
+								return { text = "Attempt a heist at an enemy base" }
+								end
+								if level &gt;= 6 and (stats.maxRarityTier or 0) &lt; 3 then
+								return { text = "Hatch stronger eggs", ui = "ShopUI", tab = "Eggs" }
+								end
+								if level &gt;= Economy.PrestigeMinLevel
+								and (snapshot.cash or 0) &gt;= Economy.PrestigeCashCost then
+								return { text = "Prestige for +25% income", ui = "SettingsUI" }
+								end
+								-- endgame rotation: quests vs collection
+								if math.floor(os.time() / 120) % 2 == 0 then
+								return { text = "Complete quests for rewards", ui = "QuestsUI" }
+								end
+								return { text = "Grow your collection", ui = "CollectionUI" }
+								end
+								
+								function ObjectiveUI.Init(context)
+								ctx = context
+								local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
+								local gui = UIFactory.ScreenGui("EggHeistObjective", 12)
+								gui.Parent = playerGui
+								
+								chip = Instance.new("TextButton")
+								chip.AnchorPoint = Vector2.new(0, 0)
+								chip.Position = UDim2.new(0, 12, 0, 70)
+								chip.Size = UDim2.new(0, 300, 0, 52)
+								chip.BackgroundColor3 = Theme.Panel
+								chip.BackgroundTransparency = 0.1
+								chip.BorderSizePixel = 0
+								chip.Text = ""
+								chip.Visible = false
+								chip.AutoButtonColor = true
+								UIFactory.Corner(chip, 10)
+								UIFactory.Stroke(chip, Theme.Accent, 1.5)
+								chip.Parent = gui
+								chip.MouseButton1Click:Connect(function()
+								if currentAction and currentAction.ui then
+								local ui = ctx.UI and ctx.UI[currentAction.ui]
+								if ui then
+								if currentAction.tab and type(ui.ShowTab) == "function" then
+								ui.ShowTab(currentAction.tab)
+								end
+								if type(ui.SetVisible) == "function" then
+								ui.SetVisible(true)
+								end
+								end
+								end
+								end)
+								
+								local caption = UIFactory.Label("NEXT OBJECTIVE", UDim2.new(1, -20, 0, 16), Theme.Accent, 11)
+								caption.Position = UDim2.new(0, 10, 0, 4)
+								caption.TextXAlignment = Enum.TextXAlignment.Left
+								caption.Parent = chip
+								objectiveLabel = UIFactory.Label("", UDim2.new(1, -20, 0, 28), Theme.Text, 14)
+								objectiveLabel.Position = UDim2.new(0, 10, 0, 20)
+								objectiveLabel.TextXAlignment = Enum.TextXAlignment.Left
+								objectiveLabel.TextTruncate = Enum.TextTruncate.AtEnd
+								objectiveLabel.Parent = chip
+								
+								if ctx.Data then
+								ctx.Data.Changed:Connect(function(snapshot)
+								ObjectiveUI.Refresh(snapshot)
+								end)
+								end
+								end
+								
+								function ObjectiveUI.Refresh(snapshot)
+								snapshot = snapshot or (ctx.Data and ctx.Data.Get())
+								if not snapshot then
+								chip.Visible = false
+								return
+								end
+								-- the tutorial panel owns onboarding; the chip takes over after
+								if not snapshot.tutorial or not snapshot.tutorial.done then
+								chip.Visible = false
+								return
+								end
+								currentAction = computeObjective(snapshot)
+								objectiveLabel.Text = currentAction.text
+								chip.Visible = true
+								end
+								
+								return ObjectiveUI
+								</ProtectedString>
+							</Properties>
+						</Item>
+						<Item class="ModuleScript" referent="RBX102">
 							<Properties>
 								<string name="Name">QuestsUI</string>
 								<ProtectedString name="Source">-- EggHeist | Client/UI/QuestsUI.lua
@@ -9150,16 +10860,23 @@
 								local ReplicatedStorage = game:GetService("ReplicatedStorage")
 								
 								local Shared = ReplicatedStorage:WaitForChild("EggHeistShared")
-								local Economy = require(Shared:WaitForChild("Config"):WaitForChild("Economy"))
+								local ConfigFolder = Shared:WaitForChild("Config")
+								local Economy = require(ConfigFolder:WaitForChild("Economy"))
+								local Achievements = require(ConfigFolder:WaitForChild("Achievements"))
+								local Eggs = require(ConfigFolder:WaitForChild("Eggs"))
+								local Gadgets = require(ConfigFolder:WaitForChild("Gadgets"))
 								local Format = require(Shared:WaitForChild("Utilities"):WaitForChild("Format"))
 								local UIFactory = require(script.Parent:WaitForChild("UIFactory"))
 								
 								local QuestsUI = {}
 								local ctx = nil
 								local window = nil
-								local list = nil
+								local pages = {}
+								local tabButtons = {}
+								local currentTab = "Quests"
 								
 								local Theme = UIFactory.Theme
+								local TABS = { "Quests", "Achievements" }
 								
 								function QuestsUI.Init(context)
 								ctx = context
@@ -9167,8 +10884,37 @@
 								local gui = UIFactory.ScreenGui("EggHeistQuests", 20)
 								gui.Parent = playerGui
 								
-								window = UIFactory.Window(gui, "Quests", UDim2.new(0, 480, 0, 440))
-								list = UIFactory.ScrollingList(window.Content)
+								window = UIFactory.Window(gui, "Quests &amp; Achievements", UDim2.new(0, 500, 0, 450))
+								
+								local tabBar = Instance.new("Frame")
+								tabBar.Size = UDim2.new(1, 0, 0, 36)
+								tabBar.BackgroundTransparency = 1
+								tabBar.Parent = window.Content
+								for i, tab in ipairs(TABS) do
+								local button = UIFactory.Button(tab, function()
+								QuestsUI.ShowTab(tab)
+								end)
+								button.Size = UDim2.new(1 / #TABS, -6, 1, 0)
+								button.Position = UDim2.new((i - 1) / #TABS, 3, 0, 0)
+								button.Parent = tabBar
+								tabButtons[tab] = button
+								end
+								
+								local pageHolder = Instance.new("Frame")
+								pageHolder.Position = UDim2.new(0, 0, 0, 42)
+								pageHolder.Size = UDim2.new(1, 0, 1, -42)
+								pageHolder.BackgroundTransparency = 1
+								pageHolder.Parent = window.Content
+								for _, tab in ipairs(TABS) do
+								local page = Instance.new("Frame")
+								page.Size = UDim2.fromScale(1, 1)
+								page.BackgroundTransparency = 1
+								page.Visible = false
+								page.Parent = pageHolder
+								pages[tab] = page
+								UIFactory.ScrollingList(page)
+								end
+								QuestsUI.ShowTab("Quests")
 								
 								if ctx.Data then
 								ctx.Data.Changed:Connect(function()
@@ -9177,6 +10923,42 @@
 								end
 								end)
 								end
+								end
+								
+								function QuestsUI.ShowTab(tab)
+								currentTab = tab
+								for name, page in pairs(pages) do
+								page.Visible = name == tab
+								end
+								for name, button in pairs(tabButtons) do
+								button.BackgroundColor3 = name == tab and Theme.Accent or Theme.Button
+								button.TextColor3 = name == tab and Color3.fromRGB(30, 25, 10) or Theme.Text
+								end
+								end
+								
+								local function rewardText(reward)
+								reward = reward or {}
+								local parts = {}
+								if reward.Cash and reward.Cash &gt; 0 then
+								parts[#parts + 1] = Format.Money(reward.Cash)
+								end
+								if reward.Gems and reward.Gems &gt; 0 then
+								parts[#parts + 1] = tostring(reward.Gems) .. " G"
+								end
+								if reward.Xp and reward.Xp &gt; 0 then
+								parts[#parts + 1] = "+" .. tostring(reward.Xp) .. " XP"
+								end
+								if reward.Egg then
+								local def = Eggs.ById[reward.Egg]
+								parts[#parts + 1] = def and def.DisplayName or reward.Egg
+								end
+								if reward.Gadget then
+								local def = Gadgets.ById[reward.Gadget]
+								local count = reward.GadgetCount or 1
+								parts[#parts + 1] = (def and def.DisplayName or reward.Gadget)
+								.. (count &gt; 1 and (" x" .. tostring(count)) or "")
+								end
+								return table.concat(parts, "  +  ")
 								end
 								
 								local function questCard(quest)
@@ -9224,6 +11006,7 @@
 								if not snapshot then
 								return
 								end
+								local list = pages.Quests:FindFirstChildOfClass("ScrollingFrame")
 								UIFactory.ClearChildren(list, true)
 								local quests = snapshot.quests or {}
 								local dailies = quests.dailies or {}
@@ -9249,6 +11032,62 @@
 								for _, quest in ipairs(weeklies) do
 								questCard(quest).Parent = list
 								end
+								
+								-- Achievements page
+								local achPage = pages.Achievements:FindFirstChildOfClass("ScrollingFrame")
+								UIFactory.ClearChildren(achPage, true)
+								local states = snapshot.achievements or {}
+								local doneCount = 0
+								for _, def in ipairs(Achievements.List) do
+								local state = states[def.Id]
+								if state and state.done then
+								doneCount = doneCount + 1
+								end
+								end
+								local header = UIFactory.Label("ACHIEVEMENTS  " .. tostring(doneCount)
+								.. "/" .. tostring(#Achievements.List), UDim2.new(1, 0, 0, 26), Theme.Accent, 15)
+								header.TextXAlignment = Enum.TextXAlignment.Left
+								header.Parent = achPage
+								for _, def in ipairs(Achievements.List) do
+								local state = states[def.Id]
+								local done = state and state.done
+								local claimed = state and state.claimed
+								local card = UIFactory.Card(86)
+								local name = UIFactory.Label(def.Name, UDim2.new(1, -110, 0, 24),
+								done and Theme.Text or Theme.TextDim, 14)
+								name.TextXAlignment = Enum.TextXAlignment.Left
+								name.Parent = card
+								local text = UIFactory.Label(def.Text or "", UDim2.new(1, -110, 0, 22),
+								Theme.TextDim, 12)
+								text.TextXAlignment = Enum.TextXAlignment.Left
+								text.Position = UDim2.new(0, 0, 0, 26)
+								text.Font = Theme.FontRegular
+								text.Parent = card
+								local reward = UIFactory.Label(rewardText(def.Reward),
+								UDim2.new(1, -110, 0, 20), Theme.Accent, 11)
+								reward.TextXAlignment = Enum.TextXAlignment.Left
+								reward.Position = UDim2.new(0, 0, 0, 50)
+								reward.Font = Theme.FontRegular
+								reward.Parent = card
+								if claimed then
+								local label = UIFactory.Label("DONE", UDim2.new(0, 90, 0, 40), Theme.Success, 14)
+								label.Position = UDim2.new(1, -98, 0, 14)
+								label.Parent = card
+								elseif done then
+								local claim = UIFactory.PrimaryButton("CLAIM", function()
+								ctx.Controllers.QuestController.ClaimAchievement(def.Id)
+								end)
+								claim.Size = UDim2.new(0, 90, 0, 40)
+								claim.Position = UDim2.new(1, -98, 0, 14)
+								claim.Parent = card
+								else
+								local label = UIFactory.Label("LOCKED", UDim2.new(0, 90, 0, 40), Theme.TextDim, 12)
+								label.Position = UDim2.new(1, -98, 0, 14)
+								label.Font = Theme.FontRegular
+								label.Parent = card
+								end
+								card.Parent = achPage
+								end
 								end
 								
 								function QuestsUI.SetVisible(visible)
@@ -9266,7 +11105,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX91">
+						<Item class="ModuleScript" referent="RBX103">
 							<Properties>
 								<string name="Name">SettingsUI</string>
 								<ProtectedString name="Source">-- EggHeist | Client/UI/SettingsUI.lua
@@ -9276,7 +11115,10 @@
 								local ReplicatedStorage = game:GetService("ReplicatedStorage")
 								
 								local Shared = ReplicatedStorage:WaitForChild("EggHeistShared")
-								local Economy = require(Shared:WaitForChild("Config"):WaitForChild("Economy"))
+								local ConfigFolder = Shared:WaitForChild("Config")
+								local Economy = require(ConfigFolder:WaitForChild("Economy"))
+								local Achievements = require(ConfigFolder:WaitForChild("Achievements"))
+								local Settings = require(ConfigFolder:WaitForChild("Settings"))
 								local Format = require(Shared:WaitForChild("Utilities"):WaitForChild("Format"))
 								local UIFactory = require(script.Parent:WaitForChild("UIFactory"))
 								
@@ -9293,6 +11135,11 @@
 								{ Key = "notifications", Label = "Notifications" },
 								{ Key = "showPets", Label = "Show my pets" },
 								{ Key = "autoHatch", Label = "Auto-hatch (needs gamepass)" },
+								{ Key = "cameraShake", Label = "Camera shake" },
+								{ Key = "reducedEffects", Label = "Reduced effects" },
+								{ Key = "performanceMode", Label = "Performance mode" },
+								{ Key = "heistAlerts", Label = "Heist banners" },
+								{ Key = "npcTips", Label = "NPC tips" },
 								}
 								
 								function SettingsUI.Init(context)
@@ -9381,7 +11228,22 @@
 								statsHeader.TextXAlignment = Enum.TextXAlignment.Left
 								statsHeader.Parent = list
 								local stats = snapshot.stats or {}
-								local statsCard = UIFactory.Card(150)
+								local rep = stats.heistRep or 0
+								local repTitle = "Pickpocket"
+								for _, tier in ipairs((Settings.Heist or {}).RepTitles or {}) do
+								if rep &gt;= (tier.Rep or 0) then
+								repTitle = tier.Title
+								end
+								end
+								local achStates = snapshot.achievements or {}
+								local achDone = 0
+								for _, def in ipairs(Achievements.List) do
+								local state = achStates[def.Id]
+								if state and state.done then
+								achDone = achDone + 1
+								end
+								end
+								local statsCard = UIFactory.Card(190)
 								local statsText = UIFactory.Label(
 								"Earned: " .. Format.Money(stats.totalEarned or 0)
 								.. "\nHatched: " .. tostring(stats.totalHatched or 0)
@@ -9389,7 +11251,10 @@
 								.. "\nHeists won: " .. tostring(stats.heistsWon or 0)
 								.. "  |  Failed: " .. tostring(stats.heistsFailed or 0)
 								.. "\nTimes robbed: " .. tostring(stats.timesRobbed or 0)
-								.. "\nPlaytime: " .. tostring(stats.playMinutes or 0) .. " min",
+								.. "\nPlaytime: " .. tostring(stats.playMinutes or 0) .. " min"
+								.. "\nHeist rep: " .. tostring(rep) .. " (" .. repTitle .. ")"
+								.. "\nAchievements: " .. tostring(achDone) .. "/" .. tostring(#Achievements.List)
+								.. "\nGadgets used: " .. tostring(stats.gadgetsUsed or 0),
 								UDim2.new(1, 0, 1, 0), Theme.TextDim, 13)
 								statsText.TextXAlignment = Enum.TextXAlignment.Left
 								statsText.TextYAlignment = Enum.TextYAlignment.Top
@@ -9413,7 +11278,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX92">
+						<Item class="ModuleScript" referent="RBX104">
 							<Properties>
 								<string name="Name">ShopUI</string>
 								<ProtectedString name="Source">-- EggHeist | Client/UI/ShopUI.lua
@@ -9425,6 +11290,8 @@
 								local Shared = ReplicatedStorage:WaitForChild("EggHeistShared")
 								local ConfigFolder = Shared:WaitForChild("Config")
 								local Eggs = require(ConfigFolder:WaitForChild("Eggs"))
+								local Gadgets = require(ConfigFolder:WaitForChild("Gadgets"))
+								local Rarities = require(ConfigFolder:WaitForChild("Rarities"))
 								local Shop = require(ConfigFolder:WaitForChild("Shop"))
 								local Format = require(Shared:WaitForChild("Utilities"):WaitForChild("Format"))
 								local UIFactory = require(script.Parent:WaitForChild("UIFactory"))
@@ -9437,7 +11304,7 @@
 								local currentTab = "Eggs"
 								
 								local Theme = UIFactory.Theme
-								local TABS = { "Eggs", "Boosts", "Passes", "Decor" }
+								local TABS = { "Eggs", "Gadgets", "Boosts", "Passes", "Decor" }
 								
 								function ShopUI.Init(context)
 								ctx = context
@@ -9455,8 +11322,8 @@
 								local button = UIFactory.Button(tab, function()
 								ShopUI.ShowTab(tab)
 								end)
-								button.Size = UDim2.new(0.25, -6, 1, 0)
-								button.Position = UDim2.new((i - 1) * 0.25, 3, 0, 0)
+								button.Size = UDim2.new(1 / #TABS, -6, 1, 0)
+								button.Position = UDim2.new((i - 1) / #TABS, 3, 0, 0)
 								button.Parent = tabBar
 								tabButtons[tab] = button
 								end
@@ -9501,6 +11368,29 @@
 								return UIFactory.Card(height or 76)
 								end
 								
+								-- Compact hatch odds line: "C 74% · R 16% · E 3% · L 1% · M 0% · S 0%"
+								local function oddsLine(def)
+								local weights = def.HatchWeights or {}
+								local total = 0
+								for _, rarity in ipairs(Rarities.List) do
+								total = total + (weights[rarity.Id] or 0)
+								end
+								if total &lt;= 0 then
+								return "Odds: unknown"
+								end
+								local parts = {}
+								for _, rarity in ipairs(Rarities.List) do
+								local w = weights[rarity.Id] or 0
+								if w &gt; 0 then
+								local pct = w / total * 100
+								local text = pct &gt;= 10 and tostring(math.floor(pct + 0.5))
+								or string.format("%.1f", math.floor(pct * 10 + 0.5) / 10)
+								parts[#parts + 1] = rarity.Short .. " " .. text .. "%"
+								end
+								end
+								return table.concat(parts, " · ")
+								end
+								
 								function ShopUI.Refresh()
 								local snapshot = ctx.Data and ctx.Data.Get()
 								if not snapshot then
@@ -9515,11 +11405,11 @@
 								for _, def in ipairs(Eggs.GetShopEggs()) do
 								local locked = level &lt; (def.RequiredLevel or 1)
 								local afford = cash &gt;= def.Price
-								local card = rowCard(84)
+								local card = rowCard(108)
 								local name = UIFactory.Label(def.DisplayName, UDim2.new(1, -130, 0, 24), Theme.Text, 15)
 								name.TextXAlignment = Enum.TextXAlignment.Left
 								name.Parent = card
-								local desc = UIFactory.Label(def.Description or "", UDim2.new(1, -130, 0, 40),
+								local desc = UIFactory.Label(def.Description or "", UDim2.new(1, -130, 0, 34),
 								Theme.TextDim, 12)
 								desc.TextXAlignment = Enum.TextXAlignment.Left
 								desc.TextYAlignment = Enum.TextYAlignment.Top
@@ -9527,11 +11417,17 @@
 								desc.Position = UDim2.new(0, 0, 0, 26)
 								desc.Font = Theme.FontRegular
 								desc.Parent = card
+								local odds = UIFactory.Label(oddsLine(def), UDim2.new(1, -130, 0, 18),
+								Theme.Accent, 11)
+								odds.TextXAlignment = Enum.TextXAlignment.Left
+								odds.Position = UDim2.new(0, 0, 0, 62)
+								odds.Font = Theme.FontRegular
+								odds.Parent = card
 								local buy = UIFactory.PrimaryButton(Format.Money(def.Price), function()
 								ctx.Controllers.EggController.BuyEgg(def.Id)
 								end)
-								buy.Size = UDim2.new(0, 110, 0, 40)
-								buy.Position = UDim2.new(1, -118, 0, 14)
+								buy.Size = UDim2.new(0, 110, 0, 44)
+								buy.Position = UDim2.new(1, -118, 0, 24)
 								buy.Parent = card
 								if locked then
 								buy.Text = "Lv " .. tostring(def.RequiredLevel)
@@ -9541,6 +11437,54 @@
 								buy.BackgroundColor3 = Color3.fromRGB(120, 80, 40)
 								end
 								card.Parent = eggsPage
+								end
+								
+								-- Gadgets tab (heist tools, cash shop)
+								local gadgetsPage = pages.Gadgets:FindFirstChildOfClass("ScrollingFrame")
+								UIFactory.ClearChildren(gadgetsPage, true)
+								local ownedGadgets = snapshot.gadgets or {}
+								local hint = UIFactory.Label("Gadgets turn heists around. Armed gadgets are used when a breach starts.",
+								UDim2.new(1, 0, 0, 22), Theme.TextDim, 12)
+								hint.TextXAlignment = Enum.TextXAlignment.Left
+								hint.Font = Theme.FontRegular
+								hint.Parent = gadgetsPage
+								for _, def in ipairs(Gadgets.List) do
+								local owned = ownedGadgets[def.Id] or 0
+								local card = rowCard(108)
+								local name = UIFactory.Label(def.DisplayName .. "  x" .. tostring(owned),
+								UDim2.new(1, -130, 0, 24), Theme.Text, 15)
+								name.TextXAlignment = Enum.TextXAlignment.Left
+								name.Parent = card
+								local desc = UIFactory.Label(def.Description or "", UDim2.new(1, -130, 0, 56),
+								Theme.TextDim, 12)
+								desc.TextXAlignment = Enum.TextXAlignment.Left
+								desc.TextYAlignment = Enum.TextYAlignment.Top
+								desc.TextWrapped = true
+								desc.Position = UDim2.new(0, 0, 0, 26)
+								desc.Font = Theme.FontRegular
+								desc.Parent = card
+								if owned &gt; 0 then
+								local use = UIFactory.PrimaryButton("USE", function()
+								ctx.Controllers.GadgetController.Use(def.Id)
+								end)
+								use.Size = UDim2.new(0, 110, 0, 36)
+								use.Position = UDim2.new(1, -118, 0, 4)
+								use.Parent = card
+								end
+								local maxed = owned &gt;= (def.MaxHeld or 99)
+								local buy = UIFactory.Button(maxed and "MAX" or Format.Money(def.Price), function()
+								if not maxed then
+								ctx.Controllers.GadgetController.Buy(def.Id)
+								end
+								end)
+								buy.Size = UDim2.new(0, 110, 0, 36)
+								buy.Position = UDim2.new(1, -118, 0, owned &gt; 0 and 46 or 24)
+								if maxed or cash &lt; def.Price then
+								buy.BackgroundColor3 = Theme.Button
+								buy.TextColor3 = Theme.TextDim
+								end
+								buy.Parent = card
+								card.Parent = gadgetsPage
 								end
 								
 								-- Boosts tab (dev products)
@@ -9631,7 +11575,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX93">
+						<Item class="ModuleScript" referent="RBX105">
 							<Properties>
 								<string name="Name">TutorialUI</string>
 								<ProtectedString name="Source">-- EggHeist | Client/UI/TutorialUI.lua
@@ -9725,7 +11669,7 @@
 								</ProtectedString>
 							</Properties>
 						</Item>
-						<Item class="ModuleScript" referent="RBX94">
+						<Item class="ModuleScript" referent="RBX106">
 							<Properties>
 								<string name="Name">UIFactory</string>
 								<ProtectedString name="Source">-- EggHeist | Client/UI/UIFactory.lua
@@ -10061,7 +12005,7 @@
 						</Item>
 					</Item>
 				</Item>
-				<Item class="LocalScript" referent="RBX97">
+				<Item class="LocalScript" referent="RBX109">
 					<Properties>
 						<string name="Name">ClientMain</string>
 						<bool name="Disabled">false</bool>
@@ -10085,6 +12029,9 @@
 						"ShopController",
 						"EventController",
 						"TutorialController",
+						"GadgetController",
+						"CollectionController",
+						"NpcController",
 						"InputController", -- keybinds last (acts on controllers + UI at press time)
 						}
 						
@@ -10102,6 +12049,7 @@
 						"HeistUI",
 						"EventBannerUI",
 						"TutorialUI",
+						"ObjectiveUI",
 						}
 						
 						local ctx = {}
@@ -10176,22 +12124,22 @@
 			</Item>
 		</Item>
 	</Item>
-	<Item class="StarterGui" referent="RBX101">
+	<Item class="StarterGui" referent="RBX113">
 		<Properties>
 			<string name="Name">StarterGui</string>
 		</Properties>
 	</Item>
-	<Item class="ServerStorage" referent="RBX102">
+	<Item class="ServerStorage" referent="RBX114">
 		<Properties>
 			<string name="Name">ServerStorage</string>
 		</Properties>
 	</Item>
-	<Item class="SoundService" referent="RBX103">
+	<Item class="SoundService" referent="RBX115">
 		<Properties>
 			<string name="Name">SoundService</string>
 		</Properties>
 	</Item>
-	<Item class="Teams" referent="RBX104">
+	<Item class="Teams" referent="RBX116">
 		<Properties>
 			<string name="Name">Teams</string>
 		</Properties>

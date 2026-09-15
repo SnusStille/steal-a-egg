@@ -15,6 +15,10 @@ function QuestController.ClaimDaily()
 	ctx.Net.Fire("ClaimDaily")
 end
 
+function QuestController.ClaimAchievement(achievementId)
+	ctx.Net.Fire("ClaimAchievement", achievementId)
+end
+
 function QuestController.Start()
 end
 

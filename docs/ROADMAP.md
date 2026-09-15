@@ -1,6 +1,16 @@
 # Roadmap
 
-Future systems and how they should plug into the v2 architecture.
+## Shipped in v3 (playable Alpha)
+
+- Full onboarding loop: starter cash/egg, instant first hatch, objective
+  tracker, tutorial toasts, NPC guides in the world.
+- Egg shop with per-egg hatch odds, tier locks, and rarity-scaled juice.
+- Achievements (one-shot goals + claim UI), collection milestones, gadget
+  loadout for heists, heist reputation titles, target choice, abandon-loot.
+- Levels leaderboard, settings that actually work (shake/effects/perf/
+  alerts/tips), pitch-varied SFX, mobile-safe HUD.
+
+Future systems and how they should plug into the architecture.
 Feature flags for these live in `Config/Settings.lua` (`Settings.Features`).
 
 ## Trading (flag: `Features.Trading`, default off)

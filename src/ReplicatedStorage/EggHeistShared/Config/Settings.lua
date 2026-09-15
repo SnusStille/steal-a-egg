@@ -20,6 +20,19 @@ Settings.Heist = {
 	OwnerOnlineRequired = false, -- if true, can only steal from owners in-server
 	MinThiefLevel = 2,
 	ExtractionChannelTime = 3.0,
+	-- Loot targets: quick grab (fast, quiet, small) vs full vault (slow, loud, big)
+	QuickGrabLootFraction = 0.4, -- of the computed full-vault loot
+	QuickGrabBreachMult = 0.5, -- breach channel multiplier for quick grabs
+	-- Heist reputation: earned per success, lost per failure (min 0)
+	RepPerWin = 2,
+	RepPerFail = -1,
+	RepTitles = {
+		{ Rep = 0, Title = "Pickpocket" },
+		{ Rep = 5, Title = "Burglar" },
+		{ Rep = 15, Title = "Shadow" },
+		{ Rep = 30, Title = "Ghost" },
+		{ Rep = 60, Title = "Heist Legend" },
+	},
 }
 
 -- Pet following

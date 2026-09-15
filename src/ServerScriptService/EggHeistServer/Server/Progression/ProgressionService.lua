@@ -109,6 +109,9 @@ function ProgressionService.DoPrestige(player)
 	registry.Notify.Broadcast("secret", "PRESTIGE!",
 		player.DisplayName .. " prestiged to rank " .. tostring(p.prestige.count)
 			.. " (+" .. tostring(math.floor(p.prestige.bonus * 100)) .. "% income)!", 8)
+	if registry.Achievement then
+		registry.Achievement.Check(player, "Prestige")
+	end
 	return true
 end
 

@@ -9,6 +9,7 @@ local Shared = ReplicatedStorage:WaitForChild("EggHeistShared")
 local ConfigFolder = Shared:WaitForChild("Config")
 local Economy = require(ConfigFolder:WaitForChild("Economy"))
 local Settings = require(ConfigFolder:WaitForChild("Settings"))
+local Validate = require(Shared:WaitForChild("Utilities"):WaitForChild("Validate"))
 
 local HeistService = {}
 HeistService.Name = "HeistService"
@@ -39,7 +40,32 @@ function HeistService.GetCarrySpeed(player)
 	if profile and profile.gamepasses and profile.gamepasses.FastHeist then
 		mult = mult * 1.15
 	end
-	return mult
+	if registry.Gadget and registry.Gadget.IsSprintActive(player) then
+		mult = mult * registry.Gadget.GetSprintMult()
+	end
+	return math.min(1, mult) -- gadgets can erase the slow, never exceed walk speed
+end
+
+-- Notoriety title from reputation (shared table, client mirrors this logic)
+function HeistService.GetRepTitle(rep)
+	local title = "Pickpocket"
+	for _, entry in ipairs(Settings.Heist.RepTitles or {}) do
+		if (rep or 0) >= (entry.Rep or 0) then
+			title = entry.Title
+		end
+	end
+	return title
+end
+
+local function addRep(player, delta)
+	local profile = profileOf(player)
+	if not profile then
+		return 0
+	end
+	profile.stats = profile.stats or {}
+	local before = profile.stats.heistRep or 0
+	profile.stats.heistRep = math.max(0, before + (delta or 0))
+	return profile.stats.heistRep, HeistService.GetRepTitle(before)
 end
 
 local function setCarrySlow(player, active)
@@ -150,6 +176,7 @@ local function returnLootToVictim(thief, reason)
 	local thiefProfile = profileOf(thief)
 	if thiefProfile then
 		thiefProfile.stats.heistsFailed = (thiefProfile.stats.heistsFailed or 0) + 1
+		addRep(thief, Settings.Heist.RepPerFail or -1)
 		registry.Data.MarkDirty(thief)
 	end
 	registry.Notify.Send(thief, "warning", "Heist failed",
@@ -161,10 +188,15 @@ end
 -- Grab flow
 --------------------------------------------------------------------------------
 
-function HeistService.TryGrab(player, plotIndex)
+function HeistService.TryGrab(player, plotIndex, target)
 	if not Settings.Features.Heists then
 		return
 	end
+	target = Validate.String(target, 8, "vault")
+	if target ~= "quick" and target ~= "vault" then
+		target = "vault"
+	end
+	local isQuick = target == "quick"
 	if carrying[player.UserId] or channeling[player.UserId] then
 		return
 	end
@@ -217,13 +249,27 @@ function HeistService.TryGrab(player, plotIndex)
 		return
 	end
 
+	-- gadget modifiers (armed gadgets are consumed as the breach starts)
+	local mods = { breachMult = 1, silent = false }
+	if registry.Gadget then
+		mods = registry.Gadget.ConsumeArmedForBreach(player)
+	end
 	-- begin breach channel: must stay near the vault
 	local breachTime = registry.Security.GetBreachTime(victim)
-	channeling[player.UserId] = { plotIndex = plotIndex, endsAt = now + breachTime }
-	registry.Notify.Send(player, "info", "Breaching...",
+		* (isQuick and (Settings.Heist.QuickGrabBreachMult or 0.5) or 1)
+		* (mods.breachMult or 1)
+	breachTime = math.max(0.8, breachTime)
+	channeling[player.UserId] = { plotIndex = plotIndex, endsAt = now + breachTime, target = target }
+	local breachLabel = isQuick and "Quick grab..." or "Breaching..."
+	registry.Notify.Send(player, "info", breachLabel,
 		"Stay by the vault for " .. string.format("%.1f", breachTime) .. "s!", 4)
-	registry.Net.Fire(player, "HeistUpdate", { channeling = true, duration = breachTime })
-	registry.Security.AlertOwner(victim, player, "is breaching your vault!")
+	registry.Net.Fire(player, "HeistUpdate", { channeling = true, duration = breachTime, target = target })
+	if not isQuick and not mods.silent then
+		registry.Security.AlertOwner(victim, player, "is breaching your vault!")
+	elseif mods.silent then
+		registry.Notify.Send(player, "info", "Silent breach",
+			"Smoke hides you... until the grab.", 3)
+	end
 
 	task.delay(breachTime, function()
 		local state = channeling[player.UserId]
@@ -251,11 +297,11 @@ function HeistService.TryGrab(player, plotIndex)
 			registry.Notify.Send(player, "warning", "Lockdown!", "Sealed mid-breach!", 3)
 			return
 		end
-		HeistService.CompleteGrab(player, victim2, plotIndex)
+		HeistService.CompleteGrab(player, victim2, plotIndex, state.target)
 	end)
 end
 
-function HeistService.CompleteGrab(thief, victim, plotIndex)
+function HeistService.CompleteGrab(thief, victim, plotIndex, target)
 	local victimProfile = profileOf(victim)
 	local thiefProfile = profileOf(thief)
 	if not victimProfile or not thiefProfile then
@@ -281,13 +327,20 @@ function HeistService.CompleteGrab(thief, victim, plotIndex)
 		payoutMult = registry.Event.GetHeistPayoutMultiplier()
 	end
 	local loot = math.floor(vault * Economy.HeistStealFraction * (1 - protection) * payoutMult)
+	if target == "quick" then
+		loot = math.floor(loot * (Settings.Heist.QuickGrabLootFraction or 0.4))
+	end
 	loot = math.max(0, loot)
 	if loot < 10 then
 		registry.Notify.Send(thief, "info", "Vault nearly empty", "Nothing worth carrying.", 3)
 		return
 	end
 	-- deduct now (server-authoritative, no duplication possible)
-	victimProfile.base.vault = vault - math.floor(vault * Economy.HeistStealFraction * (1 - protection))
+	local deducted = math.floor(vault * Economy.HeistStealFraction * (1 - protection))
+	if target == "quick" then
+		deducted = math.floor(deducted * (Settings.Heist.QuickGrabLootFraction or 0.4))
+	end
+	victimProfile.base.vault = vault - deducted
 	victimProfile.stats.timesRobbed = (victimProfile.stats.timesRobbed or 0) + 1
 	registry.Data.MarkDirty(victim)
 
@@ -306,6 +359,7 @@ function HeistService.CompleteGrab(thief, victim, plotIndex)
 	registry.Net.Fire(thief, "HeistUpdate", {
 		carrying = true,
 		amount = loot,
+		target = target,
 		timeLeft = Settings.Heist.MaxCarryTime,
 	})
 	-- death drops loot
@@ -340,8 +394,17 @@ local function completeExtraction(thief)
 		registry.Data.MarkDirty(thief)
 	end
 	registry.Quest.AddProgress(thief, "CompleteHeists", 1)
+	local newRep, oldTitle = addRep(thief, Settings.Heist.RepPerWin or 2)
+	local newTitle = HeistService.GetRepTitle(newRep)
 	registry.Notify.Send(thief, "success", "Heist complete!",
 		"You extracted loot successfully!", 6)
+	if newTitle ~= oldTitle then
+		registry.Notify.Send(thief, "secret", "Notoriety up!",
+			"You are now known as: " .. newTitle .. "!", 6)
+	end
+	if registry.Achievement then
+		registry.Achievement.Check(thief, "HeistWin")
+	end
 	registry.Net.Fire(thief, "HeistUpdate", { carrying = false, extracted = true })
 	registry.Net.Fire(thief, "Fx", "HeistWin", state.amount)
 	if state.amount >= 25000 then
@@ -402,6 +465,36 @@ local function extractionLoop()
 	end
 end
 
+-- Tactical drop: loot returns to the victim. Kinder than failing (no fail
+-- stat, no rep loss) but the run is over and cooldowns were already spent.
+function HeistService.AbandonCarry(player)
+	local state = carrying[player.UserId]
+	if not state then
+		return false
+	end
+	carrying[player.UserId] = nil
+	extracting[player.UserId] = nil
+	setCarrySlow(player, false)
+	clearLootVisual(player)
+	disconnectDeathWatch(player)
+	local victim = Players:GetPlayerByUserId(state.victimUserId)
+	if victim then
+		local victimProfile = profileOf(victim)
+		if victimProfile then
+			local capacity = registry.Base.GetVaultCapacity(victim)
+			victimProfile.base.vault = math.min(capacity,
+				(victimProfile.base.vault or 0) + state.amount)
+			registry.Data.MarkDirty(victim)
+			registry.Notify.Send(victim, "info", "Loot dropped",
+				"The thief abandoned your loot. Vault refunded.", 4)
+		end
+	end
+	registry.Notify.Send(player, "info", "Loot abandoned",
+		"You dropped the loot and slipped away.", 4)
+	registry.Net.Fire(player, "HeistUpdate", { carrying = false })
+	return true
+end
+
 function HeistService.HandlePlayerLeaving(player)
 	channeling[player.UserId] = nil
 	extracting[player.UserId] = nil
@@ -411,7 +504,7 @@ function HeistService.HandlePlayerLeaving(player)
 end
 
 function HeistService.Start()
-	registry.Net.OnRequest("GrabLoot", function(player)
+	registry.Net.OnRequest("GrabLoot", function(player, target)
 		-- client hint only; server finds nearest foreign vault
 		local character = player.Character
 		local hrp = character and character:FindFirstChild("HumanoidRootPart")
@@ -430,8 +523,12 @@ function HeistService.Start()
 			end
 		end
 		if best then
-			HeistService.TryGrab(player, best)
+			HeistService.TryGrab(player, best, target)
 		end
+	end)
+
+	registry.Net.OnRequest("AbandonLoot", function(player)
+		HeistService.AbandonCarry(player)
 	end)
 
 	task.spawn(extractionLoop)

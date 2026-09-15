@@ -363,6 +363,29 @@ function WorldService.EnsureExtraction()
 	else
 		extractionPad.CFrame = CFrame.new(0, 1.5, 120)
 	end
+	-- Sky beacon so carriers can find the pad from anywhere
+	if not gameplay:FindFirstChild("ExtractionBeacon") then
+		local beacon = Instance.new("Part")
+		beacon.Name = "ExtractionBeacon"
+		beacon.Size = Vector3.new(3, 120, 3)
+		beacon.Anchored = true
+		beacon.CanCollide = false
+		beacon.CanQuery = false
+		beacon.Material = Enum.Material.Neon
+		beacon.Color = Color3.fromRGB(80, 255, 140)
+		beacon.Transparency = 0.55
+		beacon.TopSurface = Enum.SurfaceType.Smooth
+		beacon.BottomSurface = Enum.SurfaceType.Smooth
+		beacon.Parent = gameplay
+		local light = Instance.new("PointLight")
+		light.Color = Color3.fromRGB(80, 255, 140)
+		light.Range = 40
+		light.Parent = beacon
+	end
+	local beacon = gameplay:FindFirstChild("ExtractionBeacon")
+	if beacon and beacon:IsA("BasePart") then
+		beacon.CFrame = extractionPad.CFrame + Vector3.new(0, 60, 0)
+	end
 end
 
 function WorldService.GetExtractionPad()

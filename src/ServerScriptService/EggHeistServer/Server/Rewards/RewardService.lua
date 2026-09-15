@@ -54,15 +54,7 @@ function RewardService.ClaimDaily(player)
 	profile.daily.lastClaimDay = today
 	local dayIndex = ((profile.daily.streak - 1) % 7) + 1
 	local reward = Economy.DailyRewards[dayIndex]
-	if reward.Cash and reward.Cash > 0 then
-		registry.Economy.AddCash(player, reward.Cash, "daily")
-	end
-	if reward.Gems and reward.Gems > 0 then
-		registry.Economy.AddGems(player, reward.Gems, "daily")
-	end
-	if reward.Egg then
-		registry.Egg.GiftEgg(player, reward.Egg, "daily")
-	end
+	registry.Economy.GrantBundle(player, reward, "daily")
 	registry.Data.MarkDirty(player)
 	registry.Notify.Send(player, "success",
 		"Day " .. tostring(profile.daily.streak) .. " reward claimed!",

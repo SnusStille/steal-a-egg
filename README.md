@@ -15,16 +15,16 @@ steal loot and extract it — while defending your own fortune.
 
 Full instructions: [`SETUP.md`](SETUP.md).
 
-> **Download:** grab **`Egg-Heist-v2.zip`** from the repo root — it contains
+> **Download:** grab **`Egg-Heist-v3.zip`** from the repo root — it contains
 > the place file, the world model, all source, tools, and docs.
-> (The older `Egg-Heist-Final.zip` is the v1 package, kept for reference.)
+> (Older `Egg-Heist-v2.zip` / `Egg-Heist-Final.zip` packages are kept in releases for reference.)
 
 ## Project structure
 
 ```
 Egg heist.rbxm                 # Original world model (preserved, byte-identical)
 build/Egg-Heist.rbxlx          # Generated Studio-ready place (scripts embedded)
-Egg-Heist-v2.zip               # Complete downloadable package (place + world + src + docs)
+Egg-Heist-v3.zip               # Complete downloadable package (place + world + src + docs)
 src/
   ServerScriptService/EggHeistServer/
     ServerMain.server.lua      # BOOTSTRAP: loads domains in dependency order
@@ -37,27 +37,31 @@ src/
       Bases/          BaseService (plots, upgrades, vault, decorations)
       Security/       SecurityService (shop + lasers/traps/cameras/lockdown)
       Heists/         HeistService (breach -> grab -> carry -> extract)
+                      GadgetService (lockpick/smoke/sprint/EMP)
       Progression/    ProgressionService (prestige/rebirth)
+                      AchievementService (one-shot goals + claim grants)
       Quests/         QuestService (dailies/weeklies + tutorial hook)
       Rewards/        RewardService (daily streak calendar)
+                      CollectionService (discovery milestones)
       Events/         EventService (scheduler, modifiers, pickups)
       Monetization/   ShopService (gamepasses/products, ProcessReceipt)
       Social/         LeaderboardService (OrderedDataStores + boards)
       World/          WorldService (world discovery + fallback builder)
+                      NpcService (world guides + tips)
       Admin/          AdminService (allow-listed commands)
       Util/           RateLimiter (token-bucket anti-spam)
   ReplicatedStorage/EggHeistShared/
     Remotes.lua                # THE remote contract (C2S/S2C/Fn + rate limits)
     Types.lua                  # Data-model docs + record constructors
-    Config/                    # EVERY tunable number (12 files, see below)
+    Config/                    # EVERY tunable number (16 files, see below)
     Utilities/                 # Format · Signal · TableUtil · Validate
   StarterPlayer/.../EggHeistClient/
     ClientMain.client.lua      # BOOTSTRAP: net -> controllers -> UI -> Start
     Client/
       ClientNet.lua            # Remote access (Fire/On/Invoke)
-      Controllers/             # 9 thin intent/caches (Data, Egg, Pet, Base, ...)
+      Controllers/             # 13 thin intents/caches (Data, Egg, Pet, Base, Gadget, ...)
       Input/          InputController (PC keybinds: B/Q/H/Esc)
-      UI/                      # 14 modules (Main/HUD + 13 windows, UIFactory theme)
+      UI/                      # 15 modules (Main/HUD + 14 windows, UIFactory theme)
       Effects/                 # Effects (tweens/confetti/shake) + SoundManager
 tools/                         # build_place.py, validate_lua.py, check_refs.py, inspect_rbxm.py
 docs/                          # Architecture, economy, security, testing, monetization...

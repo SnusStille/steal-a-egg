@@ -21,8 +21,12 @@ function HeistController.Init(context)
 	end)
 end
 
-function HeistController.Grab()
-	ctx.Net.Fire("GrabLoot")
+function HeistController.Grab(target)
+	ctx.Net.Fire("GrabLoot", target)
+end
+
+function HeistController.Abandon()
+	ctx.Net.Fire("AbandonLoot")
 end
 
 function HeistController.IsCarrying()

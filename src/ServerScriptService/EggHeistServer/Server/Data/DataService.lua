@@ -65,6 +65,9 @@ local function defaultProfile(userId)
 		pets = {}, -- { {uid=..., id=..., mut=..., lvl=..., xp=...} }
 		equipped = {}, -- list of pet uids, in slot order
 		collection = {}, -- ["petId:mut"] = hatch count
+		gadgets = {}, -- [gadgetId] = count owned
+		achievements = {}, -- [achievementId] = { done, claimed }
+		collectionRewards = {}, -- [milestoneIndex] = true when claimed
 		base = {
 			plot = 0,
 			upgrades = defaultUpgrades(),
@@ -88,6 +91,11 @@ local function defaultProfile(userId)
 			notifications = true,
 			showPets = true,
 			autoHatch = false,
+			cameraShake = true,
+			reducedEffects = false,
+			performanceMode = false,
+			heistAlerts = true,
+			npcTips = true,
 		},
 		tutorial = { done = false, step = 1 },
 		boosts = {}, -- { {id=..., expiresAt=...} }
@@ -95,6 +103,11 @@ local function defaultProfile(userId)
 			totalEarned = 0,
 			totalHatched = 0,
 			mutatedHatched = 0,
+			eggsBought = 0,
+			maxRarityTier = 0,
+			legendaryPlusHatched = 0,
+			secretsHatched = 0,
+			heistRep = 0,
 			heistsWon = 0,
 			heistsFailed = 0,
 			timesRobbed = 0,
@@ -103,6 +116,7 @@ local function defaultProfile(userId)
 			upgradesBought = 0,
 			securityBought = 0,
 			questsDone = 0,
+			gadgetsUsed = 0,
 		},
 		gamepasses = {},
 		lastSeen = os.time(),
@@ -158,6 +172,20 @@ local function sanitizeProfile(p)
 	if type(p.pets) ~= "table" then p.pets = {} end
 	if type(p.equipped) ~= "table" then p.equipped = {} end
 	if type(p.collection) ~= "table" then p.collection = {} end
+	if type(p.gadgets) ~= "table" then p.gadgets = {} end
+	if type(p.achievements) ~= "table" then p.achievements = {} end
+	if type(p.collectionRewards) ~= "table" then p.collectionRewards = {} end
+	-- clamp gadget counts (exploit/shenanigan guard)
+	for gadgetId, count in pairs(p.gadgets) do
+		if type(count) ~= "number" or count < 0 then
+			p.gadgets[gadgetId] = nil
+		elseif count > 99 then
+			p.gadgets[gadgetId] = 99
+		end
+	end
+	if type(p.stats.heistRep) ~= "number" or p.stats.heistRep < 0 then
+		p.stats.heistRep = 0
+	end
 	if type(p.base) ~= "table" then p.base = {} end
 	p.base.plot = sanitizeNumber(p.base.plot, 0, 0, Settings.MaxBasePlots)
 	p.base.vault = sanitizeNumber(p.base.vault, 0, 0, 1e12)
@@ -303,6 +331,20 @@ local function onPlayerAdded(player)
 							"Your pals earned while you were away.", 6)
 					end
 				end
+			end
+		end)
+	end
+	-- starter grant for brand-new players (first 10 minutes matter most)
+	if profile.isNew then
+		profile.cash = profile.cash + Settings.Tutorial.StarterCashBonus
+		profile.eggs[#profile.eggs + 1] = {
+			uid = DataService.GenerateUid(player),
+			eggId = Settings.Tutorial.StarterEgg,
+		}
+		task.delay(3, function()
+			if player.Parent then
+				registry.Notify.Send(player, "success", "Welcome to Egg Heist!",
+					"Here's a free egg + cash. Follow the guide (bottom-left)!", 8)
 			end
 		end)
 	end

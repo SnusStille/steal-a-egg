@@ -25,8 +25,13 @@ Remotes.C2S = {
 	"BuySecurity",   -- (itemId)
 	"ToggleLockdown",-- ()
 	"CollectVault",  -- ()
-	"GrabLoot",      -- ()  (heist grab; server validates position/channel)
+	"GrabLoot",      -- (target?)  "quick"|"vault"; server validates position/channel
+	"AbandonLoot",   -- ()  drop carried loot (returns to victim, no fail stat)
+	"BuyGadget",     -- (gadgetId)
+	"UseGadget",     -- (gadgetId)
 	"ClaimQuest",    -- (questId)
+	"ClaimAchievement", -- (achievementId)
+	"ClaimMilestone",-- (milestoneIndex)
 	"ClaimDaily",    -- ()
 	"Prestige",      -- ()
 	"BuyDecoration", -- (decorId)
@@ -69,7 +74,12 @@ Remotes.RateLimits = {
 	ToggleLockdown = 1,
 	CollectVault = 4,
 	GrabLoot = 3,
+	AbandonLoot = 2,
+	BuyGadget = 4,
+	UseGadget = 3,
 	ClaimQuest = 4,
+	ClaimAchievement = 4,
+	ClaimMilestone = 4,
 	ClaimDaily = 2,
 	Prestige = 1,
 	BuyDecoration = 4,

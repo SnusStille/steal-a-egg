@@ -241,6 +241,7 @@ function MainUI.Refresh(snapshot)
 	if not snapshot then
 		return
 	end
+	Effects.Configure(snapshot.settings)
 	local cash = snapshot.cash or 0
 	if cash ~= lastCash then
 		Effects.CountUp(cashLabel, lastCash, cash, 0.4, Format.Money)
@@ -268,6 +269,11 @@ function MainUI.Refresh(snapshot)
 	end
 	for _, q in ipairs((snapshot.quests and snapshot.quests.weeklies) or {}) do
 		if q.progress >= q.target and not q.claimed then
+			claimable = claimable + 1
+		end
+	end
+	for _, state in pairs(snapshot.achievements or {}) do
+		if state.done and not state.claimed then
 			claimable = claimable + 1
 		end
 	end
@@ -303,8 +309,9 @@ end
 
 function MainUI.RefreshRanks()
 	UIFactory.ClearChildren(ranksList, true)
-	local boards = { "Richest", "Heists", "Collectors" }
+	local boards = { "Richest", "Levels", "Heists", "Collectors" }
 	local titles = { Richest = "Richest Heisters (lifetime earned)",
+		Levels = "Highest Levels",
 		Heists = "Master Thieves (successful extractions)",
 		Collectors = "Top Collectors (unique discoveries)" }
 	for _, board in ipairs(boards) do
@@ -353,6 +360,11 @@ function MainUI.HandleFx(fxName, arg1, _arg2)
 		SoundManager.Play("Success", 0.8)
 		Effects.Confetti(playerGui, 50)
 		Effects.ShakeCamera(0.4, 0.3)
+	elseif fxName == "Achievement" then
+		SoundManager.Play("Achievement", 0.8, 1.1)
+		Effects.Confetti(playerGui, 40)
+	elseif fxName == "Gadget" then
+		SoundManager.Play("Gadget", 0.7, 0.9 + math.random() * 0.2)
 	elseif fxName == "TrapStun" then
 		SoundManager.Play("Error", 0.7)
 		Effects.ShakeCamera(0.8, 0.4)

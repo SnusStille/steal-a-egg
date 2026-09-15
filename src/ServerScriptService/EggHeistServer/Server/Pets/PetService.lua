@@ -158,6 +158,9 @@ function PetService.Equip(player, petUid)
 	profile.equipped[#profile.equipped + 1] = petUid
 	registry.Data.MarkDirty(player)
 	registry.Quest.AddProgress(player, "EquipPets", 0) -- re-evaluated as count check
+	if registry.Achievement then
+		registry.Achievement.Check(player, "EquipPet")
+	end
 	if registry.TutorialHook then
 		registry.TutorialHook(player, "EquipPet")
 	end

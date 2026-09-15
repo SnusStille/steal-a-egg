@@ -2,7 +2,7 @@
 
 ## Service model (server)
 
-`ServerScriptService/EggHeistServer/ServerMain.server.lua` requires 17 domain
+`ServerScriptService/EggHeistServer/ServerMain.server.lua` requires 21 domain
 services in dependency order (`Server/<Domain>/<Name>Service.lua`), then calls
 `Init(registry)` on each (wiring), then `Start()` (loops/listeners). Services
 talk through the shared `registry` table — never through globals or direct
@@ -21,6 +21,10 @@ Base         plots, template builds, upgrades, vault, decorations
 Security     security shop + lasers/traps/cameras/lockdown runtime
 Heist        breach channel -> grab -> slowed carry -> extraction
 Quest        dailies/weeklies + tutorial hook
+Achievement  one-shot goals, checks on game events, claim grants
+Gadget       heist tools: buy/armed/instant (lockpick/smoke/sprint/EMP)
+Collection   discovery scans + milestone auto-grants
+Npc          world guides: builds NPCs, talk prompts, tip scheduler
 Reward       daily streak calendar
 Event        scheduler + modifiers + meteor/egg pickups + lighting presets
 Shop         gamepasses/products, ProcessReceipt granting
@@ -31,7 +35,7 @@ Admin        allow-listed commands (testing/live-ops)
 ## Shared modules
 
 `ReplicatedStorage/EggHeistShared/Config/*` — every tunable number.
-`Remotes.lua` — the contract: 21 C2S events, 9 S2C events, 2 functions.
+`Remotes.lua` — the contract: 26 C2S events, 9 S2C events, 2 functions.
 `Types.lua` — data-model docs (EmmyLua) + Egg/Pet record constructors.
 `Utilities/*` — Format, TableUtil, Validate, Signal (client+server safe).
 

@@ -1,5 +1,61 @@
 # Changelog
 
+## v3.0.0 — Playable Alpha (2026-09-15)
+
+The full game loop is now connected: join → spawn → starter cash/egg →
+hatch → equip → income → upgrades → better eggs → visit → heist → extract
+→ security → prestige. Four new server services (21 total), four new
+client modules (13 controllers, 15 UIs), four new configs (16 total).
+
+**Onboarding & guidance**
+
+- Starter grant hookup: new players get starting cash + a starter egg
+  immediately, with tutorial toasts pointing at the next step.
+- New `ObjectiveUI`: always-on "what next" tracker driven by live data.
+- New `NpcService` + `NpcController`: 3 world NPC guides (egg merchant,
+  security chief, quest giver) with talk prompts, greetings, and UI
+  shortcuts; scheduled server tips (toggleable).
+- World extraction beacon + dual vault prompts (quick vs vault targets).
+
+**Eggs, pets, collection**
+
+- Shop shows per-egg hatch odds + tier locks; hatch reveal names the
+  source egg; rarity-scaled juice (flash/confetti/shake/pitch).
+- New `CollectionService`: discovery scans + milestone auto-grants;
+  CollectionUI gained a milestone panel.
+- New `AchievementService` + `Config/Achievements.lua`: one-shot goals
+  checked on game events, `ClaimAchievement` grants, Fx fanfare, badge
+  counts, QuestsUI achievements tab, stats panel progress.
+
+**Heists & security**
+
+- New `GadgetService` + `Config/Gadgets.lua` + `GadgetController`: 4
+  gadgets (Lockpick, Smoke, Sprint, EMP) with shop tab, armed/instant
+  mechanics, daily login rewards, and breach/EMP/SecurityService hooks.
+- Heist target choice (quick vs vault), risk/reward durations, loot
+  abandon (`AbandonLoot`), carry countdown HUD, DROP LOOT button.
+- Heist reputation + titles (`Settings.Heist.RepTitles`), rep chip in
+  HUD, stats line; silent-breach (smoke) and fast-breach (lockpick)
+  modifiers; S2C intruder alert now a one-shot with sound + toggle.
+- EMP disables enemy lasers/traps (`SecurityService` EMP windows).
+
+**Progression & polish**
+
+- Levels leaderboard (server + Ranks window); pet XP/level hook for
+  achievements; prestige keeps gadget/achievement records.
+- Settings that work: camera shake, reduced effects, performance mode,
+  heist banners, NPC tips — all server-persisted booleans with UI
+  toggles; `Effects.Configure` gates confetti/flash/shake.
+- `SoundManager.Play(name, volume, pitch)` + Achievement/Gadget/Extract/
+  HeistAlert hooks; heist carry/extract/alert sounds.
+- Daily calendar shows gadget rewards; Settings stats show rep title,
+  achievement progress, gadgets used.
+- Fixes: LeaderboardService `Workspace` require, Effects `Workspace`
+  casing, stale world refs.
+
+**Validation:** 77/77 Lua files parse OK; cross-refs pass
+(services=21, controllers=13, uis=15, configs=16, c2s=26, s2c=9, fn=2).
+
 ## v2.0.0 — Restructure + hardening (2026-09-15)
 
 Clean professional rebuild of the v1 game. No gameplay removed; everything

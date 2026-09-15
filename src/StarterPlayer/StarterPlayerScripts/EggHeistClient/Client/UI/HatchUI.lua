@@ -99,7 +99,7 @@ function HatchUI.PlayNext()
 	revealCard.Visible = false
 	tapToContinue.Visible = false
 	eggLabel.Visible = true
-	eggLabel.Text = "EGG"
+	eggLabel.Text = string.upper(tostring(entry.eggName or "Egg"))
 	eggLabel.TextColor3 = Theme.Accent
 	eggLabel.Rotation = 0
 
@@ -134,7 +134,10 @@ function HatchUI.Reveal(entry)
 	revealTitle.Text = displayName
 	revealTitle.TextColor3 = pet.mut and Mutations.GetColor(pet.mut) or rarityColor
 
-	local lines = { rarity .. (entry.isNew and "  -  NEW!" or "") }
+	local lines = {
+		rarity .. (entry.isNew and "  -  NEW!" or ""),
+		"from " .. tostring(entry.eggName or "an egg"),
+	}
 	if pet.mut then
 		lines[#lines + 1] = "Mutation: " .. pet.mut
 	end

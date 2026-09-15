@@ -7,6 +7,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("EggHeistShared")
 local ConfigFolder = Shared:WaitForChild("Config")
 local Eggs = require(ConfigFolder:WaitForChild("Eggs"))
+local Gadgets = require(ConfigFolder:WaitForChild("Gadgets"))
+local Rarities = require(ConfigFolder:WaitForChild("Rarities"))
 local Shop = require(ConfigFolder:WaitForChild("Shop"))
 local Format = require(Shared:WaitForChild("Utilities"):WaitForChild("Format"))
 local UIFactory = require(script.Parent:WaitForChild("UIFactory"))
@@ -19,7 +21,7 @@ local tabButtons = {}
 local currentTab = "Eggs"
 
 local Theme = UIFactory.Theme
-local TABS = { "Eggs", "Boosts", "Passes", "Decor" }
+local TABS = { "Eggs", "Gadgets", "Boosts", "Passes", "Decor" }
 
 function ShopUI.Init(context)
 	ctx = context
@@ -37,8 +39,8 @@ function ShopUI.Init(context)
 		local button = UIFactory.Button(tab, function()
 			ShopUI.ShowTab(tab)
 		end)
-		button.Size = UDim2.new(0.25, -6, 1, 0)
-		button.Position = UDim2.new((i - 1) * 0.25, 3, 0, 0)
+		button.Size = UDim2.new(1 / #TABS, -6, 1, 0)
+		button.Position = UDim2.new((i - 1) / #TABS, 3, 0, 0)
 		button.Parent = tabBar
 		tabButtons[tab] = button
 	end
@@ -83,6 +85,29 @@ local function rowCard(height)
 	return UIFactory.Card(height or 76)
 end
 
+-- Compact hatch odds line: "C 74% · R 16% · E 3% · L 1% · M 0% · S 0%"
+local function oddsLine(def)
+	local weights = def.HatchWeights or {}
+	local total = 0
+	for _, rarity in ipairs(Rarities.List) do
+		total = total + (weights[rarity.Id] or 0)
+	end
+	if total <= 0 then
+		return "Odds: unknown"
+	end
+	local parts = {}
+	for _, rarity in ipairs(Rarities.List) do
+		local w = weights[rarity.Id] or 0
+		if w > 0 then
+			local pct = w / total * 100
+				local text = pct >= 10 and tostring(math.floor(pct + 0.5))
+					or string.format("%.1f", math.floor(pct * 10 + 0.5) / 10)
+				parts[#parts + 1] = rarity.Short .. " " .. text .. "%"
+			end
+	end
+	return table.concat(parts, " · ")
+end
+
 function ShopUI.Refresh()
 	local snapshot = ctx.Data and ctx.Data.Get()
 	if not snapshot then
@@ -97,11 +122,11 @@ function ShopUI.Refresh()
 	for _, def in ipairs(Eggs.GetShopEggs()) do
 		local locked = level < (def.RequiredLevel or 1)
 		local afford = cash >= def.Price
-		local card = rowCard(84)
+		local card = rowCard(108)
 		local name = UIFactory.Label(def.DisplayName, UDim2.new(1, -130, 0, 24), Theme.Text, 15)
 		name.TextXAlignment = Enum.TextXAlignment.Left
 		name.Parent = card
-		local desc = UIFactory.Label(def.Description or "", UDim2.new(1, -130, 0, 40),
+		local desc = UIFactory.Label(def.Description or "", UDim2.new(1, -130, 0, 34),
 			Theme.TextDim, 12)
 		desc.TextXAlignment = Enum.TextXAlignment.Left
 		desc.TextYAlignment = Enum.TextYAlignment.Top
@@ -109,11 +134,17 @@ function ShopUI.Refresh()
 		desc.Position = UDim2.new(0, 0, 0, 26)
 		desc.Font = Theme.FontRegular
 		desc.Parent = card
+		local odds = UIFactory.Label(oddsLine(def), UDim2.new(1, -130, 0, 18),
+			Theme.Accent, 11)
+		odds.TextXAlignment = Enum.TextXAlignment.Left
+		odds.Position = UDim2.new(0, 0, 0, 62)
+		odds.Font = Theme.FontRegular
+		odds.Parent = card
 		local buy = UIFactory.PrimaryButton(Format.Money(def.Price), function()
 			ctx.Controllers.EggController.BuyEgg(def.Id)
 		end)
-		buy.Size = UDim2.new(0, 110, 0, 40)
-		buy.Position = UDim2.new(1, -118, 0, 14)
+		buy.Size = UDim2.new(0, 110, 0, 44)
+		buy.Position = UDim2.new(1, -118, 0, 24)
 		buy.Parent = card
 		if locked then
 			buy.Text = "Lv " .. tostring(def.RequiredLevel)
@@ -123,6 +154,54 @@ function ShopUI.Refresh()
 			buy.BackgroundColor3 = Color3.fromRGB(120, 80, 40)
 		end
 		card.Parent = eggsPage
+	end
+
+	-- Gadgets tab (heist tools, cash shop)
+	local gadgetsPage = pages.Gadgets:FindFirstChildOfClass("ScrollingFrame")
+	UIFactory.ClearChildren(gadgetsPage, true)
+	local ownedGadgets = snapshot.gadgets or {}
+	local hint = UIFactory.Label("Gadgets turn heists around. Armed gadgets are used when a breach starts.",
+		UDim2.new(1, 0, 0, 22), Theme.TextDim, 12)
+	hint.TextXAlignment = Enum.TextXAlignment.Left
+	hint.Font = Theme.FontRegular
+	hint.Parent = gadgetsPage
+	for _, def in ipairs(Gadgets.List) do
+		local owned = ownedGadgets[def.Id] or 0
+		local card = rowCard(108)
+		local name = UIFactory.Label(def.DisplayName .. "  x" .. tostring(owned),
+			UDim2.new(1, -130, 0, 24), Theme.Text, 15)
+		name.TextXAlignment = Enum.TextXAlignment.Left
+		name.Parent = card
+		local desc = UIFactory.Label(def.Description or "", UDim2.new(1, -130, 0, 56),
+			Theme.TextDim, 12)
+		desc.TextXAlignment = Enum.TextXAlignment.Left
+		desc.TextYAlignment = Enum.TextYAlignment.Top
+		desc.TextWrapped = true
+		desc.Position = UDim2.new(0, 0, 0, 26)
+		desc.Font = Theme.FontRegular
+		desc.Parent = card
+		if owned > 0 then
+			local use = UIFactory.PrimaryButton("USE", function()
+				ctx.Controllers.GadgetController.Use(def.Id)
+			end)
+			use.Size = UDim2.new(0, 110, 0, 36)
+			use.Position = UDim2.new(1, -118, 0, 4)
+			use.Parent = card
+		end
+		local maxed = owned >= (def.MaxHeld or 99)
+		local buy = UIFactory.Button(maxed and "MAX" or Format.Money(def.Price), function()
+			if not maxed then
+				ctx.Controllers.GadgetController.Buy(def.Id)
+			end
+		end)
+		buy.Size = UDim2.new(0, 110, 0, 36)
+		buy.Position = UDim2.new(1, -118, 0, owned > 0 and 46 or 24)
+		if maxed or cash < def.Price then
+			buy.BackgroundColor3 = Theme.Button
+			buy.TextColor3 = Theme.TextDim
+		end
+		buy.Parent = card
+		card.Parent = gadgetsPage
 	end
 
 	-- Boosts tab (dev products)

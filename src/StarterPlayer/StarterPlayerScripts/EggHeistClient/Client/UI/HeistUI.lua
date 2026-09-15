@@ -2,9 +2,14 @@
 -- Heist HUD: carrying indicator, breach/extraction channels, intruder alerts.
 
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local Shared = ReplicatedStorage:WaitForChild("EggHeistShared")
+local Settings = require(Shared:WaitForChild("Config"):WaitForChild("Settings"))
+local Format = require(Shared:WaitForChild("Utilities"):WaitForChild("Format"))
 local UIFactory = require(script.Parent:WaitForChild("UIFactory"))
 local Effects = require(script.Parent.Parent:WaitForChild("Effects"):WaitForChild("Effects"))
+local SoundManager = require(script.Parent.Parent:WaitForChild("Effects"):WaitForChild("SoundManager"))
 
 local HeistUI = {}
 local ctx = nil
@@ -17,6 +22,10 @@ local alertFrame = nil
 local alertLabel = nil
 local channelEndsAt = 0
 local channelTotal = 1
+local repChip = nil
+local carryAmount = 0
+local carryTarget = "Vault"
+local carryEndsAt = 0
 
 local Theme = UIFactory.Theme
 
@@ -27,20 +36,37 @@ function HeistUI.Init(context)
 	gui.Parent = playerGui
 
 	-- carrying indicator (bottom center, above claim button area)
+	-- heist rep chip (top-left, under the main HUD strip)
+	repChip = Instance.new("Frame")
+	repChip.Position = UDim2.new(0, 12, 0, 116)
+	repChip.Size = UDim2.new(0, 220, 0, 30)
+	repChip.BackgroundColor3 = Theme.Panel
+	repChip.BorderSizePixel = 0
+	UIFactory.Corner(repChip, 8)
+	repChip.Parent = gui
+
 	carryFrame = Instance.new("Frame")
 	carryFrame.AnchorPoint = Vector2.new(0.5, 1)
 	carryFrame.Position = UDim2.new(0.5, 0, 1, -150)
-	carryFrame.Size = UDim2.new(0, 320, 0, 60)
+	carryFrame.Size = UDim2.new(0, 340, 0, 104)
 	carryFrame.BackgroundColor3 = Color3.fromRGB(60, 20, 20)
 	carryFrame.BorderSizePixel = 0
 	carryFrame.Visible = false
 	UIFactory.Corner(carryFrame, 10)
 	UIFactory.Stroke(carryFrame, Color3.fromRGB(255, 80, 80), 2)
 	carryFrame.Parent = gui
-	carryLabel = UIFactory.Label("CARRYING LOOT", UDim2.new(1, -16, 1, 0), Color3.fromRGB(255, 160, 160), 15)
-	carryLabel.Position = UDim2.new(0, 8, 0, 0)
+	carryLabel = UIFactory.Label("CARRYING LOOT", UDim2.new(1, -16, 0, 56), Color3.fromRGB(255, 160, 160), 14)
+	carryLabel.Position = UDim2.new(0, 8, 0, 4)
 	carryLabel.TextWrapped = true
 	carryLabel.Parent = carryFrame
+	local abandonButton = UIFactory.Button("DROP LOOT", function()
+		if ctx.Controllers and ctx.Controllers.HeistController then
+			ctx.Controllers.HeistController.Abandon()
+		end
+	end)
+	abandonButton.Size = UDim2.new(1, -16, 0, 32)
+	abandonButton.Position = UDim2.new(0, 8, 0, 64)
+	abandonButton.Parent = carryFrame
 
 	-- channel bar (center)
 	channelFrame = Instance.new("Frame")
@@ -81,10 +107,22 @@ function HeistUI.Init(context)
 	alertLabel = UIFactory.Label("", UDim2.new(1, 0, 1, 0), Color3.fromRGB(255, 255, 255), 14)
 	alertLabel.Parent = alertFrame
 
-	-- channel ticker
+	if ctx.Data then
+		ctx.Data.Changed:Connect(function()
+			HeistUI.Refresh()
+		end)
+	end
+
+	-- channel + carry tickers
 	task.spawn(function()
 		while true do
 			task.wait(0.05)
+			if carryFrame.Visible and carryEndsAt > 0 then
+				local left = math.max(0, carryEndsAt - os.clock())
+				carryLabel.Text = "CARRYING " .. string.upper(tostring(carryTarget))
+					.. " LOOT (" .. Format.Money(carryAmount) .. ")!\nReach EXTRACTION! "
+					.. string.format("%.0fs left", left)
+			end
 			if channelFrame.Visible then
 				local left = channelEndsAt - os.clock()
 				if left <= 0 then
@@ -98,17 +136,54 @@ function HeistUI.Init(context)
 	end)
 end
 
+local function repTitle(rep)
+	local title = "Pickpocket"
+	for _, tier in ipairs((Settings.Heist or {}).RepTitles or {}) do
+		if (rep or 0) >= (tier.Rep or 0) then
+			title = tier.Title
+		end
+	end
+	return title
+end
+
+function HeistUI.Refresh()
+	local snapshot = ctx.Data and ctx.Data.Get()
+	if not snapshot then
+		return
+	end
+	local rep = (snapshot.stats and snapshot.stats.heistRep) or 0
+	repChip:ClearAllChildren()
+	local label = UIFactory.Label("Heist rep: " .. tostring(rep) .. " (" .. repTitle(rep) .. ")",
+		UDim2.new(1, -12, 1, 0), Theme.Accent, 13)
+	label.Position = UDim2.new(0, 6, 0, 0)
+	label.TextXAlignment = Enum.TextXAlignment.Left
+	label.Parent = repChip
+end
+
+local function alertsEnabled()
+	local snapshot = ctx.Data and ctx.Data.Get()
+	return (snapshot and snapshot.settings and snapshot.settings.heistAlerts) ~= false
+end
+
 function HeistUI.OnState(state)
 	if state.carrying == true then
+		carryAmount = tonumber(state.amount) or 0
+		carryTarget = tostring(state.target or "Vault")
+		carryEndsAt = os.clock() + (tonumber(state.timeLeft) or 60)
 		carryFrame.Visible = true
-		carryLabel.Text = "CARRYING LOOT! Get to EXTRACTION (green pad in the vault grounds)!"
 		Effects.Pop(carryFrame, 1.05)
+		SoundManager.Play("Coins", 0.7)
 	elseif state.carrying == false then
 		carryFrame.Visible = false
+		carryEndsAt = 0
 	end
 	if state.channeling == true then
 		channelFrame.Visible = true
-		channelLabel.Text = "BREACHING... STAY CLOSE!"
+		if state.target then
+			channelLabel.Text = "BREACHING " .. string.upper(tostring(state.target)) .. "... STAY CLOSE!"
+		else
+			channelLabel.Text = "BREACHING... STAY CLOSE!"
+		end
 		channelTotal = tonumber(state.duration) or 3
 		channelEndsAt = os.clock() + channelTotal
 	elseif state.channeling == false then
@@ -117,14 +192,20 @@ function HeistUI.OnState(state)
 	if state.extracted == true then
 		carryFrame.Visible = false
 		channelFrame.Visible = false
+		carryEndsAt = 0
+		SoundManager.Play("Extract", 0.8, 1.15)
 	end
 	if state.alert == true then
-		alertLabel.Text = "INTRUDER: " .. tostring(state.intruder or "unknown") .. " is in your base!"
-		alertFrame.Visible = true
-		Effects.Pop(alertFrame, 1.05)
-		task.delay(5, function()
-			alertFrame.Visible = false
-		end)
+		state.alert = false
+		if alertsEnabled() then
+			alertLabel.Text = "INTRUDER: " .. tostring(state.intruder or "unknown") .. " is in your base!"
+			alertFrame.Visible = true
+			Effects.Pop(alertFrame, 1.05)
+			SoundManager.Play("HeistAlert", 0.7)
+			task.delay(5, function()
+				alertFrame.Visible = false
+			end)
+		end
 	end
 end
 

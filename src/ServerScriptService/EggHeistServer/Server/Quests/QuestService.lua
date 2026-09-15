@@ -193,6 +193,9 @@ function QuestService.ClaimQuest(player, questId)
 		registry.Economy.AddXp(player, reward.Xp)
 	end
 	profile.stats.questsDone = (profile.stats.questsDone or 0) + 1
+	if registry.Achievement then
+		registry.Achievement.Check(player, "QuestClaim")
+	end
 	registry.Data.MarkDirty(player)
 	registry.Notify.Send(player, "success", "Reward claimed!",
 		quest.text, 4)

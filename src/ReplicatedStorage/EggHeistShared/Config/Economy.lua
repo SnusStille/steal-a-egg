@@ -71,10 +71,10 @@ Economy.DailyRewards = {
 	{ Cash = 500, Gems = 0, Egg = nil },
 	{ Cash = 1200, Gems = 3, Egg = nil },
 	{ Cash = 0, Gems = 0, Egg = "Stone" },
-	{ Cash = 5000, Gems = 5, Egg = nil },
+	{ Cash = 5000, Gems = 5, Egg = nil, Gadget = "Lockpick" },
 	{ Cash = 12000, Gems = 8, Egg = nil },
-	{ Cash = 0, Gems = 0, Egg = "Golden" },
-	{ Cash = 30000, Gems = 20, Egg = "Crystal" },
+	{ Cash = 0, Gems = 0, Egg = "Golden", Gadget = "Smoke" },
+	{ Cash = 30000, Gems = 20, Egg = "Crystal", Gadget = "Sprint" },
 }
 
 -- Quest rewards (scaled by difficulty 1-3)

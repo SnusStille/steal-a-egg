@@ -139,6 +139,9 @@ function EconomyService.AddXp(player, amount)
 		registry.Notify.Send(player, "success", "Level up!",
 			"You reached level " .. tostring(p.level) .. "! Rewards added.", 5)
 		registry.Net.Fire(player, "Fx", "LevelUp", p.level)
+		if registry.Achievement then
+			registry.Achievement.Check(player, "LevelUp")
+		end
 	end
 	registry.Data.MarkDirty(player)
 end
@@ -201,6 +204,30 @@ function EconomyService.GetLuckMultiplier(player)
 		mult = mult * registry.Event.GetSecretLuckMultiplier()
 	end
 	return mult
+end
+
+-- Grants a reward bundle { Cash, Gems, Xp, Egg, Gadget, GadgetCount }.
+-- Single choke point for achievement / milestone / daily-style rewards.
+function EconomyService.GrantBundle(player, bundle, source)
+	if type(bundle) ~= "table" then
+		return false
+	end
+	if bundle.Cash and bundle.Cash > 0 then
+		EconomyService.AddCash(player, bundle.Cash, source)
+	end
+	if bundle.Gems and bundle.Gems > 0 then
+		EconomyService.AddGems(player, bundle.Gems, source)
+	end
+	if bundle.Xp and bundle.Xp > 0 then
+		EconomyService.AddXp(player, bundle.Xp)
+	end
+	if bundle.Egg and registry.Egg then
+		registry.Egg.GiftEgg(player, bundle.Egg, source)
+	end
+	if bundle.Gadget and registry.Gadget then
+		registry.Gadget.GrantGadget(player, bundle.Gadget, bundle.GadgetCount or 1)
+	end
+	return true
 end
 
 function EconomyService.AddBoost(player, boostId, duration, modifiers)

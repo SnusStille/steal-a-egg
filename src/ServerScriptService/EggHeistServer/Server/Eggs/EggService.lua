@@ -145,6 +145,17 @@ local function doHatch(player, eggUid)
 
 	-- progression hooks
 	profile.stats.totalHatched = (profile.stats.totalHatched or 0) + 1
+	local hatchTier = Rarities.GetTier(roll.rarity)
+	profile.stats.maxRarityTier = math.max(profile.stats.maxRarityTier or 0, hatchTier)
+	if hatchTier >= 4 then
+		profile.stats.legendaryPlusHatched = (profile.stats.legendaryPlusHatched or 0) + 1
+	end
+	if hatchTier >= 6 then
+		profile.stats.secretsHatched = (profile.stats.secretsHatched or 0) + 1
+	end
+	if registry.Achievement then
+		registry.Achievement.Check(player, "HatchEgg")
+	end
 	if roll.mut then
 		profile.stats.mutatedHatched = (profile.stats.mutatedHatched or 0) + 1
 		registry.Quest.AddProgress(player, "HatchMutated", 1)
@@ -170,7 +181,13 @@ local function doHatch(player, eggUid)
 	end
 
 	registry.Data.MarkDirty(player)
-	return { pet = pet, isNew = isNew, rarity = roll.rarity }
+	local sourceDef = Eggs.ById[egg.eggId]
+	return {
+		pet = pet,
+		isNew = isNew,
+		rarity = roll.rarity,
+		eggName = (sourceDef and sourceDef.DisplayName) or egg.eggId,
+	}
 end
 
 function EggService.BuyEgg(player, eggId)
@@ -199,6 +216,10 @@ function EggService.BuyEgg(player, eggId)
 	end
 	local egg = Types.NewEggRecord(registry.Data.GenerateUid(player), eggId)
 	profile.eggs[#profile.eggs + 1] = egg
+	profile.stats.eggsBought = (profile.stats.eggsBought or 0) + 1
+	if registry.Achievement then
+		registry.Achievement.Check(player, "BuyEgg")
+	end
 	registry.Data.MarkDirty(player)
 	if registry.TutorialHook then
 		registry.TutorialHook(player, "BuyEgg")

@@ -101,39 +101,49 @@ local function buildPlotFromTemplate(plotIndex)
 	return true
 end
 
+local VAULT_PROMPTS = {
+	{ Name = "VaultPromptQuick", ActionText = "Quick Grab", Key = Enum.KeyCode.E, Target = "quick" },
+	{ Name = "VaultPromptFull", ActionText = "Full Heist", Key = Enum.KeyCode.F, Target = "vault" },
+}
+
 local function ensureVaultPrompt(plotIndex)
 	local plot = registry.World.GetPlotModel(plotIndex)
 	if not plot then
 		return
 	end
-	if plot:FindFirstChild("VaultPrompt", true) then
-		return
+	-- legacy single prompt from older versions: remove in favor of the pair
+	local legacy = plot:FindFirstChild("VaultPrompt", true)
+	if legacy and legacy.Name == "VaultPrompt" then
+		pcall(function() legacy:Destroy() end)
 	end
 	local anchor = registry.World.GetVaultAnchor(plotIndex)
 	if not anchor then
 		return
 	end
-	local prompt = Instance.new("ProximityPrompt")
-	prompt.Name = "VaultPrompt"
-	prompt.ActionText = "Vault"
-	prompt.ObjectText = "Base Vault"
-	prompt.HoldDuration = 0.5
-	prompt.MaxActivationDistance = 14
-	prompt.RequiresLineOfSight = false
-	prompt.Parent = anchor
-	prompt.Triggered:Connect(function(player)
-		local ownerId = plotOwner[plotIndex]
-		if not ownerId then
-			return
+	for _, spec in ipairs(VAULT_PROMPTS) do
+		if not anchor:FindFirstChild(spec.Name) then
+			local prompt = Instance.new("ProximityPrompt")
+			prompt.Name = spec.Name
+			prompt.ActionText = spec.ActionText
+			prompt.ObjectText = "Base Vault"
+			prompt.KeyboardKeyCode = spec.Key
+			prompt.HoldDuration = 0.5
+			prompt.MaxActivationDistance = 14
+			prompt.RequiresLineOfSight = false
+			prompt.Parent = anchor
+			prompt.Triggered:Connect(function(player)
+				local ownerId = plotOwner[plotIndex]
+				if not ownerId then
+					return
+				end
+				if player.UserId == ownerId then
+					BaseService.CollectVault(player)
+				elseif registry.Heist then
+					registry.Heist.TryGrab(player, plotIndex, spec.Target)
+				end
+			end)
 		end
-		if player.UserId == ownerId then
-			BaseService.CollectVault(player)
-		else
-			if registry.Heist then
-				registry.Heist.TryGrab(player, plotIndex)
-			end
-		end
-	end)
+	end
 end
 
 function BaseService.AssignPlot(player, preferredIndex)
@@ -291,6 +301,9 @@ function BaseService.BuyUpgrade(player, trackId)
 	profile.stats.upgradesBought = (profile.stats.upgradesBought or 0) + 1
 	registry.Economy.AddXp(player, 15 * nextTier)
 	registry.Quest.AddProgress(player, "UpgradeBase", 1)
+	if registry.Achievement then
+		registry.Achievement.Check(player, "UpgradeBuy")
+	end
 	registry.Notify.Send(player, "success", "Upgrade purchased!",
 		track.DisplayName .. " tier " .. tostring(nextTier) .. ".", 4)
 	registry.Net.Fire(player, "Fx", "Upgrade", trackId, nextTier)

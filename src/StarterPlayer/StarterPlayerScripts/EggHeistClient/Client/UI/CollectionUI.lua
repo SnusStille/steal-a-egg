@@ -9,6 +9,8 @@ local ConfigFolder = Shared:WaitForChild("Config")
 local Pets = require(ConfigFolder:WaitForChild("Pets"))
 local Rarities = require(ConfigFolder:WaitForChild("Rarities"))
 local Mutations = require(ConfigFolder:WaitForChild("Mutations"))
+local Collection = require(ConfigFolder:WaitForChild("Collection"))
+local Format = require(Shared:WaitForChild("Utilities"):WaitForChild("Format"))
 local UIFactory = require(script.Parent:WaitForChild("UIFactory"))
 
 local CollectionUI = {}
@@ -16,6 +18,8 @@ local ctx = nil
 local window = nil
 local grid = nil
 local progressLabel = nil
+local milestoneBox = nil
+local gridHolder = nil
 
 local Theme = UIFactory.Theme
 
@@ -25,15 +29,30 @@ function CollectionUI.Init(context)
 	local gui = UIFactory.ScreenGui("EggHeistCollection", 20)
 	gui.Parent = playerGui
 
-	window = UIFactory.Window(gui, "Collection", UDim2.new(0, 560, 0, 470))
+	window = UIFactory.Window(gui, "Collection", UDim2.new(0, 560, 0, 520))
 	progressLabel = UIFactory.Label("", UDim2.new(1, 0, 0, 24), Theme.Accent, 14)
 	progressLabel.Parent = window.Content
-	local holder = Instance.new("Frame")
-	holder.Position = UDim2.new(0, 0, 0, 28)
-	holder.Size = UDim2.new(1, 0, 1, -28)
-	holder.BackgroundTransparency = 1
-	holder.Parent = window.Content
-	grid = UIFactory.Grid(holder, UDim2.new(0, 158, 0, 120), 8)
+	local milestoneHeight = 30 + #Collection.Milestones * 28 + 8
+	milestoneBox = Instance.new("Frame")
+	milestoneBox.Position = UDim2.new(0, 0, 0, 28)
+	milestoneBox.Size = UDim2.new(1, 0, 0, milestoneHeight)
+	milestoneBox.BackgroundColor3 = Theme.Panel
+	milestoneBox.BorderSizePixel = 0
+	milestoneBox.Parent = window.Content
+	local milestoneCorner = Instance.new("UICorner")
+	milestoneCorner.CornerRadius = UDim.new(0, 8)
+	milestoneCorner.Parent = milestoneBox
+	local milestonePad = Instance.new("UIPadding")
+	milestonePad.PaddingTop = UDim.new(0, 6)
+	milestonePad.PaddingLeft = UDim.new(0, 10)
+	milestonePad.PaddingRight = UDim.new(0, 10)
+	milestonePad.Parent = milestoneBox
+	gridHolder = Instance.new("Frame")
+	gridHolder.Position = UDim2.new(0, 0, 0, 28 + milestoneHeight + 6)
+	gridHolder.Size = UDim2.new(1, 0, 1, -(28 + milestoneHeight + 6))
+	gridHolder.BackgroundTransparency = 1
+	gridHolder.Parent = window.Content
+	grid = UIFactory.Grid(gridHolder, UDim2.new(0, 158, 0, 120), 8)
 
 	if ctx.Data then
 		ctx.Data.Changed:Connect(function()
@@ -50,6 +69,34 @@ function CollectionUI.Refresh()
 		return
 	end
 	UIFactory.ClearChildren(grid, true)
+	-- Milestone panel (rewards granted automatically by the server)
+	UIFactory.ClearChildren(milestoneBox, true)
+	local milestoneHeader = UIFactory.Label("COLLECTION MILESTONES", UDim2.new(1, 0, 0, 24),
+		Theme.Accent, 13)
+	milestoneHeader.TextXAlignment = Enum.TextXAlignment.Left
+	milestoneHeader.Parent = milestoneBox
+	local claimedMilestones = snapshot.collectionRewards or {}
+	for i, milestone in ipairs(Collection.Milestones) do
+		local id = milestone.Id or ("tier" .. tostring(i))
+		local claimed = claimedMilestones[id] == true
+		local parts = {}
+		if milestone.Cash and milestone.Cash > 0 then
+			parts[#parts + 1] = Format.Money(milestone.Cash)
+		end
+		if milestone.Gems and milestone.Gems > 0 then
+			parts[#parts + 1] = tostring(milestone.Gems) .. " G"
+		end
+		if milestone.Xp and milestone.Xp > 0 then
+			parts[#parts + 1] = "+" .. tostring(milestone.Xp) .. " XP"
+		end
+		local row = UIFactory.Label(tostring(milestone.Required) .. " pets  ->  "
+			.. table.concat(parts, "  +  ") .. (claimed and "   (claimed)" or ""),
+			UDim2.new(1, 0, 0, 26), claimed and Theme.TextDim or Theme.Text, 12)
+		row.TextXAlignment = Enum.TextXAlignment.Left
+		row.Position = UDim2.new(0, 0, 0, 24 + (i - 1) * 28)
+		row.Font = Theme.FontRegular
+		row.Parent = milestoneBox
+	end
 	local collection = snapshot.collection or {}
 	local found = 0
 	local total = 0

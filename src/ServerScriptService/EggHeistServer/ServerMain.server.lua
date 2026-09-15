@@ -13,6 +13,7 @@ local ServerFolder = ROOT:WaitForChild("Server")
 local LOAD_ORDER = {
 	"Net/NetService", -- remotes + routing first (everyone depends on Net)
 	"World/WorldService", -- world discovery / fallback before gameplay builds on it
+	"World/NpcService", -- world NPCs (needs the world root)
 	"Data/DataService", -- profiles before any system touches player data
 	"Net/NotifyService",
 	"Economy/EconomyService",
@@ -20,10 +21,13 @@ local LOAD_ORDER = {
 	"Pets/PetService",
 	"Bases/BaseService",
 	"Security/SecurityService",
+	"Heists/GadgetService", -- gadget state before heists query it
 	"Heists/HeistService",
 	"Progression/ProgressionService",
 	"Quests/QuestService",
 	"Rewards/RewardService",
+	"Rewards/CollectionService",
+	"Progression/AchievementService",
 	"Events/EventService",
 	"Monetization/ShopService",
 	"Social/LeaderboardService",

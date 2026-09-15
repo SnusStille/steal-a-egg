@@ -7,6 +7,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("EggHeistShared")
 local Economy = require(Shared:WaitForChild("Config"):WaitForChild("Economy"))
 local Eggs = require(Shared:WaitForChild("Config"):WaitForChild("Eggs"))
+local Gadgets = require(Shared:WaitForChild("Config"):WaitForChild("Gadgets"))
 local Format = require(Shared:WaitForChild("Utilities"):WaitForChild("Format"))
 local UIFactory = require(script.Parent:WaitForChild("UIFactory"))
 
@@ -30,6 +31,10 @@ local function rewardText(reward)
 	if reward.Egg then
 		local def = Eggs.ById[reward.Egg]
 		parts[#parts + 1] = def and def.DisplayName or reward.Egg
+	end
+	if reward.Gadget then
+		local def = Gadgets.ById[reward.Gadget]
+		parts[#parts + 1] = def and def.DisplayName or reward.Gadget
 	end
 	return table.concat(parts, "\n")
 end

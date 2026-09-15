@@ -1,8 +1,9 @@
 -- EggHeist | Server/Social/LeaderboardService.lua
--- OrderedDataStore rankings: richest, heists, collectors.
+-- OrderedDataStore rankings: richest, heists, collectors, levels.
 -- Studio-safe: falls back to in-session rankings when stores are unavailable.
 
 local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
 local DataStoreService = game:GetService("DataStoreService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -21,6 +22,7 @@ local BOARDS = {
 	Richest = { Store = "EggHeist_Board_Richest", Stat = "totalEarned", Display = "Richest Heisters" },
 	Heists = { Store = "EggHeist_Board_Heists", Stat = "heistsWon", Display = "Master Thieves" },
 	Collectors = { Store = "EggHeist_Board_Collectors", Stat = "__collection", Display = "Top Collectors" },
+	Levels = { Store = "EggHeist_Board_Levels", Stat = "__level", Display = "Highest Level" },
 }
 
 function LeaderboardService.Init(_, reg)
@@ -46,6 +48,9 @@ local function playerScore(player, board)
 	end
 	if board == "Collectors" then
 		return TableUtil.Count(profile.collection or {})
+	end
+	if board == "Levels" then
+		return math.floor(profile.level or 1)
 	end
 	local stat = BOARDS[board].Stat
 	return math.floor((profile.stats and profile.stats[stat]) or 0)

@@ -18,6 +18,9 @@ local CONTROLLERS = {
 	"ShopController",
 	"EventController",
 	"TutorialController",
+	"GadgetController",
+	"CollectionController",
+	"NpcController",
 	"InputController", -- keybinds last (acts on controllers + UI at press time)
 }
 
@@ -35,6 +38,7 @@ local UI_MODULES = {
 	"HeistUI",
 	"EventBannerUI",
 	"TutorialUI",
+	"ObjectiveUI",
 }
 
 local ctx = {}

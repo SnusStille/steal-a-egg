@@ -5,7 +5,10 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("EggHeistShared")
-local Economy = require(Shared:WaitForChild("Config"):WaitForChild("Economy"))
+local ConfigFolder = Shared:WaitForChild("Config")
+local Economy = require(ConfigFolder:WaitForChild("Economy"))
+local Achievements = require(ConfigFolder:WaitForChild("Achievements"))
+local Settings = require(ConfigFolder:WaitForChild("Settings"))
 local Format = require(Shared:WaitForChild("Utilities"):WaitForChild("Format"))
 local UIFactory = require(script.Parent:WaitForChild("UIFactory"))
 
@@ -22,6 +25,11 @@ local SETTING_DEFS = {
 	{ Key = "notifications", Label = "Notifications" },
 	{ Key = "showPets", Label = "Show my pets" },
 	{ Key = "autoHatch", Label = "Auto-hatch (needs gamepass)" },
+	{ Key = "cameraShake", Label = "Camera shake" },
+	{ Key = "reducedEffects", Label = "Reduced effects" },
+	{ Key = "performanceMode", Label = "Performance mode" },
+	{ Key = "heistAlerts", Label = "Heist banners" },
+	{ Key = "npcTips", Label = "NPC tips" },
 }
 
 function SettingsUI.Init(context)
@@ -110,7 +118,22 @@ function SettingsUI.Refresh()
 	statsHeader.TextXAlignment = Enum.TextXAlignment.Left
 	statsHeader.Parent = list
 	local stats = snapshot.stats or {}
-	local statsCard = UIFactory.Card(150)
+	local rep = stats.heistRep or 0
+	local repTitle = "Pickpocket"
+	for _, tier in ipairs((Settings.Heist or {}).RepTitles or {}) do
+		if rep >= (tier.Rep or 0) then
+			repTitle = tier.Title
+		end
+	end
+	local achStates = snapshot.achievements or {}
+	local achDone = 0
+	for _, def in ipairs(Achievements.List) do
+		local state = achStates[def.Id]
+		if state and state.done then
+			achDone = achDone + 1
+		end
+	end
+	local statsCard = UIFactory.Card(190)
 	local statsText = UIFactory.Label(
 		"Earned: " .. Format.Money(stats.totalEarned or 0)
 			.. "\nHatched: " .. tostring(stats.totalHatched or 0)
@@ -118,7 +141,10 @@ function SettingsUI.Refresh()
 			.. "\nHeists won: " .. tostring(stats.heistsWon or 0)
 			.. "  |  Failed: " .. tostring(stats.heistsFailed or 0)
 			.. "\nTimes robbed: " .. tostring(stats.timesRobbed or 0)
-			.. "\nPlaytime: " .. tostring(stats.playMinutes or 0) .. " min",
+			.. "\nPlaytime: " .. tostring(stats.playMinutes or 0) .. " min"
+			.. "\nHeist rep: " .. tostring(rep) .. " (" .. repTitle .. ")"
+			.. "\nAchievements: " .. tostring(achDone) .. "/" .. tostring(#Achievements.List)
+			.. "\nGadgets used: " .. tostring(stats.gadgetsUsed or 0),
 		UDim2.new(1, 0, 1, 0), Theme.TextDim, 13)
 	statsText.TextXAlignment = Enum.TextXAlignment.Left
 	statsText.TextYAlignment = Enum.TextYAlignment.Top
