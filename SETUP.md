@@ -15,6 +15,11 @@
 > world and builds a complete procedural fallback (spawn, market, vault,
 > event stage, 8 plots, egg assets).
 
+> **"Empty map" in the editor is NORMAL:** before you press Play, the
+> viewport only shows a baseplate + spawn. The full map only exists at
+> RUNTIME. Always test with Play (F5) — after pressing Play, Output shows
+> `Fallback world built: N parts...` as proof the map was built.
+
 ## Path B: Rojo workflow (developers)
 
 1. Install the [Rojo Studio plugin](https://rojo.space/docs/installation/) and

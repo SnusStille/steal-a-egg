@@ -1,5 +1,21 @@
 # Changelog
 
+## v6.0.2 — Hotfix: client could never boot (2026-09-15)
+
+Two fatal client bugs found via headless boot simulation (new
+`tools/sim_boot.py`: runs the REAL server + client boot with stubbed
+engine APIs — now fully green: 0 warns, 0 errors end-to-end, verified
+with join + base claim + egg hatch).
+
+- FIXED: `ClientNet.Invoke` used `...` inside a nested pcall closure.
+  Luau forbids this (compile error), so requiring ClientNet ALWAYS
+  failed -> CLIENT FATAL -> zero UI. Varargs are now packed first.
+- FIXED: ClientMain called `Init` as `pcall(X.Init, X, ctx)` but all 34
+  client Init functions take `(context)` only — every Init received the
+  wrong argument (`ctx.Net` was nil, controllers dead). Now passes `(ctx)`.
+- NEW: WorldService prints `Fallback world built: N parts...` as
+  runtime proof the map exists.
+- NEW: failed controller `Start()` calls now warn (were silent).
 ## v6.0.1 — Hotfix: invisible UIs + runtime error catcher (2026-09-15)
 
 - FIXED: HelpUI, FeedUI and TravelUI never set `gui.Parent`, so all

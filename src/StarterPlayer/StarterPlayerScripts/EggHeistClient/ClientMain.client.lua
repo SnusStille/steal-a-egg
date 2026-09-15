@@ -190,7 +190,7 @@ local function loadController(name)
 	if ok and controller then
 		ctx.Controllers[name] = controller
 		if type(controller.Init) == "function" then
-			local ok2, err = pcall(controller.Init, controller, ctx)
+			local ok2, err = pcall(controller.Init, ctx)
 			if not ok2 then
 				warn("[EggHeist] " .. name .. ".Init failed: " .. tostring(err))
 			end
@@ -220,7 +220,7 @@ for _, name in ipairs(UI_MODULES) do
 		elseif ok and ui then
 			ctx.UI[name] = ui
 			if type(ui.Init) == "function" then
-				local ok2, err = pcall(ui.Init, ui, ctx)
+				local ok2, err = pcall(ui.Init, ctx)
 				if not ok2 then
 					warn("[EggHeist] " .. name .. ".Init failed: " .. tostring(err))
 				end
@@ -235,7 +235,10 @@ bootStatus("starting controllers...")
 for _, name in ipairs(CONTROLLERS) do
 	local controller = ctx.Controllers[name]
 	if controller and type(controller.Start) == "function" then
-		pcall(controller.Start, controller)
+		local ok, err = pcall(controller.Start, controller)
+		if not ok then
+			warn("[EggHeist] " .. name .. ".Start failed: " .. tostring(err))
+		end
 	end
 end
 

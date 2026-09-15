@@ -419,6 +419,18 @@ local function buildFallbackWorld()
 	end
 
 	root.Parent = Workspace
+	-- Proof-of-map: count what was built so Output shows the map exists.
+	local partCount, promptCount = 0, 0
+	for _, d in ipairs(root:GetDescendants()) do
+		if d:IsA("BasePart") then
+			partCount = partCount + 1
+		elseif d:IsA("ProximityPrompt") then
+			promptCount = promptCount + 1
+		end
+	end
+	print(string.format(
+		"[EggHeist] Fallback world built: %d parts, %d prompts (%d objects).",
+		partCount, promptCount, #root:GetDescendants()))
 end
 
 --------------------------------------------------------------------------------

@@ -48,8 +48,12 @@ function ClientNet.Invoke(name, ...)
 	assert(folder, "ClientNet not initialized")
 	local rf = folder:FindFirstChild("Fn_" .. name)
 	if rf then
+		-- NOTE: Luau forbids using '...' inside a nested closure, so the
+		-- varargs MUST be packed into a table first (passing '...' straight
+		-- into the pcall callback is a compile error that kills the client).
+		local args = { ... }
 		local ok, result = pcall(function()
-			return rf:InvokeServer(...)
+			return rf:InvokeServer(unpack(args))
 		end)
 		if ok then
 			return result

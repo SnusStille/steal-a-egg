@@ -9287,6 +9287,18 @@
 							end
 							
 							root.Parent = Workspace
+							-- Proof-of-map: count what was built so Output shows the map exists.
+							local partCount, promptCount = 0, 0
+							for _, d in ipairs(root:GetDescendants()) do
+							if d:IsA("BasePart") then
+							partCount = partCount + 1
+							elseif d:IsA("ProximityPrompt") then
+							promptCount = promptCount + 1
+							end
+							end
+							print(string.format(
+							"[EggHeist] Fallback world built: %d parts, %d prompts (%d objects).",
+							partCount, promptCount, #root:GetDescendants()))
 							end
 							
 							--------------------------------------------------------------------------------
@@ -9900,8 +9912,12 @@
 							assert(folder, "ClientNet not initialized")
 							local rf = folder:FindFirstChild("Fn_" .. name)
 							if rf then
+							-- NOTE: Luau forbids using '...' inside a nested closure, so the
+							-- varargs MUST be packed into a table first (passing '...' straight
+							-- into the pcall callback is a compile error that kills the client).
+							local args = { ... }
 							local ok, result = pcall(function()
-							return rf:InvokeServer(...)
+							return rf:InvokeServer(unpack(args))
 							end)
 							if ok then
 							return result
@@ -15188,7 +15204,7 @@
 						if ok and controller then
 						ctx.Controllers[name] = controller
 						if type(controller.Init) == "function" then
-						local ok2, err = pcall(controller.Init, controller, ctx)
+						local ok2, err = pcall(controller.Init, ctx)
 						if not ok2 then
 						warn("[EggHeist] " .. name .. ".Init failed: " .. tostring(err))
 						end
@@ -15218,7 +15234,7 @@
 						elseif ok and ui then
 						ctx.UI[name] = ui
 						if type(ui.Init) == "function" then
-						local ok2, err = pcall(ui.Init, ui, ctx)
+						local ok2, err = pcall(ui.Init, ctx)
 						if not ok2 then
 						warn("[EggHeist] " .. name .. ".Init failed: " .. tostring(err))
 						end
@@ -15233,7 +15249,10 @@
 						for _, name in ipairs(CONTROLLERS) do
 						local controller = ctx.Controllers[name]
 						if controller and type(controller.Start) == "function" then
-						pcall(controller.Start, controller)
+						local ok, err = pcall(controller.Start, controller)
+						if not ok then
+						warn("[EggHeist] " .. name .. ".Start failed: " .. tostring(err))
+						end
 						end
 						end
 						
