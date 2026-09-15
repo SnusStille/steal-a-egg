@@ -60,15 +60,15 @@ Juice.HatchFx = {
 -- Every field is optional; missing fields keep their current value.
 Juice.Moods = {
 	Default = {
-		FogColor = Color3.fromRGB(190, 200, 215),
-		FogStart = 120,
-		FogEnd = 900,
-		Atmosphere = { Density = 0.28, Haze = 3, Glare = 0.4,
-			Color = Color3.fromRGB(200, 215, 230), Decay = Color3.fromRGB(120, 140, 160) },
-		Bloom = { Intensity = 0.35, Size = 24, Threshold = 1.2 },
-		SunRays = { Intensity = 0.06, Spread = 0.7 },
-		ColorCorrection = { Saturation = 0.08, Contrast = 0.04,
-			TintColor = Color3.fromRGB(255, 250, 242) },
+		FogColor = Color3.fromRGB(175, 210, 245),
+		FogStart = 150,
+		FogEnd = 1200,
+		Atmosphere = { Density = 0.22, Haze = 2, Glare = 0.6,
+			Color = Color3.fromRGB(185, 220, 255), Decay = Color3.fromRGB(130, 170, 220) },
+		Bloom = { Intensity = 0.5, Size = 28, Threshold = 1.1 },
+		SunRays = { Intensity = 0.12, Spread = 0.7 },
+		ColorCorrection = { Saturation = 0.25, Contrast = 0.05,
+			TintColor = Color3.fromRGB(255, 252, 245) },
 	},
 	GoldenHour = {
 		FogColor = Color3.fromRGB(255, 205, 140),

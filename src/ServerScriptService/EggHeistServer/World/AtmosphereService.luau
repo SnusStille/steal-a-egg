@@ -396,6 +396,126 @@ end
 -- Service lifecycle
 --------------------------------------------------------------------------------
 
+--------------------------------------------------------------------------------
+-- Candy builders (cartoon map dressing: trees, lollipops, eggs, rainbow)
+--------------------------------------------------------------------------------
+
+local CANDY = {
+	pink = Color3.fromRGB(255, 150, 210),
+	mint = Color3.fromRGB(130, 240, 190),
+	sky = Color3.fromRGB(130, 200, 255),
+	lemon = Color3.fromRGB(255, 235, 130),
+	grape = Color3.fromRGB(190, 140, 255),
+	tangerine = Color3.fromRGB(255, 175, 100),
+	white = Color3.fromRGB(255, 255, 255),
+	choco = Color3.fromRGB(140, 95, 60),
+}
+local CANDY_CYCLE = { "pink", "mint", "sky", "lemon", "grape", "tangerine" }
+
+local function mkBall(name, diameter, position, color)
+	local part = mkPart(name, Vector3.new(diameter, diameter, diameter), position, color)
+	part.Shape = Enum.PartType.Ball
+	return part
+end
+
+local function buildCandyTrees()
+	local spots = {
+		{ "plaza", -22, -14 }, { "plaza", 22, -14 },
+		{ "plaza", -24, 12 }, { "plaza", 24, 12 },
+		{ "market", -20, 10 }, { "market", 20, 10 },
+		{ "event", -16, 14 }, { "event", 16, 14 },
+	}
+	for i, spot in ipairs(spots) do
+		local base = anchors[spot[1]] or FALLBACK_POS[spot[1]]
+		if base then
+			local x, z = base.X + spot[2], base.Z + spot[3]
+			local candy = CANDY[CANDY_CYCLE[(i - 1) % #CANDY_CYCLE + 1]]
+			mkPart("CandyTrunk" .. i, Vector3.new(1.4, 6, 1.4),
+				Vector3.new(x, base.Y + 3, z), CANDY.choco)
+			mkBall("CandyTop" .. i, 5, Vector3.new(x, base.Y + 7.5, z), candy)
+			mkBall("CandyLeft" .. i, 3.6, Vector3.new(x - 2.4, base.Y + 6, z + 0.8), candy)
+			mkBall("CandyRight" .. i, 3.6, Vector3.new(x + 2.4, base.Y + 6, z - 0.8), candy)
+			mkBall("CandyDot" .. i, 1.4, Vector3.new(x, base.Y + 10.4, z), CANDY.white)
+		end
+	end
+end
+
+local function buildLollipops()
+	local spots = {
+		{ "plaza", 30, 7, true }, { "plaza", 45, -7, false },
+		{ "plaza", 60, 7, true }, { "plaza", -30, -7, false },
+		{ "plaza", -45, 7, true }, { "plaza", -60, -7, false },
+	}
+	for i, spot in ipairs(spots) do
+		local base = anchors[spot[1]] or FALLBACK_POS[spot[1]]
+		if base then
+			local x, z = base.X + spot[2], base.Z + spot[3]
+			local candy = CANDY[CANDY_CYCLE[(i - 1) % #CANDY_CYCLE + 1]]
+			mkPart("LolliPole" .. i, Vector3.new(0.7, 7, 0.7),
+				Vector3.new(x, base.Y + 3.5, z), CANDY.white)
+			local pop = mkBall("LolliPop" .. i, 4,
+				Vector3.new(x, base.Y + 8, z), candy)
+			if spot[4] then
+				mkLight(pop, candy, 26, 1.5)
+			end
+		end
+	end
+end
+
+local function buildGiantEggs()
+	local spots = {
+		{ "plaza", 0, -17, "pink" }, { "market", 0, 12, "lemon" }, { "event", 0, -14, "sky" },
+	}
+	for i, spot in ipairs(spots) do
+		local base = anchors[spot[1]] or FALLBACK_POS[spot[1]]
+		if base then
+			local body = mkPart("GiantEgg" .. i, Vector3.new(5, 6.5, 5),
+				Vector3.new(base.X + spot[2], base.Y + 3.4, base.Z + spot[3]),
+				CANDY[spot[4]])
+			local mesh = Instance.new("SpecialMesh")
+			mesh.MeshType = Enum.MeshType.Egg
+			mesh.Scale = Vector3.new(5, 6.5, 5)
+			mesh.Parent = body
+			mkSparkles(body, CANDY.white, 4, 5, 0.8, 2)
+		end
+	end
+end
+
+local function buildRainbowArch()
+	local base = anchors.plaza or FALLBACK_POS.plaza
+	local bands = {
+		Color3.fromRGB(255, 90, 110), Color3.fromRGB(255, 160, 60),
+		Color3.fromRGB(255, 230, 90), Color3.fromRGB(120, 240, 140),
+		Color3.fromRGB(110, 180, 255), Color3.fromRGB(170, 130, 255),
+		Color3.fromRGB(230, 150, 255),
+	}
+	for i = 1, 7 do
+		local a = math.rad(20 + (i - 1) * (140 / 6))
+		local pos = Vector3.new(base.X + math.cos(a) * 14, base.Y + math.sin(a) * 12, base.Z + 16)
+		local beam = mkPart("Rainbow" .. i, Vector3.new(7.5, 1.8, 1.8), pos, bands[i])
+		beam.CFrame = CFrame.new(pos) * CFrame.fromEulerAnglesXYZ(0, 0, a - math.pi / 2)
+	end
+	mkBall("RainbowCloudL", 6, Vector3.new(base.X - 13.2, base.Y + 4.5, base.Z + 16), CANDY.white)
+	mkBall("RainbowCloudR", 6, Vector3.new(base.X + 13.2, base.Y + 4.5, base.Z + 16), CANDY.white)
+end
+
+local function buildGumdrops()
+	local spots = {
+		{ "plaza", -14, 18 }, { "plaza", 14, 18 }, { "plaza", -18, -4 }, { "plaza", 18, -6 },
+		{ "market", -12, -8 }, { "market", 12, -8 }, { "event", -10, 8 }, { "event", 10, 8 },
+		{ "heist", -12, 10 }, { "heist", 12, 10 },
+	}
+	for i, spot in ipairs(spots) do
+		local base = anchors[spot[1]] or FALLBACK_POS[spot[1]]
+		if base then
+			local candy = CANDY[CANDY_CYCLE[(i - 1) % #CANDY_CYCLE + 1]]
+			local drop = mkPart("Gumdrop" .. i, Vector3.new(3.2, 2.2, 3.2),
+				Vector3.new(base.X + spot[2], base.Y + 1, base.Z + spot[3]), candy)
+			drop.Shape = Enum.PartType.Ball
+		end
+	end
+end
+
 function AtmosphereService.Init(_, reg)
 	registry = reg
 	ensureLightingRig()
@@ -425,6 +545,8 @@ function AtmosphereService.Init(_, reg)
 	local builders = {
 		buildBeacons, buildSkyIslands, buildSpawnStatue,
 		buildHeistAlert, buildStageRig, buildVolcano, buildClouds,
+		buildCandyTrees, buildLollipops, buildGiantEggs,
+		buildRainbowArch, buildGumdrops,
 	}
 	for _, builder in ipairs(builders) do
 		local ok, err = pcall(builder)

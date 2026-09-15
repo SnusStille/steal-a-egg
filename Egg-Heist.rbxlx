@@ -768,6 +768,16 @@
 						-- Time between event rolls when no event is active
 						Events.IdleRollInterval = 120
 						
+						-- Golden Egg Hunt: a glowing golden egg hides somewhere in the districts;
+						-- first player to claim it wins gems + Feed fame. Always-on minigame.
+						Events.EggHunt = {
+						Enabled = true,
+						FirstDelay = 90,
+						Interval = 300,
+						GemReward = 25,
+						Lifetime = 180,
+						}
+						
 						return Events
 						</ProtectedString>
 					</Properties>
@@ -922,15 +932,15 @@
 						-- Every field is optional; missing fields keep their current value.
 						Juice.Moods = {
 						Default = {
-						FogColor = Color3.fromRGB(190, 200, 215),
-						FogStart = 120,
-						FogEnd = 900,
-						Atmosphere = { Density = 0.28, Haze = 3, Glare = 0.4,
-						Color = Color3.fromRGB(200, 215, 230), Decay = Color3.fromRGB(120, 140, 160) },
-						Bloom = { Intensity = 0.35, Size = 24, Threshold = 1.2 },
-						SunRays = { Intensity = 0.06, Spread = 0.7 },
-						ColorCorrection = { Saturation = 0.08, Contrast = 0.04,
-						TintColor = Color3.fromRGB(255, 250, 242) },
+						FogColor = Color3.fromRGB(175, 210, 245),
+						FogStart = 150,
+						FogEnd = 1200,
+						Atmosphere = { Density = 0.22, Haze = 2, Glare = 0.6,
+						Color = Color3.fromRGB(185, 220, 255), Decay = Color3.fromRGB(130, 170, 220) },
+						Bloom = { Intensity = 0.5, Size = 28, Threshold = 1.1 },
+						SunRays = { Intensity = 0.12, Spread = 0.7 },
+						ColorCorrection = { Saturation = 0.25, Contrast = 0.05,
+						TintColor = Color3.fromRGB(255, 252, 245) },
 						},
 						GoldenHour = {
 						FogColor = Color3.fromRGB(255, 205, 140),
@@ -1861,6 +1871,7 @@
 					"HatchAll",      -- ()
 					"PlaceEgg",      -- (eggUid)  place into first free pad of own base
 					"PickupEgg",     -- (eggUid)  return a placed egg to the pouch
+					"PlaceAllEggs",  -- ()        place every carried egg on free pads
 					"EquipPet",      -- (petUid)
 					"UnequipPet",    -- (petUid)
 					"DeletePet",     -- (petUid) (sells for 50% value)
@@ -1927,6 +1938,7 @@
 					HatchAll = 2,
 					PlaceEgg = 4,
 					PickupEgg = 4,
+					PlaceAllEggs = 3,
 					EquipPet = 10,
 					UnequipPet = 10,
 					DeletePet = 4,
@@ -3346,6 +3358,7 @@
 						local Settings = require(ConfigFolder:WaitForChild("Settings"))
 						local ShopConfig = require(ConfigFolder:WaitForChild("Shop"))
 						local Validate = require(Shared:WaitForChild("Utilities"):WaitForChild("Validate"))
+						local ModelFactory = require(Shared:WaitForChild("Utilities"):WaitForChild("ModelFactory"))
 						
 						local BaseService = {}
 						BaseService.Name = "BaseService"
@@ -3529,6 +3542,79 @@
 						end)
 						end
 						
+						--- Command totem: Hatch-All + Collect prompts for the plot owner.
+						--- Prompts are CLIENT-wired (NpcController) to self-only remotes.
+						local function ensurePlotTotem(index)
+						local plot = registry.World.GetPlotModel(index)
+						if not plot then
+						return
+						end
+						local furniture = plot:FindFirstChild("ServerFurniture")
+						if not furniture then
+						furniture = Instance.new("Folder")
+						furniture.Name = "ServerFurniture"
+						furniture.Parent = plot
+						end
+						if furniture:FindFirstChild("PlotTotem") then
+						return
+						end
+						local foundation = plot:FindFirstChild("Foundation")
+						if not foundation or not foundation:IsA("BasePart") then
+						return
+						end
+						local spot = ModelFactory.FindClearSpot(plot, Vector3.new(14, 0, 15), 3, 15)
+						local base = foundation.Position
+						+ Vector3.new(0, foundation.Size.Y / 2, 0)
+						+ spot
+						local totem = Instance.new("Part")
+						totem.Name = "PlotTotem"
+						totem.Shape = Enum.PartType.Cylinder
+						totem.Size = Vector3.new(5, 2.4, 2.4)
+						totem.CFrame = CFrame.new(base + Vector3.new(0, 2.5, 0))
+						* CFrame.fromEulerAnglesXYZ(0, 0, math.pi / 2)
+						totem.Color = Color3.fromRGB(70, 235, 130)
+						totem.Material = Enum.Material.Neon
+						totem.Transparency = 0.25
+						totem.Anchored = true
+						totem.CanCollide = true
+						totem.TopSurface = Enum.SurfaceType.Smooth
+						totem.BottomSurface = Enum.SurfaceType.Smooth
+						totem.Parent = furniture
+						local billboard = Instance.new("BillboardGui")
+						billboard.Name = "TotemLabel"
+						billboard.Size = UDim2.new(0, 160, 0, 40)
+						billboard.StudsOffset = Vector3.new(0, 6.5, 0)
+						billboard.AlwaysOnTop = false
+						billboard.MaxDistance = 70
+						billboard.Parent = totem
+						local text = Instance.new("TextLabel")
+						text.Size = UDim2.fromScale(1, 1)
+						text.BackgroundTransparency = 1
+						text.Text = "BASE COMMAND"
+						text.TextColor3 = Color3.fromRGB(70, 235, 130)
+						text.Font = Enum.Font.FredokaOne
+						text.TextSize = 18
+						text.TextStrokeTransparency = 0.4
+						text.Parent = billboard
+						local defs = {
+						{ Action = "HatchAll", ActionText = "Hatch All Ready", Key = Enum.KeyCode.E },
+						{ Action = "CollectVault", ActionText = "Collect Vault", Key = Enum.KeyCode.F },
+						}
+						for _, def in ipairs(defs) do
+						local prompt = Instance.new("ProximityPrompt")
+						prompt.Name = "BasePrompt"
+						prompt:SetAttribute("Action", def.Action)
+						prompt:SetAttribute("PlotIndex", index)
+						prompt.ActionText = def.ActionText
+						prompt.ObjectText = "Base Command"
+						prompt.KeyboardKeyCode = def.Key
+						prompt.HoldDuration = 0
+						prompt.MaxActivationDistance = 12
+						prompt.RequiresLineOfSight = false
+						prompt.Parent = totem
+						end
+						end
+						
 						function BaseService.AssignPlot(player, preferredIndex)
 						if userPlot[player.UserId] then
 						return userPlot[player.UserId]
@@ -3570,6 +3656,7 @@
 						registry.Pet.OnPlotAssigned(player, index)
 						end
 						ensureClaimPrompt(index) -- owned now: removes the claim prompt
+						ensurePlotTotem(index)
 						registry.World.SetPlotLabel(index, player.DisplayName .. "'s Base")
 						-- one-time starter vault so the first CollectVault feels rewarding
 						if profile and not profile.base.vaultSeeded then
@@ -5348,6 +5435,26 @@
 						return true
 						end
 						
+						--- Places every carried egg on free pads (one tap, whole pouch).
+						function EggService.PlaceAllEggs(player)
+						local profile = profileOf(player)
+						if not profile then
+						return 0
+						end
+						local placed = 0
+						for _, egg in ipairs(profile.eggs or {}) do
+						if not egg.placedPad and EggService.PlaceEgg(player, egg.uid) then
+						placed = placed + 1
+						end
+						end
+						if placed &gt; 0 then
+						registry.Notify.Send(player, "success", "Eggs placed!",
+						"Placed " .. tostring(placed) .. " egg" .. (placed == 1 and "" or "s")
+						.. " on your pads!", 4)
+						end
+						return placed
+						end
+						
 						--- Returns a placed egg to the pouch (timer resets on next placement).
 						function EggService.PickupEgg(player, eggUid)
 						eggUid = Validate.Uid(eggUid)
@@ -5839,6 +5946,10 @@
 						EggService.PickupEgg(player, eggUid)
 						end)
 						
+						registry.Net.OnRequest("PlaceAllEggs", function(player)
+						EggService.PlaceAllEggs(player)
+						end)
+						
 						registry.Net.OnRequest("HatchEgg", function(player, eggUid)
 						local result = EggService.HatchEgg(player, eggUid)
 						if result then
@@ -6055,6 +6166,107 @@
 						end
 						
 						--------------------------------------------------------------------------------
+						-- Golden Egg Hunt (always-on hide-and-seek minigame)
+						--------------------------------------------------------------------------------
+						
+						local huntModel = nil
+						
+						local function ensurePickupFolder()
+						if meteorFolder then
+						return meteorFolder
+						end
+						local gameplay = registry.World.Find("Gameplay")
+						if not gameplay then
+						return nil
+						end
+						meteorFolder = gameplay:FindFirstChild("EventPickups")
+						if not meteorFolder then
+						meteorFolder = Instance.new("Folder")
+						meteorFolder.Name = "EventPickups"
+						meteorFolder.Parent = gameplay
+						end
+						return meteorFolder
+						end
+						
+						local function spawnHuntEgg()
+						if huntModel and huntModel.Parent then
+						return huntModel
+						end
+						local folder = ensurePickupFolder()
+						if not folder then
+						return nil
+						end
+						local centers = scatterCenters()
+						local spot = centers[rng:NextInteger(1, #centers)]
+						local angle = rng:NextNumber(0, math.pi * 2)
+						local dist = rng:NextNumber(6, spot.radius)
+						local position = spot.pos + Vector3.new(math.cos(angle) * dist, 2.5, math.sin(angle) * dist)
+						local model = registry.World.CloneEggAsset("GoldenEgg")
+						model.Name = "GoldenHuntEgg"
+						local body = model:FindFirstChild("Body")
+						if body and body:IsA("BasePart") then
+						body.CFrame = CFrame.new(position)
+						body.Anchored = true
+						body.CanCollide = false
+						local prompt = Instance.new("ProximityPrompt")
+						prompt.ActionText = "Claim"
+						prompt.ObjectText = "GOLDEN EGG!"
+						prompt.HoldDuration = 0.5
+						prompt.MaxActivationDistance = 12
+						prompt.RequiresLineOfSight = false
+						prompt.Parent = body
+						prompt.Triggered:Connect(function(player)
+						if model.Parent then
+						model:Destroy() -- first claim wins
+						local gems = Events.EggHunt.GemReward or 25
+						registry.Economy.AddGems(player, gems, "egg_hunt")
+						registry.Notify.Send(player, "secret", "GOLDEN EGG!",
+						"You found the hidden golden egg! +" .. tostring(gems) .. " gems!", 6)
+						registry.Net.FireAll("Feed", { icon = "HUNT",
+						text = player.DisplayName .. " found the GOLDEN EGG!" })
+						registry.Net.Fire(player, "Fx", "GrabFx")
+						end
+						end)
+						end
+						-- gold beacon + sparkle halo so hunters can spot it from afar
+						local beacon = Instance.new("Part")
+						beacon.Name = "Beacon"
+						beacon.Size = Vector3.new(2, 60, 2)
+						beacon.CFrame = CFrame.new(position.X, 30, position.Z)
+						beacon.Color = Color3.fromRGB(255, 205, 60)
+						beacon.Material = Enum.Material.Neon
+						beacon.Anchored = true
+						beacon.CanCollide = false
+						beacon.CanQuery = false
+						beacon.Parent = model
+						local halo = Instance.new("ParticleEmitter")
+						halo.Color = ColorSequence.new(Color3.fromRGB(255, 215, 100))
+						halo.LightEmission = 0.9
+						halo.Rate = 8
+						halo.Speed = NumberRange.new(2, 5)
+						halo.Size = NumberSequence.new(0.8)
+						halo.Lifetime = NumberRange.new(1, 2)
+						halo.SpreadAngle = Vector2.new(180, 180)
+						halo.Parent = model:FindFirstChild("Body") or model
+						model.Parent = folder
+						huntModel = model
+						task.delay(Events.EggHunt.Lifetime or 180, function()
+						if model and model.Parent then
+						model:Destroy()
+						end
+						if huntModel == model then
+						huntModel = nil
+						end
+						end)
+						return model
+						end
+						
+						--- Test backdoor: spawns the golden hunt egg immediately (sim coverage).
+						function EventService.TestSpawnHuntEgg()
+						return spawnHuntEgg()
+						end
+						
+						--------------------------------------------------------------------------------
 						-- Event lifecycle
 						--------------------------------------------------------------------------------
 						
@@ -6210,6 +6422,16 @@
 						end
 						end
 						end)
+						end)
+						
+						task.spawn(function()
+						task.wait(Events.EggHunt.FirstDelay or 90)
+						while true do
+						if Settings.Features.Events and Events.EggHunt.Enabled then
+						pcall(spawnHuntEgg)
+						end
+						task.wait(Events.EggHunt.Interval or 300)
+						end
 						end)
 						
 						task.spawn(function()
@@ -11435,6 +11657,126 @@
 						-- Service lifecycle
 						--------------------------------------------------------------------------------
 						
+						--------------------------------------------------------------------------------
+						-- Candy builders (cartoon map dressing: trees, lollipops, eggs, rainbow)
+						--------------------------------------------------------------------------------
+						
+						local CANDY = {
+						pink = Color3.fromRGB(255, 150, 210),
+						mint = Color3.fromRGB(130, 240, 190),
+						sky = Color3.fromRGB(130, 200, 255),
+						lemon = Color3.fromRGB(255, 235, 130),
+						grape = Color3.fromRGB(190, 140, 255),
+						tangerine = Color3.fromRGB(255, 175, 100),
+						white = Color3.fromRGB(255, 255, 255),
+						choco = Color3.fromRGB(140, 95, 60),
+						}
+						local CANDY_CYCLE = { "pink", "mint", "sky", "lemon", "grape", "tangerine" }
+						
+						local function mkBall(name, diameter, position, color)
+						local part = mkPart(name, Vector3.new(diameter, diameter, diameter), position, color)
+						part.Shape = Enum.PartType.Ball
+						return part
+						end
+						
+						local function buildCandyTrees()
+						local spots = {
+						{ "plaza", -22, -14 }, { "plaza", 22, -14 },
+						{ "plaza", -24, 12 }, { "plaza", 24, 12 },
+						{ "market", -20, 10 }, { "market", 20, 10 },
+						{ "event", -16, 14 }, { "event", 16, 14 },
+						}
+						for i, spot in ipairs(spots) do
+						local base = anchors[spot[1]] or FALLBACK_POS[spot[1]]
+						if base then
+						local x, z = base.X + spot[2], base.Z + spot[3]
+						local candy = CANDY[CANDY_CYCLE[(i - 1) % #CANDY_CYCLE + 1]]
+						mkPart("CandyTrunk" .. i, Vector3.new(1.4, 6, 1.4),
+						Vector3.new(x, base.Y + 3, z), CANDY.choco)
+						mkBall("CandyTop" .. i, 5, Vector3.new(x, base.Y + 7.5, z), candy)
+						mkBall("CandyLeft" .. i, 3.6, Vector3.new(x - 2.4, base.Y + 6, z + 0.8), candy)
+						mkBall("CandyRight" .. i, 3.6, Vector3.new(x + 2.4, base.Y + 6, z - 0.8), candy)
+						mkBall("CandyDot" .. i, 1.4, Vector3.new(x, base.Y + 10.4, z), CANDY.white)
+						end
+						end
+						end
+						
+						local function buildLollipops()
+						local spots = {
+						{ "plaza", 30, 7, true }, { "plaza", 45, -7, false },
+						{ "plaza", 60, 7, true }, { "plaza", -30, -7, false },
+						{ "plaza", -45, 7, true }, { "plaza", -60, -7, false },
+						}
+						for i, spot in ipairs(spots) do
+						local base = anchors[spot[1]] or FALLBACK_POS[spot[1]]
+						if base then
+						local x, z = base.X + spot[2], base.Z + spot[3]
+						local candy = CANDY[CANDY_CYCLE[(i - 1) % #CANDY_CYCLE + 1]]
+						mkPart("LolliPole" .. i, Vector3.new(0.7, 7, 0.7),
+						Vector3.new(x, base.Y + 3.5, z), CANDY.white)
+						local pop = mkBall("LolliPop" .. i, 4,
+						Vector3.new(x, base.Y + 8, z), candy)
+						if spot[4] then
+						mkLight(pop, candy, 26, 1.5)
+						end
+						end
+						end
+						end
+						
+						local function buildGiantEggs()
+						local spots = {
+						{ "plaza", 0, -17, "pink" }, { "market", 0, 12, "lemon" }, { "event", 0, -14, "sky" },
+						}
+						for i, spot in ipairs(spots) do
+						local base = anchors[spot[1]] or FALLBACK_POS[spot[1]]
+						if base then
+						local body = mkPart("GiantEgg" .. i, Vector3.new(5, 6.5, 5),
+						Vector3.new(base.X + spot[2], base.Y + 3.4, base.Z + spot[3]),
+						CANDY[spot[4]])
+						local mesh = Instance.new("SpecialMesh")
+						mesh.MeshType = Enum.MeshType.Egg
+						mesh.Scale = Vector3.new(5, 6.5, 5)
+						mesh.Parent = body
+						mkSparkles(body, CANDY.white, 4, 5, 0.8, 2)
+						end
+						end
+						end
+						
+						local function buildRainbowArch()
+						local base = anchors.plaza or FALLBACK_POS.plaza
+						local bands = {
+						Color3.fromRGB(255, 90, 110), Color3.fromRGB(255, 160, 60),
+						Color3.fromRGB(255, 230, 90), Color3.fromRGB(120, 240, 140),
+						Color3.fromRGB(110, 180, 255), Color3.fromRGB(170, 130, 255),
+						Color3.fromRGB(230, 150, 255),
+						}
+						for i = 1, 7 do
+						local a = math.rad(20 + (i - 1) * (140 / 6))
+						local pos = Vector3.new(base.X + math.cos(a) * 14, base.Y + math.sin(a) * 12, base.Z + 16)
+						local beam = mkPart("Rainbow" .. i, Vector3.new(7.5, 1.8, 1.8), pos, bands[i])
+						beam.CFrame = CFrame.new(pos) * CFrame.fromEulerAnglesXYZ(0, 0, a - math.pi / 2)
+						end
+						mkBall("RainbowCloudL", 6, Vector3.new(base.X - 13.2, base.Y + 4.5, base.Z + 16), CANDY.white)
+						mkBall("RainbowCloudR", 6, Vector3.new(base.X + 13.2, base.Y + 4.5, base.Z + 16), CANDY.white)
+						end
+						
+						local function buildGumdrops()
+						local spots = {
+						{ "plaza", -14, 18 }, { "plaza", 14, 18 }, { "plaza", -18, -4 }, { "plaza", 18, -6 },
+						{ "market", -12, -8 }, { "market", 12, -8 }, { "event", -10, 8 }, { "event", 10, 8 },
+						{ "heist", -12, 10 }, { "heist", 12, 10 },
+						}
+						for i, spot in ipairs(spots) do
+						local base = anchors[spot[1]] or FALLBACK_POS[spot[1]]
+						if base then
+						local candy = CANDY[CANDY_CYCLE[(i - 1) % #CANDY_CYCLE + 1]]
+						local drop = mkPart("Gumdrop" .. i, Vector3.new(3.2, 2.2, 3.2),
+						Vector3.new(base.X + spot[2], base.Y + 1, base.Z + spot[3]), candy)
+						drop.Shape = Enum.PartType.Ball
+						end
+						end
+						end
+						
 						function AtmosphereService.Init(_, reg)
 						registry = reg
 						ensureLightingRig()
@@ -11464,6 +11806,8 @@
 						local builders = {
 						buildBeacons, buildSkyIslands, buildSpawnStatue,
 						buildHeistAlert, buildStageRig, buildVolcano, buildClouds,
+						buildCandyTrees, buildLollipops, buildGiantEggs,
+						buildRainbowArch, buildGumdrops,
 						}
 						for _, builder in ipairs(builders) do
 						local ok, err = pcall(builder)
@@ -12261,6 +12605,18 @@
 						liveFolder.Parent = Workspace
 						end
 						
+						-- Cartoon base lighting: bright candy day (events restore to THIS)
+						pcall(function()
+						Lighting.ClockTime = 14
+						Lighting.Brightness = 3
+						Lighting.Ambient = Color3.fromRGB(140, 170, 220)
+						Lighting.OutdoorAmbient = Color3.fromRGB(150, 180, 230)
+						Lighting.FogColor = Color3.fromRGB(175, 210, 245)
+						Lighting.FogStart = 150
+						Lighting.FogEnd = 1200
+						Lighting.ColorShift_Top = Color3.fromRGB(170, 200, 240)
+						Lighting.ColorShift_Bottom = Color3.fromRGB(230, 210, 190)
+						end)
 						-- Snapshot default lighting for event restore
 						defaultLighting.ClockTime = Lighting.ClockTime
 						defaultLighting.Brightness = Lighting.Brightness
@@ -12942,6 +13298,10 @@
 							ctx.Net.Fire("PickupEgg", eggUid)
 							end
 							
+							function EggController.PlaceAllEggs()
+							ctx.Net.Fire("PlaceAllEggs")
+							end
+							
 							function EggController.HatchAll()
 							ctx.Net.Fire("HatchAll")
 							end
@@ -13202,6 +13562,27 @@
 							elseif prompt.Name == "MarketPrompt" then
 							wired[prompt] = true
 							prompt.Triggered:Connect(openShop)
+							elseif prompt.Name == "BasePrompt" then
+							wired[prompt] = true
+							prompt.Triggered:Connect(function()
+							local plotIndex = prompt:GetAttribute("PlotIndex")
+							local snap = ctx.Data and ctx.Data.Get and ctx.Data.Get() or nil
+							local ownPlot = snap and snap.base and snap.base.plot or 0
+							if plotIndex and plotIndex ~= ownPlot then
+							local notifications = ctx.Screens and ctx.Screens.NotificationsScreen
+							if notifications then
+							notifications.Show("warning", "Not your base!",
+							"This command totem belongs to someone else.", 3)
+							end
+							return
+							end
+							local action = prompt:GetAttribute("Action")
+							if action == "HatchAll" and ctx.Controllers.EggController then
+							ctx.Controllers.EggController.HatchAll()
+							elseif action == "CollectVault" and ctx.Controllers.BaseController then
+							ctx.Controllers.BaseController.CollectVault()
+							end
+							end)
 							end
 							end
 							
@@ -16154,6 +16535,11 @@
 							end)
 							hatchAll.Size = UDim2.new(0, 150, 0, 44)
 							hatchAll.Parent = eggsGrid
+							local placeAll = UIFactory.Button("PLACE ALL", function()
+							ctx.Controllers.EggController.PlaceAllEggs()
+							end)
+							placeAll.Size = UDim2.new(0, 150, 0, 44)
+							placeAll.Parent = eggsGrid
 							end
 							for _, egg in ipairs(eggs) do
 							eggCard(egg).Parent = eggsGrid
@@ -18389,22 +18775,23 @@
 							local UIFactory = {}
 							
 							UIFactory.Theme = {
-							Background = Color3.fromRGB(18, 20, 32),
-							Panel = Color3.fromRGB(28, 31, 48),
-							Card = Color3.fromRGB(38, 42, 64),
-							Accent = Color3.fromRGB(255, 200, 80),
-							AccentDark = Color3.fromRGB(200, 140, 40),
-							Success = Color3.fromRGB(80, 220, 120),
-							Warning = Color3.fromRGB(255, 170, 60),
-							Error = Color3.fromRGB(255, 90, 90),
-							Text = Color3.fromRGB(245, 245, 250),
-							TextDim = Color3.fromRGB(170, 175, 195),
-							Button = Color3.fromRGB(58, 64, 100),
-							ButtonHover = Color3.fromRGB(76, 84, 130),
-							Stroke = Color3.fromRGB(70, 76, 110),
-							Font = Enum.Font.GothamBold,
-							FontRegular = Enum.Font.Gotham,
-							Corner = 10,
+							Background = Color3.fromRGB(38, 30, 70),
+							Panel = Color3.fromRGB(56, 44, 100),
+							Card = Color3.fromRGB(74, 60, 128),
+							Accent = Color3.fromRGB(255, 205, 60),
+							AccentDark = Color3.fromRGB(240, 140, 30),
+							Success = Color3.fromRGB(70, 235, 130),
+							Warning = Color3.fromRGB(255, 160, 40),
+							Error = Color3.fromRGB(255, 95, 120),
+							Text = Color3.fromRGB(255, 255, 255),
+							TextDim = Color3.fromRGB(205, 190, 240),
+							Button = Color3.fromRGB(90, 110, 255),
+							ButtonHover = Color3.fromRGB(120, 140, 255),
+							Stroke = Color3.fromRGB(28, 20, 55),
+							Font = Enum.Font.FredokaOne,
+							FontRegular = Enum.Font.FredokaOne,
+							FontTitle = Enum.Font.Cartoon,
+							Corner = 16,
 							}
 							
 							local Theme = UIFactory.Theme
@@ -18473,8 +18860,9 @@
 							button.TextSize = 15
 							button.Text = text or ""
 							button.AutoButtonColor = true
-							UIFactory.Corner(button, 8)
-							UIFactory.Stroke(button, Theme.Stroke, 1)
+							button.TextStrokeTransparency = 0.75
+							UIFactory.Corner(button, 12)
+							UIFactory.Stroke(button, Theme.Stroke, 2)
 							if onClick then
 							button.MouseButton1Click:Connect(function()
 							-- press pop: every factory button punches on click
@@ -18482,14 +18870,14 @@
 							local original = button.Size
 							local punch = TweenService:Create(button,
 							TweenInfo.new(0.07, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-							Size = UDim2.new(original.X.Scale * 0.94, original.X.Offset * 0.94,
-							original.Y.Scale * 0.94, original.Y.Offset * 0.94),
+							Size = UDim2.new(original.X.Scale * 0.9, original.X.Offset * 0.9,
+							original.Y.Scale * 0.9, original.Y.Offset * 0.9),
 							})
 							punch:Play()
 							punch.Completed:Connect(function()
 							pcall(function()
 							TweenService:Create(button,
-							TweenInfo.new(0.09, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+							TweenInfo.new(0.22, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
 							Size = original,
 							}):Play()
 							end)
@@ -18504,19 +18892,29 @@
 							function UIFactory.PrimaryButton(text, onClick)
 							local button = UIFactory.Button(text, onClick)
 							button.BackgroundColor3 = Theme.Accent
-							button.TextColor3 = Color3.fromRGB(30, 25, 10)
+							button.TextColor3 = Color3.fromRGB(90, 45, 0)
+							local gradient = Instance.new("UIGradient")
+							gradient.Color = ColorSequence.new({
+							ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 235, 150)),
+							ColorSequenceKeypoint.new(0.45, Theme.Accent),
+							ColorSequenceKeypoint.new(1, Theme.AccentDark),
+							})
+							gradient.Rotation = 90
+							gradient.Parent = button
 							return button
 							end
 							
 							function UIFactory.CloseButton(onClick)
 							local button = Instance.new("TextButton")
-							button.Size = UDim2.new(0, 32, 0, 32)
-							button.BackgroundColor3 = Color3.fromRGB(200, 60, 60)
+							button.Size = UDim2.new(0, 34, 0, 34)
+							button.BackgroundColor3 = Theme.Error
 							button.TextColor3 = Color3.fromRGB(255, 255, 255)
 							button.Font = Theme.Font
 							button.TextSize = 18
 							button.Text = "X"
-							UIFactory.Corner(button, 8)
+							button.TextStrokeTransparency = 0.6
+							UIFactory.Corner(button, 17)
+							UIFactory.Stroke(button, Theme.Stroke, 2)
 							if onClick then
 							button.MouseButton1Click:Connect(function()
 							pcall(onClick)
@@ -18535,8 +18933,8 @@
 							frame.BackgroundColor3 = Theme.Panel
 							frame.BorderSizePixel = 0
 							frame.Visible = false
-							UIFactory.Corner(frame, 12)
-							UIFactory.Stroke(frame, Theme.Stroke, 2)
+							UIFactory.Corner(frame, 18)
+							UIFactory.Stroke(frame, Theme.Stroke, 3)
 							frame.Parent = parent
 							
 							local sizeConstraint = Instance.new("UISizeConstraint")
@@ -18546,29 +18944,38 @@
 							
 							local titleBar = Instance.new("Frame")
 							titleBar.Name = "TitleBar"
-							titleBar.Size = UDim2.new(1, 0, 0, 44)
+							titleBar.Size = UDim2.new(1, 0, 0, 48)
 							titleBar.BackgroundColor3 = Theme.Background
 							titleBar.BorderSizePixel = 0
 							titleBar.Parent = frame
-							UIFactory.Corner(titleBar, 12)
+							UIFactory.Corner(titleBar, 18)
+							
+							-- candy stripe under the title bar
+							local stripe = Instance.new("Frame")
+							stripe.Size = UDim2.new(1, 0, 0, 4)
+							stripe.Position = UDim2.new(0, 0, 1, 0)
+							stripe.BackgroundColor3 = Theme.Accent
+							stripe.BorderSizePixel = 0
+							stripe.Parent = titleBar
 							
 							-- fix bottom corners of title bar (square them)
 							local titleFix = Instance.new("Frame")
-							titleFix.Size = UDim2.new(1, 0, 0, 12)
-							titleFix.Position = UDim2.new(0, 0, 1, -12)
+							titleFix.Size = UDim2.new(1, 0, 0, 18)
+							titleFix.Position = UDim2.new(0, 0, 1, -18)
 							titleFix.BackgroundColor3 = Theme.Background
 							titleFix.BorderSizePixel = 0
 							titleFix.Parent = titleBar
 							
-							local titleLabel = UIFactory.Label(title or "", UDim2.new(1, -60, 1, 0), Theme.Accent, 18)
+							local titleLabel = UIFactory.Label(title or "", UDim2.new(1, -60, 1, 0), Theme.Accent, 22)
+							titleLabel.Font = Theme.FontTitle
 							titleLabel.Position = UDim2.new(0, 14, 0, 0)
 							titleLabel.TextXAlignment = Enum.TextXAlignment.Left
 							titleLabel.Parent = titleBar
 							
 							local content = Instance.new("Frame")
 							content.Name = "Content"
-							content.Position = UDim2.new(0, 0, 0, 48)
-							content.Size = UDim2.new(1, 0, 1, -56)
+							content.Position = UDim2.new(0, 0, 0, 54)
+							content.Size = UDim2.new(1, 0, 1, -62)
 							content.BackgroundTransparency = 1
 							content.Parent = frame
 							UIFactory.Padding(content, 10)
@@ -18667,24 +19074,35 @@
 							card.Size = UDim2.new(1, 0, 0, height or 64)
 							card.BackgroundColor3 = Theme.Card
 							card.BorderSizePixel = 0
-							UIFactory.Corner(card, 8)
+							UIFactory.Corner(card, 14)
+							UIFactory.Stroke(card, Theme.Stroke, 2)
 							UIFactory.Padding(card, 8)
 							return card
 							end
 							
 							function UIFactory.ProgressBar(parent, height, fillColor)
 							local back = Instance.new("Frame")
-							back.Size = UDim2.new(1, 0, 0, height or 10)
-							back.BackgroundColor3 = Color3.fromRGB(20, 22, 34)
+							back.Size = UDim2.new(1, 0, 0, height or 14)
+							back.BackgroundColor3 = Theme.Background
 							back.BorderSizePixel = 0
-							UIFactory.Corner(back, 6)
+							UIFactory.Corner(back, 9)
+							UIFactory.Stroke(back, Theme.Stroke, 2)
 							back.Parent = parent
 							local fill = Instance.new("Frame")
 							fill.Size = UDim2.new(0, 0, 1, 0)
 							fill.BackgroundColor3 = fillColor or Theme.Success
 							fill.BorderSizePixel = 0
-							UIFactory.Corner(fill, 6)
+							UIFactory.Corner(fill, 9)
 							fill.Parent = back
+							local shine = Instance.new("UIGradient")
+							shine.Color = ColorSequence.new({
+							ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+							ColorSequenceKeypoint.new(0.4, Color3.fromRGB(255, 255, 255)),
+							ColorSequenceKeypoint.new(0.41, Color3.fromRGB(220, 220, 220)),
+							ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 200, 200)),
+							})
+							shine.Rotation = 90
+							shine.Parent = fill
 							return back, fill
 							end
 							

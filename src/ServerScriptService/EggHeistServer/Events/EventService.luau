@@ -155,6 +155,107 @@ local function clearPickups()
 end
 
 --------------------------------------------------------------------------------
+-- Golden Egg Hunt (always-on hide-and-seek minigame)
+--------------------------------------------------------------------------------
+
+local huntModel = nil
+
+local function ensurePickupFolder()
+	if meteorFolder then
+		return meteorFolder
+	end
+	local gameplay = registry.World.Find("Gameplay")
+	if not gameplay then
+		return nil
+	end
+	meteorFolder = gameplay:FindFirstChild("EventPickups")
+	if not meteorFolder then
+		meteorFolder = Instance.new("Folder")
+		meteorFolder.Name = "EventPickups"
+		meteorFolder.Parent = gameplay
+	end
+	return meteorFolder
+end
+
+local function spawnHuntEgg()
+	if huntModel and huntModel.Parent then
+		return huntModel
+	end
+	local folder = ensurePickupFolder()
+	if not folder then
+		return nil
+	end
+	local centers = scatterCenters()
+	local spot = centers[rng:NextInteger(1, #centers)]
+	local angle = rng:NextNumber(0, math.pi * 2)
+	local dist = rng:NextNumber(6, spot.radius)
+	local position = spot.pos + Vector3.new(math.cos(angle) * dist, 2.5, math.sin(angle) * dist)
+	local model = registry.World.CloneEggAsset("GoldenEgg")
+	model.Name = "GoldenHuntEgg"
+	local body = model:FindFirstChild("Body")
+	if body and body:IsA("BasePart") then
+		body.CFrame = CFrame.new(position)
+		body.Anchored = true
+		body.CanCollide = false
+		local prompt = Instance.new("ProximityPrompt")
+		prompt.ActionText = "Claim"
+		prompt.ObjectText = "GOLDEN EGG!"
+		prompt.HoldDuration = 0.5
+		prompt.MaxActivationDistance = 12
+		prompt.RequiresLineOfSight = false
+		prompt.Parent = body
+		prompt.Triggered:Connect(function(player)
+			if model.Parent then
+				model:Destroy() -- first claim wins
+				local gems = Events.EggHunt.GemReward or 25
+				registry.Economy.AddGems(player, gems, "egg_hunt")
+				registry.Notify.Send(player, "secret", "GOLDEN EGG!",
+					"You found the hidden golden egg! +" .. tostring(gems) .. " gems!", 6)
+				registry.Net.FireAll("Feed", { icon = "HUNT",
+					text = player.DisplayName .. " found the GOLDEN EGG!" })
+				registry.Net.Fire(player, "Fx", "GrabFx")
+			end
+		end)
+	end
+	-- gold beacon + sparkle halo so hunters can spot it from afar
+	local beacon = Instance.new("Part")
+	beacon.Name = "Beacon"
+	beacon.Size = Vector3.new(2, 60, 2)
+	beacon.CFrame = CFrame.new(position.X, 30, position.Z)
+	beacon.Color = Color3.fromRGB(255, 205, 60)
+	beacon.Material = Enum.Material.Neon
+	beacon.Anchored = true
+	beacon.CanCollide = false
+	beacon.CanQuery = false
+	beacon.Parent = model
+	local halo = Instance.new("ParticleEmitter")
+	halo.Color = ColorSequence.new(Color3.fromRGB(255, 215, 100))
+	halo.LightEmission = 0.9
+	halo.Rate = 8
+	halo.Speed = NumberRange.new(2, 5)
+	halo.Size = NumberSequence.new(0.8)
+	halo.Lifetime = NumberRange.new(1, 2)
+	halo.SpreadAngle = Vector2.new(180, 180)
+	halo.Parent = model:FindFirstChild("Body") or model
+	model.Parent = folder
+	huntModel = model
+	task.delay(Events.EggHunt.Lifetime or 180, function()
+		if model and model.Parent then
+			model:Destroy()
+		end
+		if huntModel == model then
+			huntModel = nil
+		end
+	end)
+	return model
+end
+
+--- Test backdoor: spawns the golden hunt egg immediately (sim coverage).
+function EventService.TestSpawnHuntEgg()
+	return spawnHuntEgg()
+end
+
+--------------------------------------------------------------------------------
 -- Event lifecycle
 --------------------------------------------------------------------------------
 
@@ -310,6 +411,16 @@ function EventService.Start()
 				end
 			end
 		end)
+	end)
+
+	task.spawn(function()
+		task.wait(Events.EggHunt.FirstDelay or 90)
+		while true do
+			if Settings.Features.Events and Events.EggHunt.Enabled then
+				pcall(spawnHuntEgg)
+			end
+			task.wait(Events.EggHunt.Interval or 300)
+		end
 	end)
 
 	task.spawn(function()

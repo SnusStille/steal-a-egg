@@ -1,5 +1,21 @@
 # Changelog
 
+## CARTOON — UI, map & functions glow-up (2026-09-15)
+
+Everything chunkier, brighter, and more playful. Full gate green
+(sim `WARNS:0 ERRORS:0` incl. new place-all + hunt assertions).
+
+- CARTOON UI: dark-candy theme (grape panels, sunny buttons, bubble-red
+  close), Fredoka One + Cartoon fonts, thick outlines, candy gradients,
+  bouncy Back-ease button punch, chunky progress bars — all 19 screens.
+- CARTOON MAP: candy trees, lollipop lamps, giant sparkle eggs, a rainbow
+  arch over the plaza, gumdrops, bright cartoon daylight + saturated sky
+  (events restore to cartoon, never grey).
+- PLACE ALL: one tap places the whole pouch (remote + inventory button).
+- BASE COMMAND TOTEM: Hatch-All + Collect-Vault prompts on every plot.
+- GOLDEN EGG HUNT: always-on hide-and-seek — a glowing golden egg with a
+  gold beacon hides in the districts; first claim wins 25 gems + Feed fame.
+
 ## PLAYABLE — systems wired into the world (2026-09-15)
 
 Every backend system is now player-usable in the 3D world. Full gate green

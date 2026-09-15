@@ -521,6 +521,26 @@ function EggService.PlaceEgg(player, eggUid)
 	return true
 end
 
+--- Places every carried egg on free pads (one tap, whole pouch).
+function EggService.PlaceAllEggs(player)
+	local profile = profileOf(player)
+	if not profile then
+		return 0
+	end
+	local placed = 0
+	for _, egg in ipairs(profile.eggs or {}) do
+		if not egg.placedPad and EggService.PlaceEgg(player, egg.uid) then
+			placed = placed + 1
+		end
+	end
+	if placed > 0 then
+		registry.Notify.Send(player, "success", "Eggs placed!",
+			"Placed " .. tostring(placed) .. " egg" .. (placed == 1 and "" or "s")
+				.. " on your pads!", 4)
+	end
+	return placed
+end
+
 --- Returns a placed egg to the pouch (timer resets on next placement).
 function EggService.PickupEgg(player, eggUid)
 	eggUid = Validate.Uid(eggUid)
@@ -1010,6 +1030,10 @@ function EggService.Start()
 
 	registry.Net.OnRequest("PickupEgg", function(player, eggUid)
 		EggService.PickupEgg(player, eggUid)
+	end)
+
+	registry.Net.OnRequest("PlaceAllEggs", function(player)
+		EggService.PlaceAllEggs(player)
 	end)
 
 	registry.Net.OnRequest("HatchEgg", function(player, eggUid)

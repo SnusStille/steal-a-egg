@@ -11,6 +11,7 @@ local Economy = require(ConfigFolder:WaitForChild("Economy"))
 local Settings = require(ConfigFolder:WaitForChild("Settings"))
 local ShopConfig = require(ConfigFolder:WaitForChild("Shop"))
 local Validate = require(Shared:WaitForChild("Utilities"):WaitForChild("Validate"))
+local ModelFactory = require(Shared:WaitForChild("Utilities"):WaitForChild("ModelFactory"))
 
 local BaseService = {}
 BaseService.Name = "BaseService"
@@ -194,6 +195,79 @@ local function ensureClaimPrompt(index)
 	end)
 end
 
+--- Command totem: Hatch-All + Collect prompts for the plot owner.
+--- Prompts are CLIENT-wired (NpcController) to self-only remotes.
+local function ensurePlotTotem(index)
+	local plot = registry.World.GetPlotModel(index)
+	if not plot then
+		return
+	end
+	local furniture = plot:FindFirstChild("ServerFurniture")
+	if not furniture then
+		furniture = Instance.new("Folder")
+		furniture.Name = "ServerFurniture"
+		furniture.Parent = plot
+	end
+	if furniture:FindFirstChild("PlotTotem") then
+		return
+	end
+	local foundation = plot:FindFirstChild("Foundation")
+	if not foundation or not foundation:IsA("BasePart") then
+		return
+	end
+	local spot = ModelFactory.FindClearSpot(plot, Vector3.new(14, 0, 15), 3, 15)
+	local base = foundation.Position
+		+ Vector3.new(0, foundation.Size.Y / 2, 0)
+		+ spot
+	local totem = Instance.new("Part")
+	totem.Name = "PlotTotem"
+	totem.Shape = Enum.PartType.Cylinder
+	totem.Size = Vector3.new(5, 2.4, 2.4)
+	totem.CFrame = CFrame.new(base + Vector3.new(0, 2.5, 0))
+		* CFrame.fromEulerAnglesXYZ(0, 0, math.pi / 2)
+	totem.Color = Color3.fromRGB(70, 235, 130)
+	totem.Material = Enum.Material.Neon
+	totem.Transparency = 0.25
+	totem.Anchored = true
+	totem.CanCollide = true
+	totem.TopSurface = Enum.SurfaceType.Smooth
+	totem.BottomSurface = Enum.SurfaceType.Smooth
+	totem.Parent = furniture
+	local billboard = Instance.new("BillboardGui")
+	billboard.Name = "TotemLabel"
+	billboard.Size = UDim2.new(0, 160, 0, 40)
+	billboard.StudsOffset = Vector3.new(0, 6.5, 0)
+	billboard.AlwaysOnTop = false
+	billboard.MaxDistance = 70
+	billboard.Parent = totem
+	local text = Instance.new("TextLabel")
+	text.Size = UDim2.fromScale(1, 1)
+	text.BackgroundTransparency = 1
+	text.Text = "BASE COMMAND"
+	text.TextColor3 = Color3.fromRGB(70, 235, 130)
+	text.Font = Enum.Font.FredokaOne
+	text.TextSize = 18
+	text.TextStrokeTransparency = 0.4
+	text.Parent = billboard
+	local defs = {
+		{ Action = "HatchAll", ActionText = "Hatch All Ready", Key = Enum.KeyCode.E },
+		{ Action = "CollectVault", ActionText = "Collect Vault", Key = Enum.KeyCode.F },
+	}
+	for _, def in ipairs(defs) do
+		local prompt = Instance.new("ProximityPrompt")
+		prompt.Name = "BasePrompt"
+		prompt:SetAttribute("Action", def.Action)
+		prompt:SetAttribute("PlotIndex", index)
+		prompt.ActionText = def.ActionText
+		prompt.ObjectText = "Base Command"
+		prompt.KeyboardKeyCode = def.Key
+		prompt.HoldDuration = 0
+		prompt.MaxActivationDistance = 12
+		prompt.RequiresLineOfSight = false
+		prompt.Parent = totem
+	end
+end
+
 function BaseService.AssignPlot(player, preferredIndex)
 	if userPlot[player.UserId] then
 		return userPlot[player.UserId]
@@ -235,6 +309,7 @@ function BaseService.AssignPlot(player, preferredIndex)
 		registry.Pet.OnPlotAssigned(player, index)
 	end
 	ensureClaimPrompt(index) -- owned now: removes the claim prompt
+	ensurePlotTotem(index)
 	registry.World.SetPlotLabel(index, player.DisplayName .. "'s Base")
 	-- one-time starter vault so the first CollectVault feels rewarding
 	if profile and not profile.base.vaultSeeded then

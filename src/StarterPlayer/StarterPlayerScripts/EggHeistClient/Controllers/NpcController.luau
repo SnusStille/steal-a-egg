@@ -76,6 +76,27 @@ local function wirePrompt(prompt)
 	elseif prompt.Name == "MarketPrompt" then
 		wired[prompt] = true
 		prompt.Triggered:Connect(openShop)
+	elseif prompt.Name == "BasePrompt" then
+		wired[prompt] = true
+		prompt.Triggered:Connect(function()
+			local plotIndex = prompt:GetAttribute("PlotIndex")
+			local snap = ctx.Data and ctx.Data.Get and ctx.Data.Get() or nil
+			local ownPlot = snap and snap.base and snap.base.plot or 0
+			if plotIndex and plotIndex ~= ownPlot then
+				local notifications = ctx.Screens and ctx.Screens.NotificationsScreen
+				if notifications then
+					notifications.Show("warning", "Not your base!",
+						"This command totem belongs to someone else.", 3)
+				end
+				return
+			end
+			local action = prompt:GetAttribute("Action")
+			if action == "HatchAll" and ctx.Controllers.EggController then
+				ctx.Controllers.EggController.HatchAll()
+			elseif action == "CollectVault" and ctx.Controllers.BaseController then
+				ctx.Controllers.BaseController.CollectVault()
+			end
+		end)
 	end
 end
 

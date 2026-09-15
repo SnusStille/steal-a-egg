@@ -116,4 +116,14 @@ Events.Order = { "GoldenHour", "MeteorShower", "BloodMoon", "VoidEvent", "HeistN
 -- Time between event rolls when no event is active
 Events.IdleRollInterval = 120
 
+-- Golden Egg Hunt: a glowing golden egg hides somewhere in the districts;
+-- first player to claim it wins gems + Feed fame. Always-on minigame.
+Events.EggHunt = {
+	Enabled = true,
+	FirstDelay = 90,
+	Interval = 300,
+	GemReward = 25,
+	Lifetime = 180,
+}
+
 return Events

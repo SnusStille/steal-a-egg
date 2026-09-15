@@ -7,22 +7,23 @@ local TweenService = game:GetService("TweenService")
 local UIFactory = {}
 
 UIFactory.Theme = {
-	Background = Color3.fromRGB(18, 20, 32),
-	Panel = Color3.fromRGB(28, 31, 48),
-	Card = Color3.fromRGB(38, 42, 64),
-	Accent = Color3.fromRGB(255, 200, 80),
-	AccentDark = Color3.fromRGB(200, 140, 40),
-	Success = Color3.fromRGB(80, 220, 120),
-	Warning = Color3.fromRGB(255, 170, 60),
-	Error = Color3.fromRGB(255, 90, 90),
-	Text = Color3.fromRGB(245, 245, 250),
-	TextDim = Color3.fromRGB(170, 175, 195),
-	Button = Color3.fromRGB(58, 64, 100),
-	ButtonHover = Color3.fromRGB(76, 84, 130),
-	Stroke = Color3.fromRGB(70, 76, 110),
-	Font = Enum.Font.GothamBold,
-	FontRegular = Enum.Font.Gotham,
-	Corner = 10,
+	Background = Color3.fromRGB(38, 30, 70),
+	Panel = Color3.fromRGB(56, 44, 100),
+	Card = Color3.fromRGB(74, 60, 128),
+	Accent = Color3.fromRGB(255, 205, 60),
+	AccentDark = Color3.fromRGB(240, 140, 30),
+	Success = Color3.fromRGB(70, 235, 130),
+	Warning = Color3.fromRGB(255, 160, 40),
+	Error = Color3.fromRGB(255, 95, 120),
+	Text = Color3.fromRGB(255, 255, 255),
+	TextDim = Color3.fromRGB(205, 190, 240),
+	Button = Color3.fromRGB(90, 110, 255),
+	ButtonHover = Color3.fromRGB(120, 140, 255),
+	Stroke = Color3.fromRGB(28, 20, 55),
+	Font = Enum.Font.FredokaOne,
+	FontRegular = Enum.Font.FredokaOne,
+	FontTitle = Enum.Font.Cartoon,
+	Corner = 16,
 }
 
 local Theme = UIFactory.Theme
@@ -91,8 +92,9 @@ function UIFactory.Button(text, onClick)
 	button.TextSize = 15
 	button.Text = text or ""
 	button.AutoButtonColor = true
-	UIFactory.Corner(button, 8)
-	UIFactory.Stroke(button, Theme.Stroke, 1)
+	button.TextStrokeTransparency = 0.75
+	UIFactory.Corner(button, 12)
+	UIFactory.Stroke(button, Theme.Stroke, 2)
 	if onClick then
 		button.MouseButton1Click:Connect(function()
 			-- press pop: every factory button punches on click
@@ -100,14 +102,14 @@ function UIFactory.Button(text, onClick)
 				local original = button.Size
 				local punch = TweenService:Create(button,
 					TweenInfo.new(0.07, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-					Size = UDim2.new(original.X.Scale * 0.94, original.X.Offset * 0.94,
-						original.Y.Scale * 0.94, original.Y.Offset * 0.94),
+					Size = UDim2.new(original.X.Scale * 0.9, original.X.Offset * 0.9,
+						original.Y.Scale * 0.9, original.Y.Offset * 0.9),
 					})
 				punch:Play()
 				punch.Completed:Connect(function()
 					pcall(function()
 						TweenService:Create(button,
-							TweenInfo.new(0.09, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+							TweenInfo.new(0.22, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
 							Size = original,
 							}):Play()
 					end)
@@ -122,19 +124,29 @@ end
 function UIFactory.PrimaryButton(text, onClick)
 	local button = UIFactory.Button(text, onClick)
 	button.BackgroundColor3 = Theme.Accent
-	button.TextColor3 = Color3.fromRGB(30, 25, 10)
+	button.TextColor3 = Color3.fromRGB(90, 45, 0)
+	local gradient = Instance.new("UIGradient")
+	gradient.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 235, 150)),
+		ColorSequenceKeypoint.new(0.45, Theme.Accent),
+		ColorSequenceKeypoint.new(1, Theme.AccentDark),
+	})
+	gradient.Rotation = 90
+	gradient.Parent = button
 	return button
 end
 
 function UIFactory.CloseButton(onClick)
 	local button = Instance.new("TextButton")
-	button.Size = UDim2.new(0, 32, 0, 32)
-	button.BackgroundColor3 = Color3.fromRGB(200, 60, 60)
+	button.Size = UDim2.new(0, 34, 0, 34)
+	button.BackgroundColor3 = Theme.Error
 	button.TextColor3 = Color3.fromRGB(255, 255, 255)
 	button.Font = Theme.Font
 	button.TextSize = 18
 	button.Text = "X"
-	UIFactory.Corner(button, 8)
+	button.TextStrokeTransparency = 0.6
+	UIFactory.Corner(button, 17)
+	UIFactory.Stroke(button, Theme.Stroke, 2)
 	if onClick then
 		button.MouseButton1Click:Connect(function()
 			pcall(onClick)
@@ -153,8 +165,8 @@ function UIFactory.Window(parent, title, size)
 	frame.BackgroundColor3 = Theme.Panel
 	frame.BorderSizePixel = 0
 	frame.Visible = false
-	UIFactory.Corner(frame, 12)
-	UIFactory.Stroke(frame, Theme.Stroke, 2)
+	UIFactory.Corner(frame, 18)
+	UIFactory.Stroke(frame, Theme.Stroke, 3)
 	frame.Parent = parent
 
 	local sizeConstraint = Instance.new("UISizeConstraint")
@@ -164,29 +176,38 @@ function UIFactory.Window(parent, title, size)
 
 	local titleBar = Instance.new("Frame")
 	titleBar.Name = "TitleBar"
-	titleBar.Size = UDim2.new(1, 0, 0, 44)
+	titleBar.Size = UDim2.new(1, 0, 0, 48)
 	titleBar.BackgroundColor3 = Theme.Background
 	titleBar.BorderSizePixel = 0
 	titleBar.Parent = frame
-	UIFactory.Corner(titleBar, 12)
+	UIFactory.Corner(titleBar, 18)
+
+	-- candy stripe under the title bar
+	local stripe = Instance.new("Frame")
+	stripe.Size = UDim2.new(1, 0, 0, 4)
+	stripe.Position = UDim2.new(0, 0, 1, 0)
+	stripe.BackgroundColor3 = Theme.Accent
+	stripe.BorderSizePixel = 0
+	stripe.Parent = titleBar
 
 	-- fix bottom corners of title bar (square them)
 	local titleFix = Instance.new("Frame")
-	titleFix.Size = UDim2.new(1, 0, 0, 12)
-	titleFix.Position = UDim2.new(0, 0, 1, -12)
+	titleFix.Size = UDim2.new(1, 0, 0, 18)
+	titleFix.Position = UDim2.new(0, 0, 1, -18)
 	titleFix.BackgroundColor3 = Theme.Background
 	titleFix.BorderSizePixel = 0
 	titleFix.Parent = titleBar
 
-	local titleLabel = UIFactory.Label(title or "", UDim2.new(1, -60, 1, 0), Theme.Accent, 18)
+	local titleLabel = UIFactory.Label(title or "", UDim2.new(1, -60, 1, 0), Theme.Accent, 22)
+	titleLabel.Font = Theme.FontTitle
 	titleLabel.Position = UDim2.new(0, 14, 0, 0)
 	titleLabel.TextXAlignment = Enum.TextXAlignment.Left
 	titleLabel.Parent = titleBar
 
 	local content = Instance.new("Frame")
 	content.Name = "Content"
-	content.Position = UDim2.new(0, 0, 0, 48)
-	content.Size = UDim2.new(1, 0, 1, -56)
+	content.Position = UDim2.new(0, 0, 0, 54)
+	content.Size = UDim2.new(1, 0, 1, -62)
 	content.BackgroundTransparency = 1
 	content.Parent = frame
 	UIFactory.Padding(content, 10)
@@ -285,24 +306,35 @@ function UIFactory.Card(height)
 	card.Size = UDim2.new(1, 0, 0, height or 64)
 	card.BackgroundColor3 = Theme.Card
 	card.BorderSizePixel = 0
-	UIFactory.Corner(card, 8)
+	UIFactory.Corner(card, 14)
+	UIFactory.Stroke(card, Theme.Stroke, 2)
 	UIFactory.Padding(card, 8)
 	return card
 end
 
 function UIFactory.ProgressBar(parent, height, fillColor)
 	local back = Instance.new("Frame")
-	back.Size = UDim2.new(1, 0, 0, height or 10)
-	back.BackgroundColor3 = Color3.fromRGB(20, 22, 34)
+	back.Size = UDim2.new(1, 0, 0, height or 14)
+	back.BackgroundColor3 = Theme.Background
 	back.BorderSizePixel = 0
-	UIFactory.Corner(back, 6)
+	UIFactory.Corner(back, 9)
+	UIFactory.Stroke(back, Theme.Stroke, 2)
 	back.Parent = parent
 	local fill = Instance.new("Frame")
 	fill.Size = UDim2.new(0, 0, 1, 0)
 	fill.BackgroundColor3 = fillColor or Theme.Success
 	fill.BorderSizePixel = 0
-	UIFactory.Corner(fill, 6)
+	UIFactory.Corner(fill, 9)
 	fill.Parent = back
+	local shine = Instance.new("UIGradient")
+	shine.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+		ColorSequenceKeypoint.new(0.4, Color3.fromRGB(255, 255, 255)),
+		ColorSequenceKeypoint.new(0.41, Color3.fromRGB(220, 220, 220)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 200, 200)),
+	})
+	shine.Rotation = 90
+	shine.Parent = fill
 	return back, fill
 end
 

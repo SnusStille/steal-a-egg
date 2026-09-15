@@ -272,6 +272,10 @@ NumberSequence = {}
 function NumberSequence.new(...) return {} end
 ColorSequence = {}
 function ColorSequence.new(...) return {} end
+ColorSequenceKeypoint = {}
+function ColorSequenceKeypoint.new(...) return {} end
+NumberSequenceKeypoint = {}
+function NumberSequenceKeypoint.new(...) return {} end
 PhysicalProperties = {}
 function PhysicalProperties.new(...) return {} end
 TweenInfo = {}
@@ -975,8 +979,41 @@ function _SIM.snatchLoop()
 	_SIM.runDelayed()
 	_SIM.check(not HS.IsCarrying(p1), "snatch", "p1 still carrying after abandon")
 	_SIM.check(#prof2.eggs == eggCountBefore, "snatch", "egg not restored to victim")
+	-- place-all: p2 buys another egg, then places the whole pouch at once
+	out[#out + 1] = _SIM.fireServerAs(p2, "BuyEgg", "Basic")
+	_SIM.runDelayed()
+	out[#out + 1] = _SIM.fireServerAs(p2, "PlaceAllEggs")
+	_SIM.runDelayed()
+	local placedCount = 0
+	for _, egg in ipairs(prof2.eggs) do
+		if egg.placedPad then placedCount = placedCount + 1 end
+	end
+	_SIM.check(placedCount == #prof2.eggs and #prof2.eggs >= 2,
+		"snatch", "PlaceAllEggs did not place the whole pouch")
 	HS.TestResetCooldowns()
 	return table.concat(out, " | ") .. " | snatch-ok"
+end
+
+function _SIM.huntLoop()
+	local ES = require(_SIM.serverModule("EventService"))
+	local DS = require(_SIM.serverModule("DataService"))
+	local p1 = _SIM.localPlayer
+	local gemsBefore = DS.GetProfile(p1).gems or 0
+	local model = ES.TestSpawnHuntEgg()
+	if not model then return "hunt-no-model" end
+	local prompt = nil
+	for _, d in ipairs(model:GetDescendants()) do
+		if d.ClassName == "ProximityPrompt" then prompt = d break end
+	end
+	if not prompt then return "hunt-no-prompt" end
+	local sig = rawget(prompt, "Triggered")
+	if not sig then return "hunt-no-signal" end
+	sig:Fire(p1)
+	_SIM.runDelayed()
+	local gemsAfter = DS.GetProfile(p1).gems or 0
+	_SIM.check(gemsAfter - gemsBefore == 25, "hunt", "hunt gems not granted")
+	_SIM.check(model.Parent == nil, "hunt", "hunt egg not consumed")
+	return "hunt-ok"
 end
 
 function _SIM.fireDied(player)

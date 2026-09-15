@@ -269,6 +269,11 @@ function InventoryScreen.Refresh()
 			end)
 			hatchAll.Size = UDim2.new(0, 150, 0, 44)
 			hatchAll.Parent = eggsGrid
+			local placeAll = UIFactory.Button("PLACE ALL", function()
+				ctx.Controllers.EggController.PlaceAllEggs()
+			end)
+			placeAll.Size = UDim2.new(0, 150, 0, 44)
+			placeAll.Parent = eggsGrid
 		end
 		for _, egg in ipairs(eggs) do
 			eggCard(egg).Parent = eggsGrid

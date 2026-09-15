@@ -467,6 +467,18 @@ function WorldService.Init(_, reg)
 		liveFolder.Parent = Workspace
 	end
 
+	-- Cartoon base lighting: bright candy day (events restore to THIS)
+	pcall(function()
+		Lighting.ClockTime = 14
+		Lighting.Brightness = 3
+		Lighting.Ambient = Color3.fromRGB(140, 170, 220)
+		Lighting.OutdoorAmbient = Color3.fromRGB(150, 180, 230)
+		Lighting.FogColor = Color3.fromRGB(175, 210, 245)
+		Lighting.FogStart = 150
+		Lighting.FogEnd = 1200
+		Lighting.ColorShift_Top = Color3.fromRGB(170, 200, 240)
+		Lighting.ColorShift_Bottom = Color3.fromRGB(230, 210, 190)
+	end)
 	-- Snapshot default lighting for event restore
 	defaultLighting.ClockTime = Lighting.ClockTime
 	defaultLighting.Brightness = Lighting.Brightness

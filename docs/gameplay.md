@@ -72,3 +72,5 @@ tiers with level gates and exponential costs. Owners get instant alerts
   blocked while carrying loot.
 - **Prestige** — reset for a permanent income multiplier when progression
   slows; the long-game lever.
+- **Golden Egg Hunt** — a glowing golden egg hides in the districts every
+  few minutes; first claim wins gems + Feed fame.
