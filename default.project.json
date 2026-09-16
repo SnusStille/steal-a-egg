@@ -1,0 +1,65 @@
+{
+  "name": "EggHeist",
+  "serveSync": [
+    {
+      "target": "Workspace.EggHeist",
+      "path": "assets/world/EggHeistWorld.rbxm"
+    }
+  ],
+  "tree": {
+    "$className": "DataModel",
+    "Workspace": {
+      "$className": "Workspace",
+      "$properties": {
+        "FilteringEnabled": true,
+        "Gravity": 196.2
+      },
+      "EggHeist": {
+        "$path": "assets/world/EggHeistWorld.rbxm"
+      }
+    },
+    "Lighting": {
+      "$className": "Lighting",
+      "$properties": {
+        "ClockTime": 14.0,
+        "Brightness": 2.0,
+        "Ambient": [100, 100, 100],
+        "OutdoorAmbient": [120, 120, 120],
+        "Technology": 3
+      }
+    },
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "EggHeistShared": {
+        "$path": "src/ReplicatedStorage/EggHeistShared"
+      }
+    },
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+      "EggHeistServer": {
+        "$path": "src/ServerScriptService/EggHeistServer"
+      }
+    },
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "StarterPlayerScripts": {
+        "$className": "StarterPlayerScripts",
+        "EggHeistClient": {
+          "$path": "src/StarterPlayer/StarterPlayerScripts/EggHeistClient"
+        }
+      }
+    },
+    "StarterGui": {
+      "$className": "StarterGui",
+      "$properties": {
+        "ShowDevelopmentGui": false
+      }
+    },
+    "SoundService": {
+      "$className": "SoundService"
+    },
+    "Teams": {
+      "$className": "Teams"
+    }
+  }
+}
