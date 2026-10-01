@@ -389,10 +389,11 @@ svg {
 }
 
 .hero__media img {
+  --media-scale: 1.16;
   object-fit: cover;
-  object-position: 50% 48%;
-  filter: saturate(.77) contrast(1.02);
-  transform: translate3d(var(--shift-x, 0px), var(--shift-y, 0px), 0) scale(1.025);
+  object-position: 50% 50%;
+  filter: saturate(.9) contrast(1.02);
+  transform: translate3d(var(--shift-x, 0px), var(--shift-y, 0px), 0) scale(var(--media-scale));
   animation: image-arrive 1.2s var(--ease) both;
   will-change: transform;
 }
@@ -463,9 +464,9 @@ svg {
   gap: 12px;
   margin: 0;
   color: var(--muted);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 760;
-  letter-spacing: .16em;
+  letter-spacing: .14em;
   line-height: 1.4;
   text-transform: uppercase;
 }
@@ -484,7 +485,7 @@ svg {
 .hero h1,
 .section-heading h2,
 .principles-intro h2,
-.work-copy h2,
+.brief-copy h2,
 .about-copy h2,
 .faq-intro h2,
 .contact-banner h2 {
@@ -504,7 +505,7 @@ svg {
 .hero h1 em,
 .section-heading h2 em,
 .principles-intro h2 em,
-.work-copy h2 em,
+.brief-copy h2 em,
 .about-copy h2 em,
 .faq-intro h2 em,
 .contact-banner h2 em {
@@ -687,7 +688,7 @@ svg {
 
 .section-heading h2,
 .principles-intro h2,
-.work-copy h2,
+.brief-copy h2,
 .about-copy h2,
 .faq-intro h2 {
   font-size: clamp(49px, 6.3vw, 86px);
@@ -821,6 +822,7 @@ svg {
 .text-link {
   display: inline-flex;
   align-items: center;
+  min-height: 44px;
   gap: 11px;
   color: var(--ink);
   font-size: 10px;
@@ -908,7 +910,7 @@ svg {
 }
 
 .principles-intro h2 em,
-.work-copy h2 em {
+.brief-copy h2 em {
   color: var(--accent);
 }
 
@@ -1073,25 +1075,25 @@ svg {
   line-height: 1.75;
 }
 
-/* Project photos intentionally withheld until genuine, approved material exists. */
-.work-section {
+/* A practical first-contact guide, not a placeholder portfolio. */
+.brief-section {
   overflow: hidden;
   color: var(--white);
   background: var(--ink-2);
 }
 
-.work-section__grid {
+.brief-section__grid {
   display: grid;
   grid-template-columns: minmax(0, .86fr) minmax(0, 1.14fr);
   gap: clamp(50px, 9vw, 140px);
   align-items: center;
 }
 
-.work-copy h2 {
+.brief-copy h2 {
   margin-top: 34px;
 }
 
-.work-copy > p:not(.section-label) {
+.brief-copy > p:not(.section-label) {
   max-width: 430px;
   margin: 24px 0 29px;
   color: rgba(255, 255, 255, .63);
@@ -1099,105 +1101,82 @@ svg {
   line-height: 1.8;
 }
 
-.work-frame {
+.brief-panel {
   position: relative;
-  display: grid;
-  place-items: center;
-  min-height: clamp(320px, 38vw, 500px);
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, .23);
-  background-color: #1b1f20;
-  isolation: isolate;
+  padding: clamp(25px, 3vw, 39px);
+  border: 1px solid rgba(255, 255, 255, .2);
+  background: linear-gradient(135deg, rgba(255, 255, 255, .045), transparent 58%), #1b1f20;
 }
 
-.work-frame::before,
-.work-frame::after {
-  position: absolute;
-  z-index: -1;
-  inset: 7%;
-  border: 1px solid rgba(255, 255, 255, .09);
-  content: "";
-}
-
-.work-frame::after {
-  inset: 14% 18%;
-  border-color: rgba(240, 106, 53, .25);
-  transform: rotate(-6deg);
-}
-
-.work-frame__grid {
-  position: absolute;
-  inset: 0;
-  background-image: linear-gradient(rgba(255, 255, 255, .04) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, .04) 1px, transparent 1px);
-  background-size: 42px 42px;
-  mask-image: radial-gradient(ellipse at center, #000 0%, transparent 78%);
-}
-
-.work-frame__center {
-  display: flex;
-  align-items: center;
-  flex-direction: column;
-  gap: 12px;
-  color: var(--white);
-}
-
-.work-frame__center > span {
-  color: rgba(255, 255, 255, .11);
-  font-size: clamp(112px, 19vw, 230px);
-  font-weight: 850;
-  letter-spacing: -.12em;
-  line-height: .72;
-  padding-right: .12em;
-  transition: color .5s ease, transform .5s var(--ease);
-}
-
-.work-frame:hover .work-frame__center > span {
-  color: rgba(255, 255, 255, .17);
-  transform: scale(1.02);
-}
-
-.work-frame__center i {
-  display: block;
-  width: 32px;
-  height: 2px;
-  background: var(--accent);
-}
-
-.work-frame__center small,
-.work-frame__bottom {
-  color: rgba(255, 255, 255, .6);
+.brief-panel__eyebrow {
+  margin: 0;
+  color: var(--accent);
   font-size: 8px;
-  font-weight: 740;
+  font-weight: 760;
   letter-spacing: .16em;
 }
 
-.work-frame__bottom {
-  position: absolute;
-  right: 19px;
-  bottom: 18px;
-  left: 19px;
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  color: rgba(255, 255, 255, .48);
-  font-size: 7px;
+.brief-panel__list {
+  margin: 20px 0 0;
+  padding: 0;
+  border-top: 1px solid var(--line-light);
+  list-style: none;
 }
 
-.work-frame__cross {
-  position: absolute;
+.brief-panel__list li {
+  display: grid;
+  grid-template-columns: 37px minmax(0, 1fr);
+  gap: 15px;
+  align-items: start;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--line-light);
+}
+
+.brief-panel__number {
+  padding-top: 3px;
   color: var(--accent);
-  font-size: 20px;
-  font-weight: 300;
+  font-size: 9px;
+  font-weight: 760;
+  letter-spacing: .12em;
 }
 
-.work-frame__cross--one {
-  top: 15%;
-  left: 15%;
+.brief-panel__list h3 {
+  margin: 0;
+  color: var(--white);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -.025em;
 }
 
-.work-frame__cross--two {
-  right: 14%;
-  bottom: 18%;
+.brief-panel__list p {
+  margin: 5px 0 0;
+  color: rgba(255, 255, 255, .62);
+  font-size: 11px;
+  line-height: 1.65;
+}
+
+.brief-panel__note {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+  padding: 13px 14px;
+  border-left: 2px solid var(--accent);
+  background: rgba(255, 255, 255, .045);
+}
+
+.brief-panel__note > span {
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 820;
+  letter-spacing: -.04em;
+}
+
+.brief-panel__note p {
+  margin: 0;
+  color: rgba(255, 255, 255, .77);
+  font-size: 10px;
+  line-height: 1.6;
 }
 
 /* About */
@@ -1237,11 +1216,12 @@ svg {
   height: 100%;
   object-fit: cover;
   object-position: center;
+  transform: scale(1.08);
   transition: transform .8s var(--ease);
 }
 
 .about-visual:hover img {
-  transform: scale(1.035);
+  transform: scale(1.12);
 }
 
 .about-visual__tag {
@@ -1712,7 +1692,7 @@ svg {
   border-radius: 0;
   color: var(--ink);
   background: var(--white);
-  font-size: 11px;
+  font-size: 13px;
   line-height: 1.4;
   transition: border-color .2s ease, box-shadow .2s ease;
 }
@@ -2045,8 +2025,8 @@ svg {
 }
 
 @keyframes image-arrive {
-  from { opacity: .66; transform: scale(1.07); }
-  to { opacity: 1; transform: scale(1.025); }
+  from { opacity: .68; }
+  to { opacity: 1; }
 }
 
 @keyframes content-arrive {
@@ -2195,7 +2175,7 @@ svg {
   }
 
   .principles-section__inner,
-  .work-section__grid {
+  .brief-section__grid {
     gap: 55px;
   }
 
@@ -2264,7 +2244,8 @@ svg {
   }
 
   .hero__media img {
-    object-position: 60% center;
+    --media-scale: 2.35;
+    object-position: 50% 50%;
   }
 
   .photo-label {
@@ -2371,7 +2352,7 @@ svg {
 
   .section-heading h2,
   .principles-intro h2,
-  .work-copy h2,
+  .brief-copy h2,
   .about-copy h2,
   .faq-intro h2 {
     font-size: clamp(47px, 12vw, 69px);
@@ -2388,21 +2369,21 @@ svg {
 
   .service-card {
     display: grid;
-    grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr);
+    grid-template-columns: 1fr;
     align-items: stretch;
   }
 
   .service-card__image {
-    min-height: 205px;
-    aspect-ratio: auto;
+    min-height: 0;
+    aspect-ratio: 1.55;
   }
 
   .service-card__number {
-    top: 11px;
-    left: 10px;
-    padding: 6px 7px;
-    font-size: 6px;
-    letter-spacing: .09em;
+    top: 14px;
+    left: 14px;
+    padding: 7px 9px;
+    font-size: 8px;
+    letter-spacing: .1em;
   }
 
   .service-card__arrow {
@@ -2416,30 +2397,30 @@ svg {
   .photo-label--small {
     bottom: 10px;
     left: 10px;
-    font-size: 6px;
+    font-size: 7px;
   }
 
   .service-card__copy {
     display: flex;
     justify-content: center;
     flex-direction: column;
-    padding: 17px 15px;
+    padding: 19px 20px 20px;
   }
 
   .service-card__copy h3 {
-    font-size: 17px;
+    font-size: 19px;
   }
 
   .service-card__copy p {
     min-height: 0;
-    margin: 8px 0 12px;
-    font-size: 10px;
-    line-height: 1.6;
+    margin: 9px 0 12px;
+    font-size: 12px;
+    line-height: 1.65;
   }
 
   .service-card__copy .text-link {
-    gap: 6px;
-    font-size: 8px;
+    gap: 8px;
+    font-size: 11px;
   }
 
   .service-footnote {
@@ -2450,13 +2431,13 @@ svg {
   }
 
   .service-footnote > p:not(.service-footnote__note) {
-    font-size: 10px;
+    font-size: 12px;
     line-height: 1.75;
   }
 
   .service-footnote__note {
     grid-column: auto;
-    font-size: 8px;
+    font-size: 10px;
     line-height: 1.6;
   }
 
@@ -2488,7 +2469,7 @@ svg {
   }
 
   .principle-item p {
-    font-size: 10px;
+    font-size: 12px;
   }
 
   .process-list {
@@ -2529,36 +2510,37 @@ svg {
 
   .process-step p {
     margin-top: 6px;
-    font-size: 10px;
+    font-size: 12px;
   }
 
-  .work-section__grid {
+  .brief-section__grid {
     grid-template-columns: 1fr;
     gap: 36px;
   }
 
-  .work-copy h2 {
+  .brief-copy h2 {
     margin-top: 27px;
   }
 
-  .work-copy > p:not(.section-label) {
+  .brief-copy > p:not(.section-label) {
     font-size: 11px;
   }
 
-  .work-frame {
-    min-height: 300px;
+  .brief-panel {
+    padding: 21px 18px;
   }
 
-  .work-frame__center > span {
-    font-size: clamp(120px, 35vw, 180px);
+  .brief-panel__list li {
+    gap: 11px;
+    padding-block: 16px;
   }
 
-  .work-frame__bottom {
-    right: 12px;
-    bottom: 13px;
-    left: 12px;
-    flex-direction: column;
-    gap: 5px;
+  .brief-panel__list h3 {
+    font-size: 14px;
+  }
+
+  .brief-panel__list p {
+    font-size: 12px;
   }
 
   .about-grid {
@@ -2569,6 +2551,14 @@ svg {
   .about-visual {
     min-height: min(106vw, 440px);
     order: 2;
+  }
+
+  .about-visual img {
+    transform: scale(1.18);
+  }
+
+  .about-visual:hover img {
+    transform: scale(1.22);
   }
 
   .about-copy {
@@ -2588,7 +2578,7 @@ svg {
   }
 
   .company-facts dd {
-    font-size: 9px;
+    font-size: 11px;
   }
 
 
@@ -2613,7 +2603,7 @@ svg {
 
   .faq-item__answer p {
     padding-right: 34px;
-    font-size: 10px;
+    font-size: 12px;
   }
 
   .contact-banner__inner {
@@ -2653,7 +2643,7 @@ svg {
 
   .contact-details > p:not(.section-label) {
     max-width: 440px;
-    font-size: 11px;
+    font-size: 13px;
   }
 
   .quote-form {
@@ -2665,15 +2655,15 @@ svg {
   }
 
   .field > span:first-child {
-    font-size: 8px;
+    font-size: 11px;
   }
 
   .field input:not([type="file"]),
   .field select,
   .field textarea {
-    min-height: 44px;
-    padding: 10px;
-    font-size: 10px;
+    min-height: 48px;
+    padding: 12px;
+    font-size: 16px;
   }
 
   .field textarea {
@@ -2696,7 +2686,7 @@ svg {
   }
 
   .form-note {
-    font-size: 8px;
+    font-size: 10px;
   }
 
   .footer-top {
@@ -2711,7 +2701,7 @@ svg {
 
   .footer-brand-block > p {
     max-width: 300px;
-    font-size: 9px;
+    font-size: 11px;
   }
 
   .footer-last-cta {
@@ -2726,7 +2716,7 @@ svg {
     flex-wrap: wrap;
     gap: 9px 20px;
     padding-block: 15px;
-    font-size: 7px;
+    font-size: 9px;
   }
 
   .footer-bottom small:nth-child(2) {
@@ -2759,7 +2749,7 @@ svg {
     justify-content: center;
     min-height: 45px;
     gap: 8px;
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 770;
   }
 
@@ -2790,23 +2780,24 @@ svg {
 
   .hero__actions .button--large {
     padding-inline: 15px;
-    font-size: 9px;
+    font-size: 11px;
   }
 
   .service-card__copy {
-    padding: 14px 11px;
+    padding: 16px;
   }
 
   .service-card__copy h3 {
-    font-size: 15px;
+    font-size: 18px;
   }
 
   .service-card__copy p {
-    font-size: 9px;
+    font-size: 12px;
   }
 
   .service-card__image {
-    min-height: 190px;
+    min-height: 0;
+    aspect-ratio: 1.45;
   }
 
   .fact-strip__inner {
@@ -2815,7 +2806,7 @@ svg {
 
   .fact-strip p,
   .fact-strip a {
-    font-size: 7px;
+    font-size: 8px;
   }
 
   .form-grid {

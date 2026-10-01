@@ -43,9 +43,9 @@ Sitemap-generatorn kan även köras fristående: `node scripts/generate-sitemap.
 - MV Riv & Bygg drivs av Marko Valtakoski och har sin bas i Skene.
 - Telefonnumret `070 281 10 03` länkas som ett klickbart `tel:`-nummer.
 - Registreringsår `2007` är inte omskrivet till ett påstående om antal års erfarenhet.
-- Tjänsteöversikten bygger på företagets registrerade verksamhetsområden och rivning enligt briefen. Sanering, håltagning, bilning, totalentreprenad och andra ej bekräftade tjänster marknadsförs inte.
+- Tjänsteöversikten beskriver rivning, bygg och entreprenad enligt användarens bekräftelse samt registrerade verksamhetsområden. Sanering, håltagning, bilning, totalentreprenad och andra ej bekräftade specialiteter marknadsförs inte.
 - Ingen verifierad e-postadress, gatuadress, organisationsnummer, certifiering, försäkring, garanti, kundrecension eller dokumenterad projektprestation har lagts till.
-- Projektsektionen är avsiktligt förberedd men innehåller inga påhittade case.
+- Inga påhittade kundcase eller projektbilder används. Den tidigare tomma projektpanelen är ersatt med en praktisk checklista inför första kontakten.
 
 Källor för offentligt listade företagsuppgifter:
 
@@ -54,9 +54,9 @@ Källor för offentligt listade företagsuppgifter:
 
 ## Bilder
 
-Bilderna från Unsplash och Pexels är lokala, optimerade WebP-referenser. De märks i gränssnittet och presenteras inte som MV Riv & Byggs egna arbeten. Källor och licensinformation finns i [`assets/README.md`](assets/README.md).
+Bilderna från Unsplash och Pexels är lokala WebP-referenser, märkta så att de inte misstas för MV Riv & Byggs arbeten. Markos porträtt i hero och Om-avsnittet hämtas från den Dropbox-länk som användaren delade; det är den enda externa bildresursen. För att webbplatsen ska visa Markos foto krävs internetanslutning. Källor och bildinstruktioner finns i [`assets/README.md`](assets/README.md).
 
-Byt referensbilden i hero och porträttytan mot ett godkänt foto på Marko innan publicering, och uppdatera alt-texten. Lägg godkända foton i `assets/` och optimerade projektbilder i `assets/projects/`. Projektgalleriet ska bara fyllas med verkliga uppdrag som får visas. När den riktiga webbdomänen är bestämd ska `og:image` sättas till en absolut bildadress och canonical/sitemap byggas med samma domän.
+Vill du göra projektet helt fristående/offline: ladda ned det delade fotot till `assets/marko-valtakoski.png` och byt Dropbox-adressen i `index.html` (hero, Om, preload och sociala delningsbilder) mot den lokala sökvägen. Projektbilder ska bara läggas till när de visar verkliga uppdrag som får publiceras. När rätt webbdomän är känd kan canonical och sitemap byggas med den domänen.
 
 ## Offertformulär — viktigt
 
