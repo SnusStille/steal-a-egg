@@ -7,13 +7,23 @@
   const progress = document.querySelector(".reading-progress span");
   const menuToggle = document.querySelector("[data-menu-toggle]");
   const nav = document.querySelector("#site-nav");
-  const mobileQuery = window.matchMedia("(max-width: 720px)");
+  const mobileNavQuery = window.matchMedia("(max-width: 960px)");
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  // Keep the navigation usable without JavaScript; enhance it to a compact menu on mobile.
-  const syncMenuForViewport = () => {
-    if (!nav || !menuToggle) return;
-    if (mobileQuery.matches) {
-      nav.hidden = menuToggle.getAttribute("aria-expanded") !== "true";
+  // Compact menu: keep the links in the document and return focus when it closes.
+  const closeMenu = ({ returnFocus = false } = {}) => {
+    if (!menuToggle || !nav) return;
+    menuToggle.setAttribute("aria-expanded", "false");
+    menuToggle.setAttribute("aria-label", "Öppna meny");
+    nav.hidden = mobileNavQuery.matches;
+    if (returnFocus) menuToggle.focus({ preventScroll: true });
+  };
+
+  const syncMenu = () => {
+    if (!menuToggle || !nav) return;
+    if (mobileNavQuery.matches) {
+      const isOpen = menuToggle.getAttribute("aria-expanded") === "true";
+      nav.hidden = !isOpen;
     } else {
       nav.hidden = false;
       menuToggle.setAttribute("aria-expanded", "false");
@@ -21,99 +31,100 @@
     }
   };
 
-  syncMenuForViewport();
-  mobileQuery.addEventListener?.("change", syncMenuForViewport);
+  syncMenu();
+  mobileNavQuery.addEventListener?.("change", syncMenu);
 
   menuToggle?.addEventListener("click", () => {
-    const isOpen = menuToggle.getAttribute("aria-expanded") === "true";
-    menuToggle.setAttribute("aria-expanded", String(!isOpen));
-    menuToggle.setAttribute("aria-label", isOpen ? "Öppna meny" : "Stäng meny");
-    nav.hidden = isOpen;
-    if (!isOpen) nav.querySelector("a")?.focus({ preventScroll: true });
+    const opening = menuToggle.getAttribute("aria-expanded") !== "true";
+    menuToggle.setAttribute("aria-expanded", String(opening));
+    menuToggle.setAttribute("aria-label", opening ? "Stäng meny" : "Öppna meny");
+    nav.hidden = !opening;
+    if (opening) nav.querySelector("a")?.focus({ preventScroll: true });
   });
 
   nav?.querySelectorAll("a").forEach((link) => {
     link.addEventListener("click", () => {
-      if (!mobileQuery.matches || !menuToggle) return;
-      menuToggle.setAttribute("aria-expanded", "false");
-      menuToggle.setAttribute("aria-label", "Öppna meny");
-      nav.hidden = true;
+      if (mobileNavQuery.matches) closeMenu();
     });
   });
 
-  // Tiny pointer parallax on the hero photograph; disabled for touch and reduced motion.
-  const hero = document.querySelector(".hero");
-  const heroImage = document.querySelector(".hero-image img");
-  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (hero && heroImage && window.matchMedia("(pointer: fine)").matches && !prefersReducedMotion) {
-    let heroFrame = 0;
-    hero.addEventListener("pointermove", (event) => {
-      if (event.pointerType !== "mouse") return;
-      const bounds = hero.getBoundingClientRect();
-      const x = (event.clientX - bounds.left) / bounds.width - 0.5;
-      const y = (event.clientY - bounds.top) / bounds.height - 0.5;
-      window.cancelAnimationFrame(heroFrame);
-      heroFrame = window.requestAnimationFrame(() => {
-        heroImage.style.setProperty("--hero-shift-x", `${(-x * 10).toFixed(2)}px`);
-        heroImage.style.setProperty("--hero-shift-y", `${(-y * 8).toFixed(2)}px`);
-      });
-    }, { passive: true });
-    hero.addEventListener("pointerleave", () => {
-      heroImage.style.setProperty("--hero-shift-x", "0px");
-      heroImage.style.setProperty("--hero-shift-y", "0px");
-    }, { passive: true });
-  }
-
-  // Keep the small desktop navigation marker in sync with the section in view.
-  if (nav && "IntersectionObserver" in window) {
-    const sectionLinks = Array.from(nav.querySelectorAll("a[href^='#']"));
-    const trackedSections = sectionLinks
-      .map((link) => document.querySelector(link.getAttribute("href")))
-      .filter((section) => section && section.id !== "start");
-    const navObserver = new IntersectionObserver((entries) => {
-      const current = entries
-        .filter((entry) => entry.isIntersecting)
-        .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-      if (!current) return;
-      const currentHref = `#${current.target.id}`;
-      sectionLinks.forEach((link) => {
-        if (link.getAttribute("href") === currentHref) link.setAttribute("aria-current", "location");
-        else link.removeAttribute("aria-current");
-      });
-    }, { rootMargin: "-34% 0px -56% 0px", threshold: [0, 0.2, 0.5] });
-    trackedSections.forEach((section) => navObserver.observe(section));
-  }
+  document.addEventListener("click", (event) => {
+    if (!mobileNavQuery.matches || menuToggle?.getAttribute("aria-expanded") !== "true") return;
+    if (nav?.contains(event.target) || menuToggle?.contains(event.target)) return;
+    closeMenu();
+  });
 
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && menuToggle?.getAttribute("aria-expanded") === "true") {
-      menuToggle.setAttribute("aria-expanded", "false");
-      menuToggle.setAttribute("aria-label", "Öppna meny");
-      nav.hidden = true;
-      menuToggle.focus({ preventScroll: true });
+      closeMenu({ returnFocus: true });
     }
   });
 
-  // One passive scroll listener updates the sticky header and thin reading indicator.
+  // Header state and slim reading progress share one passive scroll listener.
   let scrollScheduled = false;
-  const updateScrollChrome = () => {
+  const updateScrollState = () => {
     const scrollTop = window.scrollY || document.documentElement.scrollTop;
-    const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+    const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
     header?.classList.toggle("is-scrolled", scrollTop > 24);
-    const ratio = scrollable > 0 ? Math.min(1, Math.max(0, scrollTop / scrollable)) : 0;
-    if (progress) progress.style.transform = `scaleX(${ratio})`;
+    if (progress) {
+      const fraction = maxScroll > 0 ? Math.min(1, Math.max(0, scrollTop / maxScroll)) : 0;
+      progress.style.transform = `scaleX(${fraction})`;
+    }
     scrollScheduled = false;
   };
 
   window.addEventListener("scroll", () => {
     if (scrollScheduled) return;
     scrollScheduled = true;
-    window.requestAnimationFrame(updateScrollChrome);
+    window.requestAnimationFrame(updateScrollState);
   }, { passive: true });
-  updateScrollChrome();
+  updateScrollState();
 
-  // Reveal content only when observed; falls back to visible content on older browsers.
+  // Current-section indicator for the compact navigation.
+  if (nav && "IntersectionObserver" in window) {
+    const navLinks = Array.from(nav.querySelectorAll("a[href^='#']"));
+    const sections = navLinks
+      .map((link) => document.querySelector(link.getAttribute("href")))
+      .filter((section) => section && section.id && section.id !== "start");
+    const observer = new IntersectionObserver((entries) => {
+      const visible = entries
+        .filter((entry) => entry.isIntersecting)
+        .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+      if (!visible) return;
+      const current = `#${visible.target.id}`;
+      navLinks.forEach((link) => {
+        if (link.getAttribute("href") === current) link.setAttribute("aria-current", "location");
+        else link.removeAttribute("aria-current");
+      });
+    }, { rootMargin: "-32% 0px -58% 0px", threshold: [0, 0.15, 0.4] });
+    sections.forEach((section) => observer.observe(section));
+  }
+
+  // Very restrained pointer movement; disabled for touch and reduced-motion preferences.
+  const hero = document.querySelector(".hero");
+  const heroImage = document.querySelector("[data-hero-image]");
+  if (hero && heroImage && window.matchMedia("(pointer: fine)").matches && !reducedMotion) {
+    let frame = 0;
+    hero.addEventListener("pointermove", (event) => {
+      if (event.pointerType !== "mouse") return;
+      const bounds = hero.getBoundingClientRect();
+      const x = event.clientX / bounds.width - .5;
+      const y = (event.clientY - bounds.top) / bounds.height - .5;
+      window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(() => {
+        heroImage.style.setProperty("--shift-x", `${(-x * 7).toFixed(1)}px`);
+        heroImage.style.setProperty("--shift-y", `${(-y * 5).toFixed(1)}px`);
+      });
+    }, { passive: true });
+    hero.addEventListener("pointerleave", () => {
+      heroImage.style.setProperty("--shift-x", "0px");
+      heroImage.style.setProperty("--shift-y", "0px");
+    }, { passive: true });
+  }
+
+  // Scroll reveals are enhancements only: if observation is unavailable, show everything.
   const revealItems = document.querySelectorAll("[data-reveal]");
-  if ("IntersectionObserver" in window && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  if ("IntersectionObserver" in window && !reducedMotion) {
     root.classList.add("motion-ready");
     const revealObserver = new IntersectionObserver((entries, observer) => {
       entries.forEach((entry) => {
@@ -121,63 +132,131 @@
         entry.target.classList.add("is-visible");
         observer.unobserve(entry.target);
       });
-    }, { threshold: 0.12, rootMargin: "0px 0px -32px 0px" });
+    }, { threshold: .12, rootMargin: "0px 0px -30px 0px" });
     revealItems.forEach((item) => revealObserver.observe(item));
   } else {
     revealItems.forEach((item) => item.classList.add("is-visible"));
   }
 
-  // Services are real text controls; the adjacent photograph is explicitly illustrative.
-  const serviceButtons = Array.from(document.querySelectorAll("[data-image][data-label]"));
-  const serviceImage = document.querySelector("[data-service-image]");
-  const serviceIndex = document.querySelector("[data-service-index]");
-  const serviceLabel = document.querySelector("[data-service-label]");
-  const serviceDetail = document.querySelector("[data-service-detail]");
-  let activeImage = serviceImage?.getAttribute("src") || "";
-  let imageSequence = 0;
-
-  const showService = (button) => {
-    if (!serviceImage || !button) return;
-    serviceButtons.forEach((item) => {
-      const active = item === button;
-      item.classList.toggle("is-active", active);
-      item.setAttribute("aria-pressed", String(active));
+  // Service cards preselect the matching project type in the contact form.
+  const serviceSelect = document.querySelector("select[name='service']");
+  document.querySelectorAll("[data-service-link]").forEach((link) => {
+    link.addEventListener("click", () => {
+      const service = link.dataset.serviceLink;
+      if (!serviceSelect || !service) return;
+      const option = Array.from(serviceSelect.options).find((item) => item.textContent.trim() === service);
+      if (option) serviceSelect.value = option.value || option.textContent;
+      else if (service === "Snickeri & ytskikt") serviceSelect.value = "Snickeri";
     });
-
-    if (serviceIndex) serviceIndex.textContent = `${button.dataset.index} / 05`;
-    if (serviceLabel) serviceLabel.textContent = button.dataset.label;
-    if (serviceDetail) serviceDetail.textContent = button.dataset.detail || "";
-
-    const nextImage = button.dataset.image;
-    if (!nextImage || nextImage === activeImage) return;
-    const sequence = ++imageSequence;
-    const preload = new Image();
-    preload.onload = () => {
-      if (sequence !== imageSequence) return;
-      serviceImage.classList.add("is-changing");
-      window.setTimeout(() => {
-        if (sequence !== imageSequence) return;
-        serviceImage.src = nextImage;
-        serviceImage.alt = button.dataset.alt || "Visuell referensbild.";
-        activeImage = nextImage;
-        requestAnimationFrame(() => serviceImage.classList.remove("is-changing"));
-      }, 120);
-    };
-    preload.onerror = () => {
-      if (sequence === imageSequence) serviceImage.classList.remove("is-changing");
-    };
-    preload.src = nextImage;
-  };
-
-  serviceButtons.forEach((button) => {
-    button.addEventListener("pointerenter", (event) => {
-      if (event.pointerType === "mouse" || event.pointerType === "pen") showService(button);
-    });
-    button.addEventListener("focus", () => showService(button));
-    button.addEventListener("click", () => showService(button));
   });
 
-  // The copyright year remains correct without hardcoding a future footer date.
+  // Quote form is deliberately transparent: this static site prepares an SMS draft locally.
+  const form = document.querySelector("#quote-form");
+  const formFields = form?.querySelector("[data-form-fields]");
+  if (formFields) formFields.disabled = false;
+  const fileInput = form?.querySelector("[data-file-input]");
+  const fileList = form?.querySelector("[data-file-list]");
+  const fileReminder = form?.querySelector("[data-file-reminder]");
+  const result = form?.querySelector("[data-form-result]");
+  const smsLink = form?.querySelector("[data-sms-link]");
+  const copyButton = form?.querySelector("[data-copy-inquiry]");
+  const messageField = form?.elements.namedItem("message");
+  const characterCount = form?.querySelector("[data-character-count]");
+  const maxFileBytes = 10 * 1024 * 1024;
+  let inquiryText = "";
+  let filesAreValid = true;
+
+  const updateCharacterCount = () => {
+    if (characterCount && messageField) characterCount.textContent = String(messageField.value.length);
+  };
+  messageField?.addEventListener("input", updateCharacterCount);
+  updateCharacterCount();
+
+  const describeFiles = () => {
+    if (!fileInput || !fileList) return;
+    const files = Array.from(fileInput.files || []);
+    const invalidCount = files.length > 4;
+    const invalidSize = files.some((file) => file.size > maxFileBytes);
+    const invalidType = files.some((file) => {
+      if (file.type.startsWith("image/") || file.type === "application/pdf") return false;
+      return !/\.(?:jpe?g|png|webp|gif|heic|heif|pdf)$/i.test(file.name);
+    });
+    filesAreValid = !invalidCount && !invalidSize && !invalidType;
+    fileInput.setCustomValidity(filesAreValid ? "" : "Välj högst fyra bilder eller PDF-filer på maximalt 10 MB per fil.");
+    fileList.classList.toggle("is-invalid", !filesAreValid);
+
+    if (!files.length) {
+      fileList.textContent = "Inga filer valda";
+    } else if (!filesAreValid) {
+      const reason = invalidCount ? "Välj högst fyra filer." : invalidSize ? "Varje fil får vara högst 10 MB." : "Välj bilder eller PDF-filer.";
+      fileList.textContent = reason;
+    } else {
+      fileList.textContent = files.map((file) => file.name).join(" · ");
+    }
+  };
+  fileInput?.addEventListener("change", describeFiles);
+  describeFiles();
+
+  const addLine = (label, value) => value ? `${label}: ${value}` : "";
+  const buildInquiry = () => {
+    const data = new FormData(form);
+    const lines = [
+      "Offertförfrågan – MV Riv & Bygg",
+      addLine("Namn", String(data.get("name") || "").trim()),
+      addLine("Telefon", String(data.get("phone") || "").trim()),
+      addLine("E-post", String(data.get("email") || "").trim()),
+      addLine("Ort", String(data.get("location") || "").trim()),
+      addLine("Typ av arbete", String(data.get("service") || "").trim()),
+      addLine("Omfattning", String(data.get("scope") || "").trim()),
+      addLine("Önskad start", String(data.get("start") || "").trim()),
+      addLine("Beskrivning", String(data.get("message") || "").trim())
+    ].filter(Boolean);
+    return lines.join("\n");
+  };
+
+  form?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (!form.reportValidity() || !filesAreValid) return;
+
+    inquiryText = buildInquiry();
+    if (smsLink) smsLink.href = `sms:+46702811003?body=${encodeURIComponent(inquiryText)}`;
+
+    const files = Array.from(fileInput?.files || []);
+    if (fileReminder) {
+      fileReminder.textContent = files.length
+        ? `Kom ihåg att bifoga ${files.length === 1 ? "filen" : `de ${files.length} filerna`} i meddelandeappen innan du skickar.`
+        : "";
+    }
+
+    if (result) {
+      result.hidden = false;
+      result.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "nearest" });
+    }
+    copyButton?.focus({ preventScroll: true });
+  });
+
+  copyButton?.addEventListener("click", async () => {
+    if (!inquiryText) return;
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(inquiryText);
+      } else {
+        const temporary = document.createElement("textarea");
+        temporary.value = inquiryText;
+        temporary.setAttribute("readonly", "");
+        temporary.style.position = "fixed";
+        temporary.style.opacity = "0";
+        document.body.append(temporary);
+        temporary.select();
+        document.execCommand("copy");
+        temporary.remove();
+      }
+      copyButton.textContent = "Kopierad ✓";
+    } catch {
+      copyButton.textContent = "Kopiera manuellt";
+    }
+  });
+
   const year = document.querySelector("[data-year]");
   if (year) year.textContent = String(new Date().getFullYear());
 })();

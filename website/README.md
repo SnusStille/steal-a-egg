@@ -1,12 +1,12 @@
 # MV Riv & Bygg — webbplats
 
-En fristående, responsiv webbplats med statiska HTML-, CSS- och JavaScript-filer. Roblox-projektets befintliga struktur och källkod är orörda. Inga paket behöver installeras.
+Fristående, responsiv webbplats byggd med HTML, CSS och JavaScript. Den använder inga externa paket, externa typsnitt eller tredjepartsskript.
 
 ## Testa i VS Code
 
 1. Packa upp `MV-Riv-Bygg-Webbplats.zip`.
-2. Öppna den uppackade mappen **MV-Riv-Bygg-Webbplats** i VS Code.
-3. Öppna terminalen i mappen och kör:
+2. Öppna mappen **MV-Riv-Bygg-Webbplats** i VS Code.
+3. Öppna terminalen i projektmappen och kör:
 
    ```bash
    npm run dev
@@ -14,7 +14,7 @@ En fristående, responsiv webbplats med statiska HTML-, CSS- och JavaScript-file
 
 4. Öppna adressen som visas — normalt `http://localhost:5173`.
 
-Alternativt: öppna **Terminal → Run Task… → MV Riv & Bygg: start dev server**. Ändringar visas när du sparar och laddar om webbläsaren. Kräver Node.js 18 eller senare; inga `npm install` behövs.
+Det går också att välja **Terminal → Run Task… → MV Riv & Bygg: start dev server**. Kräver Node.js 18 eller senare; `npm install` behövs inte.
 
 ## Bygg för publicering
 
@@ -23,34 +23,43 @@ npm run build
 npm run preview
 ```
 
-Den färdiga statiska webbplatsen hamnar i `dist/`. Ingen officiell webbdomän var angiven eller kunde verifieras, så ingen påhittad canonical-adress används. När rätt domän är känd kan sitemap och Sitemap-raden i `robots.txt` byggas samtidigt:
+Den färdiga statiska webbplatsen hamnar i `dist/`. Ingen officiell domän har angetts, därför finns ingen påhittad canonical-adress. När rätt domän är känd kan sitemap och robots-fil skapas samtidigt:
 
 ```bash
-SITE_URL=https://din-riktiga-domän.se npm run build
+SITE_URL=https://foretagets-riktiga-domän.se npm run build
 ```
 
 I PowerShell:
 
 ```powershell
-$env:SITE_URL = "https://din-riktiga-domän.se"
+$env:SITE_URL = "https://foretagets-riktiga-domän.se"
 npm run build
 ```
 
-Sitemap-generatorn går även att köra fristående: `node scripts/generate-sitemap.mjs https://din-riktiga-domän.se`.
+Sitemap-generatorn kan även köras fristående: `node scripts/generate-sitemap.mjs https://foretagets-riktiga-domän.se`.
 
-## Faktagrund och kontakt
+## Företagsuppgifter och innehåll
 
-- MV Riv & Bygg, Skene, drivs av Marko Valtakoski.
-- Telefonnumret `070 281 10 03` är offentligt listat och länkat som `tel:`. Ingen verifierad e-postadress hittades, därför visas ingen.
-- Verksamhetsområdena följer registrerad företagsinformation: bygg och renovering, byggnadssnickeri, golv- och väggbeläggning, måleriarbeten samt skötsel av grönytor.
-- `2007` anges som registreringsår — inte som ett påstående om ett visst antal års erfarenhet.
-- Ingen gatuadress, kund, recension, certifiering, garanti eller projektprestation har lagts till. Rivning har inte lyfts fram som en separat tjänst eftersom det inte kunde verifieras i verksamhetsuppgifterna.
+- MV Riv & Bygg drivs av Marko Valtakoski och har sin bas i Skene.
+- Telefonnumret `070 281 10 03` länkas som ett klickbart `tel:`-nummer.
+- Registreringsår `2007` är inte omskrivet till ett påstående om antal års erfarenhet.
+- Tjänsteöversikten bygger på företagets registrerade verksamhetsområden och rivning enligt briefen. Sanering, håltagning, bilning, totalentreprenad och andra ej bekräftade tjänster marknadsförs inte.
+- Ingen verifierad e-postadress, gatuadress, organisationsnummer, certifiering, försäkring, garanti, kundrecension eller dokumenterad projektprestation har lagts till.
+- Projektsektionen är avsiktligt förberedd men innehåller inga påhittade case.
 
-Källor:
+Källor för offentligt listade företagsuppgifter:
 
 - [Allabolag — MV Riv & Bygg](https://www.allabolag.se/foretag/mv-riv-bygg/skene/byggm%C3%A4stare/7VJQ7AOX4I5YDDT)
-- [Allabolag — Marko Valtakoski, kontaktuppgifter](https://www.allabolag.se/foretag/marko-valtakoski/skene/byggm%C3%A4stare/O4X30ZI8MI5YDDT)
+- [Allabolag — Marko Valtakoski](https://www.allabolag.se/foretag/marko-valtakoski/skene/byggm%C3%A4stare/O4X30ZI8MI5YDDT)
 
-## Egna projektbilder
+## Bilder
 
-Bildplatserna under **Arbeten** är avsiktligt inte fyllda med lånade projektbilder. Ersätt varje `.project-art`-yta i `index.html` med ett optimerat, godkänt foto från ett faktiskt MV Riv & Bygg-arbete och skriv en kort, saklig alt-text. Spara bilderna i `assets/projects/`. De redaktionella referensbilder som används i hero/tjänster är tydligt märkta och källorna finns i [`assets/README.md`](assets/README.md).
+Bilderna från Unsplash och Pexels är lokala, optimerade WebP-referenser. De märks i gränssnittet och presenteras inte som MV Riv & Byggs egna arbeten. Källor och licensinformation finns i [`assets/README.md`](assets/README.md).
+
+Byt referensbilden i hero och porträttytan mot ett godkänt foto på Marko innan publicering, och uppdatera alt-texten. Lägg godkända foton i `assets/` och optimerade projektbilder i `assets/projects/`. Projektgalleriet ska bara fyllas med verkliga uppdrag som får visas. När den riktiga webbdomänen är bestämd ska `og:image` sättas till en absolut bildadress och canonical/sitemap byggas med samma domän.
+
+## Offertformulär — viktigt
+
+Det här är en statisk webbplats och inget formulär skickas till en server. När besökaren fyller i formuläret skapas ett SMS-utkast till `070 281 10 03`; besökaren granskar och skickar det själv. Det finns även en kopiera-knapp för enheter där SMS-länk inte kan öppnas. Valda bilder/filer bifogas inte automatiskt utan behöver läggas till i meddelandeappen.
+
+Om formuläret senare ska skicka e-post eller lagra förfrågningar måste det kopplas till en verifierad e-postadress eller en säker formulärtjänst. Lägg då till tydlig integritetsinformation innan uppgifter samlas in.
