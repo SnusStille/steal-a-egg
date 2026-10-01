@@ -1,22 +1,13 @@
-# Bildkällor
+# Bildtillgångar
 
 ## Markos foto
 
-Markos riktiga foto (Marko i MV-arbetskläder vid företagets märkta skåpbil på en rivningsplats) används i hero och Om-avsnittet. Bildfilen kommer från den Dropbox-delning som användaren tillhandahöll och laddas direkt från Dropbox; den är avsiktligt inte märkt som ett kundcase. De svarta fälten i originalbilden beskärs visuellt i sidans bildramar.
+Webbplatsens enda nuvarande foto är Marko Valtakoskis tillhandahållna bild. Den hämtas direkt från användarens Dropbox-delning och visas som porträtt i hero och Om-avsnittet, inte som ett kundprojekt. Webbplatsen behöver internetanslutning för att hämta bilden.
 
-För offlineanvändning kan den delade PNG-filen hämtas till `assets/marko-valtakoski.png`. Ersätt då Dropbox-adressen i `index.html` vid preload, sociala delningsmetadata, hero och Om-avsnittet med den lokala sökvägen.
+För att använda en lokal kopia kan du spara originalbilden som `marko-valtakoski.png` här och ersätta Dropbox-adressen i `index.html` på fyra ställen: `og:image`, `twitter:image`, preload-länken och de två `<img>`-elementen (hero och Om). Anpassa även `width` och `height` om bildens originalmått ändras.
 
-## Illustrativa referenser
+## Framtida projekt
 
-Bilderna nedan är redaktionella bildreferenser. De är **inte** MV Riv & Byggs dokumenterade projekt och märks som referenser i gränssnittet.
+Det finns inga verifierade projektbilder i webbplatsen. `index.html` innehåller en dold `<template id="project-card-template">` som kan dupliceras när riktiga projekt har godkänts för publicering. Använd endast bilder från företagets faktiska uppdrag, med tillstånd; beskriv projektets omfattning och plats korrekt. Märk aldrig generiska referensbilder som utfört arbete.
 
-| Lokal fil | Visning | Källa |
-|---|---|---|
-| `demolition-site.webp` | Tjänsteförhandsvisning: rivning | [Pexels — Excavator Outside an Abandoned Building, Mike Bird](https://www.pexels.com/photo/excavator-outside-an-abandoned-building-11461002/) · [Pexels License](https://www.pexels.com/license/) |
-| `hero-interior.webp` | Tjänsteförhandsvisning: bygg och renovering | [Unsplash — Bright open-plan interior with wood floors and high ceiling](https://unsplash.com/photos/bright-open-plan-interior-with-wood-floors-and-high-ceiling-EskHgf31GUU) |
-| `craft-timber.webp` | Materialbild (ersättningsreserv) | [Unsplash — A close up of a wooden structure with a sky background](https://unsplash.com/photos/a-close-up-of-a-wooden-structure-with-a-sky-background-DsWGBLSrZ0w) |
-| `staircase-detail.webp` | Tjänsteförhandsvisning: snickeri och ytskikt | [Unsplash — Modern wooden staircase inside a cozy loft apartment](https://unsplash.com/photos/modern-wooden-staircase-inside-a-cozy-loft-apartment-vQc0ZDy7Wv8) |
-| `wall-finish.webp` | Tjänsteförhandsvisning: måleri | [Unsplash — A close up of a wall with some paint on it](https://unsplash.com/photos/a-close-up-of-a-wall-with-some-paint-on-it-_0sEjWfAK3Q) |
-| `garden-architecture.webp` | Tjänsteförhandsvisning: grönytor | [Unsplash — A small white house surrounded by trees and plants](https://unsplash.com/photos/a-small-white-house-surrounded-by-trees-and-plants-7ehAlPiFDCs) |
-
-Pexels-bilden föreställer en arbetsplats i England och används endast som generisk, tydligt märkt bildreferens — aldrig som ett MV Riv & Bygg-projekt. Kontrollera alltid aktuell licensinformation om referensbilder används på en publicerad webbplats.
+För en snabb och lätt webbplats: komprimera godkända bilder till WebP eller AVIF, ange korrekta pixelmått, använd beskrivande alt-text och lazy-loada bilder som ligger utanför första skärmen.

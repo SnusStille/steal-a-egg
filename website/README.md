@@ -1,6 +1,6 @@
 # MV Riv & Bygg — webbplats
 
-Fristående, responsiv webbplats byggd med HTML, CSS och JavaScript. Den använder inga externa paket, externa typsnitt eller tredjepartsskript.
+En responsiv, fristående webbplats byggd med HTML, CSS och vanlig JavaScript. Inga paket, externa typsnitt eller tredjepartsskript behövs. Webbplatsen använder Markos tillhandahållna foto via Dropbox; just den bilden kräver internetanslutning.
 
 ## Testa i VS Code
 
@@ -23,7 +23,7 @@ npm run build
 npm run preview
 ```
 
-Den färdiga statiska webbplatsen hamnar i `dist/`. Ingen officiell domän har angetts, därför finns ingen påhittad canonical-adress. När rätt domän är känd kan sitemap och robots-fil skapas samtidigt:
+Den färdiga statiska webbplatsen hamnar i `dist/`. Ingen officiell domän har angetts, så projektet hittar inte på en canonical-adress eller sitemap. När den riktiga domänen är känd kan sitemap och robots-fil skapas samtidigt:
 
 ```bash
 SITE_URL=https://foretagets-riktiga-domän.se npm run build
@@ -38,28 +38,35 @@ npm run build
 
 Sitemap-generatorn kan även köras fristående: `node scripts/generate-sitemap.mjs https://foretagets-riktiga-domän.se`.
 
-## Företagsuppgifter och innehåll
+## Innehåll och företagsuppgifter
 
-- MV Riv & Bygg drivs av Marko Valtakoski och har sin bas i Skene.
-- Telefonnumret `070 281 10 03` länkas som ett klickbart `tel:`-nummer.
-- Registreringsår `2007` är inte omskrivet till ett påstående om antal års erfarenhet.
-- Tjänsteöversikten beskriver rivning, bygg och entreprenad enligt användarens bekräftelse samt registrerade verksamhetsområden. Sanering, håltagning, bilning, totalentreprenad och andra ej bekräftade specialiteter marknadsförs inte.
-- Ingen verifierad e-postadress, gatuadress, organisationsnummer, certifiering, försäkring, garanti, kundrecension eller dokumenterad projektprestation har lagts till.
-- Inga påhittade kundcase eller projektbilder används. Den tidigare tomma projektpanelen är ersatt med en praktisk checklista inför första kontakten.
+- Företaget drivs av Marko Valtakoski, med bas i Skene, Marks kommun, Västra Götaland.
+- Telefonnumret `070 281 10 03` är klickbart på hela sidan.
+- Registreringsåret 2007 anges inte som ett påstående om antal års erfarenhet.
+- Tjänsteöversikten beskriver rivning, bygg och entreprenad samt registrerade verksamhetsområden: renovering, byggnadssnickeri, golv- och väggarbeten, måleri och skötsel av grönytor.
+- Inga verifierade kundprojekt visas. En dold `<template>` i `index.html` är en enkel startpunkt för framtida, godkända projektkort. Lägg bara in riktiga uppdrag med tillstånd och beskriv dem korrekt.
+- Ingen obekräftad e-postadress, organisationsuppgift, certifiering, försäkring, garanti, kundrecension eller projektprestation har lagts till. Inte heller marknadsförs obekräftade specialiteter som sanering, asbest, håltagning, bilning eller totalentreprenad.
 
 Källor för offentligt listade företagsuppgifter:
 
 - [Allabolag — MV Riv & Bygg](https://www.allabolag.se/foretag/mv-riv-bygg/skene/byggm%C3%A4stare/7VJQ7AOX4I5YDDT)
 - [Allabolag — Marko Valtakoski](https://www.allabolag.se/foretag/marko-valtakoski/skene/byggm%C3%A4stare/O4X30ZI8MI5YDDT)
 
-## Bilder
+## Foto och projektbilder
 
-Bilderna från Unsplash och Pexels är lokala WebP-referenser, märkta så att de inte misstas för MV Riv & Byggs arbeten. Markos porträtt i hero och Om-avsnittet hämtas från den Dropbox-länk som användaren delade; det är den enda externa bildresursen. För att webbplatsen ska visa Markos foto krävs internetanslutning. Källor och bildinstruktioner finns i [`assets/README.md`](assets/README.md).
+Markos riktiga foto kommer från Dropbox-bilden som användaren delade. Det används som porträtt i hero och Om-avsnittet, aldrig som kundprojekt. Dropbox är den enda externa bildresursen. Foto, delningsmetadata och preload pekar på samma bildadress. Se [`assets/README.md`](assets/README.md) om du vill göra bilden lokal eller lägga till riktiga projekt senare.
 
-Vill du göra projektet helt fristående/offline: ladda ned det delade fotot till `assets/marko-valtakoski.png` och byt Dropbox-adressen i `index.html` (hero, Om, preload och sociala delningsbilder) mot den lokala sökvägen. Projektbilder ska bara läggas till när de visar verkliga uppdrag som får publiceras. När rätt webbdomän är känd kan canonical och sitemap byggas med den domänen.
+Inga generiska stockbilder visas eller märks som företagets utförda arbeten. Projektkortsmallen ligger inuti ett `<template>`-element och visas inte förrän den fylls med verifierat material.
 
 ## Offertformulär — viktigt
 
-Det här är en statisk webbplats och inget formulär skickas till en server. När besökaren fyller i formuläret skapas ett SMS-utkast till `070 281 10 03`; besökaren granskar och skickar det själv. Det finns även en kopiera-knapp för enheter där SMS-länk inte kan öppnas. Valda bilder/filer bifogas inte automatiskt utan behöver läggas till i meddelandeappen.
+Webbplatsen är statisk och formuläret skickar inte uppgifter till en server. Det kontrollerar fälten lokalt och skapar ett SMS-utkast till `070 281 10 03`; besökaren granskar och skickar själv. Det finns en kopiera-knapp om meddelandeappen inte öppnas. Eventuella valda bilder/filer bifogas inte automatiskt — de behöver läggas till i SMS-appen. Formuläret begränsar bilagor till högst fyra bild- eller PDF-filer på 10 MB per fil.
 
-Om formuläret senare ska skicka e-post eller lagra förfrågningar måste det kopplas till en verifierad e-postadress eller en säker formulärtjänst. Lägg då till tydlig integritetsinformation innan uppgifter samlas in.
+Om formuläret i framtiden ska skicka e-post eller spara förfrågningar behöver det kopplas till en verifierad mottagare eller en säker formulärtjänst. Lägg då till tydlig integritetsinformation innan uppgifter samlas in.
+
+## Tillgänglighet och prestanda
+
+- Responsiv layout med mobilnavigation, tydliga fokusmarkeringar och stora tryckytor.
+- Semantiska sektioner, hoppa-till-innehåll-länk, etiketter på formulärfält och FAQ byggd med inbyggda `details`/`summary`.
+- Rörelse respekterar `prefers-reduced-motion`; innehåll är tillgängligt även utan JavaScript.
+- Systemtypsnitt, inline-ikoner och inga JavaScript-/CSS-bibliotek.

@@ -44,7 +44,7 @@
 
   nav?.querySelectorAll("a").forEach((link) => {
     link.addEventListener("click", () => {
-      if (mobileNavQuery.matches) closeMenu();
+      if (mobileNavQuery.matches) closeMenu({ returnFocus: true });
     });
   });
 
@@ -183,6 +183,7 @@
     });
     filesAreValid = !invalidCount && !invalidSize && !invalidType;
     fileInput.setCustomValidity(filesAreValid ? "" : "Välj högst fyra bilder eller PDF-filer på maximalt 10 MB per fil.");
+    fileInput.setAttribute("aria-invalid", String(!filesAreValid));
     fileList.classList.toggle("is-invalid", !filesAreValid);
 
     if (!files.length) {
